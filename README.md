@@ -35,6 +35,7 @@ Sin paso de compilación y sin `node_modules`: se publica tal cual en cualquier 
 | demo-0.1 | 2026-10-05 | Primera demo: 5 pasos, una necesidad, compartir con el menú del sistema |
 | demo-0.2 | 2026-10-05 | Fuentes múltiples; pantalla "Otras personas afectadas" con las 9 categorías que no nacen de las viviendas y dos reglas nuevas; varias necesidades; botón "Enviar por correo" (abre el correo con destinatario y asunto; el PDF se adjunta desde Descargas); ampliaciones EJ-N-A desde el historial |
 | demo-0.2.1 | 2026-10-05 | Seguridad: el destinatario pasa a un correo de prueba del responsable; la dirección real de la URAT no se publica en el repositorio público (R-16) |
+| demo-0.2.2 | 2026-10-05 | Corrección del service worker: la precarga pide cada archivo con la versión en la dirección y sin usar el caché HTTP, para no guardar copias antiguas al actualizar |
 
 ## Probar en el computador
 
@@ -48,7 +49,7 @@ y abrir `http://localhost:8080/` en Chrome o Edge.
 
 ## Publicar una versión nueva
 
-1. Cambiar `VERSION` en `sw.js` (por ejemplo `alfa-demo-v0.1.1`) y `version_app` en `datos/config.json`.
+1. Cambiar `VERSION` en `sw.js` (por ejemplo `alfa-demo-v0.2.3`) y `version_app` en `datos/config.json`.
 2. Subir los cambios al repositorio. GitHub Pages publica la carpeta tal cual.
 3. En el teléfono, cerrar y volver a abrir la app: avisa cuando hay una versión nueva.
 

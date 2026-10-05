@@ -1,6 +1,6 @@
 /* Service worker de la demo: precarga todos los archivos para que la app abra sin señal.
    Para publicar una versión nueva, cambiar VERSION. */
-const VERSION = 'alfa-demo-v0.2.1';
+const VERSION = 'alfa-demo-v0.2.2';
 const ARCHIVOS = [
   './',
   './index.html',
@@ -22,9 +22,21 @@ const ARCHIVOS = [
   './img/icono-512-maskable.png'
 ];
 
+// Precarga pidiendo cada archivo con la versión en la dirección y sin pasar por el caché HTTP
+// del navegador: así una versión nueva nunca guarda copias antiguas servidas por el navegador
+// o por el servidor intermedio (CDN) de GitHub Pages. Cada archivo se guarda bajo su dirección limpia.
+async function precargar(cache) {
+  await Promise.all(ARCHIVOS.map(async ruta => {
+    const url = `${ruta}${ruta.includes('?') ? '&' : '?'}v=${VERSION}`;
+    const resp = await fetch(new Request(url, { cache: 'reload' }));
+    if (!resp.ok) throw new Error('No se pudo precargar ' + ruta);
+    await cache.put(ruta, resp);
+  }));
+}
+
 self.addEventListener('install', evento => {
   evento.waitUntil(
-    caches.open(VERSION).then(cache => cache.addAll(ARCHIVOS)).then(() => self.skipWaiting())
+    caches.open(VERSION).then(precargar).then(() => self.skipWaiting())
   );
 });
 
