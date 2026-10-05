@@ -105,7 +105,10 @@
     campo('region', id.region);
     campo('provincia', id.provincia);
     campo('comuna', id.comuna);
-    campo('fuente', id.fuente);
+    const fuentes = [].concat(id.fuentes || []);
+    if (id.fuenteOtra && String(id.fuenteOtra).trim()) fuentes.push(String(id.fuenteOtra).trim());
+    if (!fuentes.length && id.fuente) fuentes.push(id.fuente); // informes de la versión anterior
+    campo('fuente', fuentes.join(', '));
     campo('contacto', id.contacto);
     campo('fecha', fmtFecha(oc.fecha));
     campo('hora', oc.hora);
@@ -117,8 +120,12 @@
       centrado('X', b.cx, b.cy - 3.2, 9, fB, azul);
     }
 
-    // 6. Afectación a personas (solo las filas que la demo alimenta)
-    const filas = { AFECTADAS: T.afectadas, DAMNIFICADAS: T.damnificadas, ALBERGADAS: T.albergadas };
+    // 6. Afectación a personas: las 11 filas del formato
+    const filas = {
+      AFECTADAS: T.afectadas, AISLADAS: T.aisladas, ALBERGADAS: T.albergadas, DAMNIFICADAS: T.damnificadas,
+      'DAMNIFICADAS LABORALES': T.damnificadas_laborales, DESAPARECIDAS: T.desaparecidas, EVACUADAS: T.evacuadas,
+      EXTRAVIADAS: T.extraviadas, FALLECIDAS: T.fallecidas, LESIONADAS: T.lesionadas
+    };
     for (const nombre of Object.keys(filas)) {
       const f = filas[nombre];
       const y = P.campos.personas.filas[nombre];
@@ -147,6 +154,9 @@
     }
 
     const obs = [];
+    if (informe.amplia && informe.amplia.de) {
+      obs.push(`Ampliación del Informe Alfa ${informe.amplia.de} del ${fmtFecha(informe.amplia.fecha)} ${informe.amplia.hora || ''}: contiene el estado completo y actualizado del evento.`);
+    }
     const J = informe.justificaciones || {};
     for (const clave of Object.keys(J)) {
       if (!J[clave] || !String(J[clave]).trim()) continue;

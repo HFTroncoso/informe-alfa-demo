@@ -1,8 +1,13 @@
 /* Motor de reglas de la demo. La lógica de cada regla vive aquí, identificada por su id;
-   los textos, niveles, fuentes, casos de solución y el catálogo viven en datos/reglas.json. */
+   los textos, niveles, fuentes, casos de solución y los catálogos viven en datos/reglas.json. */
 const Reglas = (() => {
   'use strict';
   let D = null;
+
+  // Categorías de la sección 4 del formato que no se suman a "personas únicas":
+  // las albergadas ya están contadas como damnificadas, evacuadas o aisladas.
+  const CATEGORIAS = ['afectadas', 'aisladas', 'albergadas', 'damnificadas', 'damnificadas_laborales', 'desaparecidas', 'evacuadas', 'extraviadas', 'fallecidas', 'lesionadas'];
+  const NO_SUMAN_A_UNICAS = ['albergadas'];
 
   function cargar(datos) { D = datos; }
 
@@ -35,30 +40,47 @@ const Reglas = (() => {
   }
   function fmtFecha(iso) { if (!iso) return ''; const p = iso.split('-'); return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : iso; }
   function elemento(id) { return D.catalogo_elementos.find(e => e.id === id) || null; }
+  function categoria(id) { return D.categorias_personas.find(c => c.id === id) || null; }
   function regla(id) { return D.reglas.find(r => r.id === id); }
+  function fuentesTexto(informe) {
+    const id = informe.identificacion || {};
+    const partes = [].concat(id.fuentes || []);
+    if (id.fuenteOtra && id.fuenteOtra.trim()) partes.push(id.fuenteOtra.trim());
+    if (!partes.length && id.fuente) partes.push(id.fuente); // informes antiguos
+    return partes.join(', ');
+  }
 
   // ---------- totales ----------
   function totales(informe) {
-    const t = {
-      afectadas: fila(), damnificadas: fila(), albergadas: fila(),
-      viviendas: {}, viviendas_danadas: 0, viviendas_no_habitables: 0,
-      personas: 0, personas_hombres: 0, personas_mujeres: 0, personas_nna: 0
-    };
+    const t = { viviendas: {}, viviendas_danadas: 0, viviendas_no_habitables: 0, albergadas_viviendas: 0, albergadas_otras: 0, personas: 0, personas_hombres: 0, personas_mujeres: 0, personas_nna: 0 };
+    CATEGORIAS.forEach(k => { t[k] = fila(); });
+
+    // Viviendas y sus ocupantes
     for (const c of D.condiciones_vivienda) {
       const v = (informe.viviendas || {})[c.id] || {};
       const viv = n(v.viviendas);
       t.viviendas[c.id] = viv;
       t.viviendas_danadas += viv;
-      const categoria = c.ocupantes_cuentan_como; // 'afectadas' | 'damnificadas'
-      sumar(t[categoria], v);
-      if (categoria === 'damnificadas') t.viviendas_no_habitables += viv;
-      if (c.pregunta_albergue && v.hayAlbergue) sumar(t.albergadas, v.albergue);
+      sumar(t[c.ocupantes_cuentan_como], v);
+      if (c.ocupantes_cuentan_como === 'damnificadas') t.viviendas_no_habitables += viv;
+      if (c.pregunta_albergue && v.hayAlbergue) { sumar(t.albergadas, v.albergue); t.albergadas_viviendas += ocupantes(v.albergue); }
     }
-    // Personas únicas: una persona puede ser damnificada y albergada a la vez; las albergadas no se suman.
-    t.personas = t.afectadas.total + t.damnificadas.total;
-    t.personas_hombres = t.afectadas.adH + t.afectadas.nnaH + t.damnificadas.adH + t.damnificadas.nnaH;
-    t.personas_mujeres = t.afectadas.adM + t.afectadas.nnaM + t.damnificadas.adM + t.damnificadas.nnaM;
-    t.personas_nna = t.afectadas.nnaH + t.afectadas.nnaM + t.damnificadas.nnaH + t.damnificadas.nnaM;
+    // Otras personas afectadas
+    for (const c of (D.categorias_personas || [])) {
+      const o = (informe.otras || {})[c.id];
+      if (o && o.hay) {
+        sumar(t[c.id], o);
+        if (c.id === 'albergadas') t.albergadas_otras += ocupantes(o);
+      }
+    }
+    // Personas únicas (aproximación): todas las categorías salvo las que ya están contadas en otra.
+    for (const k of CATEGORIAS) {
+      if (NO_SUMAN_A_UNICAS.includes(k)) continue;
+      t.personas += t[k].total;
+      t.personas_hombres += t[k].adH + t[k].nnaH;
+      t.personas_mujeres += t[k].adM + t[k].nnaM;
+      t.personas_nna += t[k].nnaH + t[k].nnaM;
+    }
     return t;
   }
 
@@ -80,7 +102,7 @@ const Reglas = (() => {
   }
 
   // ---------- evaluación ----------
-  // opciones: { pantalla: 'donde'|'evento'|'viviendas'|'necesidad' } o { todas: true }
+  // opciones: { pantalla: 'donde'|'evento'|'viviendas'|'personas'|'necesidad' } o { todas: true }
   function evaluar(informe, opciones) {
     opciones = opciones || {};
     const todas = !!opciones.todas;
@@ -100,7 +122,7 @@ const Reglas = (() => {
         id: r.id,
         clave,
         nivel,
-        titulo: r.titulo,
+        titulo: plantilla(r.titulo, datos),
         fuente: r.fuente,
         que_no_cuadra: plantilla(r.que_no_cuadra, datos),
         por_que: plantilla(r.por_que, datos),
@@ -146,7 +168,7 @@ const Reglas = (() => {
         const occ = ocupantes(v);
         const viv = n(v.viviendas);
         const cond = c.titulo.toLowerCase();
-        if (viv === 0 && occ > 0) hallazgo(regla('PERSONAS_SIN_VIVIENDA'), { condicion: cond, ocupantes: occ }, { sufijo: c.id });
+        if (viv === 0 && occ > 0) hallazgo(regla('PERSONAS_SIN_VIVIENDA'), { condicion: cond, ocupantes: occ, condicion_id: c.id }, { sufijo: c.id });
         if (c.pregunta_albergue && v.hayAlbergue && v.albergue) {
           for (const [k, nombre] of celdas) {
             if (n(v.albergue[k]) > n(v[k])) {
@@ -162,15 +184,31 @@ const Reglas = (() => {
       }
     }
 
-    // 4. Necesidades
+    // 4. Otras personas afectadas
+    if (en('personas')) {
+      for (const c of (D.categorias_personas || [])) {
+        const o = (informe.otras || {})[c.id];
+        if (o && o.hay && ocupantes(o) === 0) hallazgo(regla('CATEGORIA_VACIA'), { categoria: c.etiqueta.toLowerCase() }, { sufijo: c.id });
+        if (c.requiere_denuncia && o && o.hay && ocupantes(o) > 0 && !o.denuncia) {
+          hallazgo(regla('DESAPARECIDAS_SIN_DENUNCIA'), { desaparecidas: ocupantes(o) }, { sufijo: c.id });
+        }
+      }
+      const suma = t.damnificadas.total + t.evacuadas.total + t.aisladas.total;
+      if (t.albergadas.total > suma) {
+        hallazgo(regla('ALBERGUE_TOTAL'), { albergadas: t.albergadas.total, suma, damnificadas: t.damnificadas.total, evacuadas: t.evacuadas.total, aisladas: t.aisladas.total });
+      }
+    }
+
+    // 5. Necesidades
     if (en('necesidad') && informe.hayNecesidad === true) {
       (informe.necesidades || []).forEach((nec, i) => {
+        const numero = i + 1;
         const faltan = [];
         if (!nec.elemento) faltan.push('el elemento');
         else if (nec.elemento === 'otro' && !(nec.otroNombre || '').trim()) faltan.push('cuál es el elemento');
         if (!(n(nec.cantidad) > 0)) faltan.push('la cantidad');
         if (!nec.paraQue || nec.paraQue.trim().length < P.largo_minimo_para_que) faltan.push('para qué se requiere (una frase completa)');
-        if (faltan.length) { hallazgo(regla('NECESIDAD_INCOMPLETA'), { faltantes: lista(faltan), indice: i }, { sufijo: String(i) }); return; }
+        if (faltan.length) { hallazgo(regla('NECESIDAD_INCOMPLETA'), { faltantes: lista(faltan), indice: i, numero }, { sufijo: String(i) }); return; }
 
         const el = elemento(nec.elemento);
         if (el && el.base && el.factor) {
@@ -179,14 +217,14 @@ const Reglas = (() => {
           if (n(nec.cantidad) > tope) {
             hallazgo(regla('TOPE_ELEMENTO'), {
               cantidad: n(nec.cantidad), unidad: el.unidad, elemento: el.nombre, criterio: el.criterio.toLowerCase(),
-              base_valor: baseValor, base_nombre: D.bases[el.base].nombre, tope, indice: i
-            }, { nivel: el.nivel_tope, sufijo: el.id, caso: el.caso_parecido });
+              base_valor: baseValor, base_nombre: D.bases[el.base].nombre, tope, indice: i, numero
+            }, { nivel: el.nivel_tope, sufijo: el.id + ':' + i, caso: el.caso_parecido });
           }
         }
         if (el && el.regla_72h) {
           const horas = horasDesdeInicio(informe);
           if (horas !== null && horas >= 0 && horas < P.horas_minimas_kit_alimentacion) {
-            hallazgo(regla('ALIMENTACION_72H'), { elemento: el.nombre, horas: Math.floor(horas), indice: i }, { sufijo: el.id });
+            hallazgo(regla('ALIMENTACION_72H'), { elemento: el.nombre, horas: Math.floor(horas), indice: i, numero }, { sufijo: el.id + ':' + i });
           }
         }
       });
@@ -197,7 +235,7 @@ const Reglas = (() => {
     return H;
   }
 
-  return { cargar, totales, evaluar, sugerencia, elemento, plantilla, horasDesdeInicio, fmtFecha, lista };
+  return { cargar, totales, evaluar, sugerencia, elemento, categoria, plantilla, horasDesdeInicio, fmtFecha, lista, fuentesTexto, CATEGORIAS };
 })();
 
 if (typeof module !== 'undefined') module.exports = Reglas;

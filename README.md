@@ -28,6 +28,13 @@ No contiene datos reales de personas ni de emergencias.
 
 Sin paso de compilación y sin `node_modules`: se publica tal cual en cualquier sitio estático con HTTPS.
 
+## Versiones
+
+| Versión | Fecha | Qué cambió |
+| --- | --- | --- |
+| demo-0.1 | 2026-10-05 | Primera demo: 5 pasos, una necesidad, compartir con el menú del sistema |
+| demo-0.2 | 2026-10-05 | Fuentes múltiples; pantalla "Otras personas afectadas" con las 9 categorías que no nacen de las viviendas y dos reglas nuevas; varias necesidades; botón "Enviar por correo" (abre el correo con destinatario y asunto; el PDF se adjunta desde Descargas); ampliaciones EJ-N-A desde el historial |
+
 ## Probar en el computador
 
 Desde esta carpeta, con Python instalado:

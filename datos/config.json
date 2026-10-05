@@ -1,6 +1,6 @@
 {
   "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino la indicó el responsable del proyecto el 2026-10-05.",
-  "version_app": "demo-0.1",
+  "version_app": "demo-0.2",
   "modo": "ejercicio",
   "destinatario": {
     "nombre": "UAT Magallanes",
@@ -33,11 +33,16 @@
   "fuentes_frecuentes": [
     "Bomberos",
     "Carabineros",
+    "Armada o Capitanía de Puerto",
+    "CONAF",
+    "Salud (SAMU, hospital, CESFAM)",
     "Equipo municipal de emergencia",
-    "Empresa de servicios (agua, luz, gas)",
+    "Delegación Presidencial",
+    "Empresa de servicios (agua, luz, gas, telecomunicaciones)",
     "Vecinos o junta de vecinos",
     "Observación directa en terreno"
   ],
+  "fuentes_nota": "La Guía 2026, sección 1, pide señalar la(s) institución(es) que proporcionan la información y el contacto de la persona que la entregó. Se pueden marcar varias.",
   "responsable_ejercicio": {
     "nombre": "Funcionario(a) de ejercicio",
     "cargo": "Encargado(a) comunal de emergencia (ejercicio)",

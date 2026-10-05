@@ -1,6 +1,6 @@
 {
-  "_comentario": "Catálogo de elementos, condiciones de vivienda, tipos de evento y reglas de validación de la demo. VERSIÓN PROVISORIA redactada en el Sprint 1 a partir de ARQUITECTURA.md, la Guía de Aplicación 2026 y el IT-LOG-01 v4. Debe ser revisada en Cowork y validada con la URAT (riesgo R-12) antes del piloto. Si cambia el instructivo, se edita este archivo, no el código.",
-  "version": "demo-0.1 provisoria",
+  "_comentario": "Catálogo de elementos, condiciones de vivienda, categorías de personas, tipos de evento y reglas de validación de la demo. VERSIÓN PROVISORIA redactada en el Sprint 1 a partir de ARQUITECTURA.md, la Guía de Aplicación 2026 y el IT-LOG-01 v4. Debe ser revisada en Cowork y validada con la URAT (riesgo R-12) antes del piloto. Si cambia el instructivo, se edita este archivo, no el código.",
+  "version": "demo-0.2 provisoria",
 
   "condiciones_vivienda": [
     {
@@ -38,11 +38,96 @@
     }
   ],
 
+  "categorias_personas": [
+    {
+      "id": "afectadas",
+      "etiqueta": "AFECTADAS",
+      "nombre": "Afectadas sin daño en su vivienda",
+      "pregunta": "¿Hay personas con su vida alterada por el evento, pero sin daño en su vivienda?",
+      "definicion": "Personas que con ocasión de la emergencia ven alterado directamente su modo de vida; especialmente por cortes de luz, teléfono o agua, o por aislamiento.",
+      "contraejemplo": "Quien tuvo que salir de su casa porque quedó inhabitable no va aquí: es damnificado y ya se registró con las viviendas.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "aisladas",
+      "etiqueta": "AISLADAS",
+      "nombre": "Aisladas",
+      "pregunta": "¿Hay personas que no pueden entrar ni salir de su localidad?",
+      "definicion": "Personas que pierden la conectividad por la interrupción total del tránsito normal en rutas terrestres, navieras o aéreas.",
+      "contraejemplo": "Un camino con tránsito lento o por una sola pista no deja a nadie aislado.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "albergadas",
+      "etiqueta": "ALBERGADAS",
+      "nombre": "Albergadas que no vienen de viviendas dañadas",
+      "pregunta": "¿Hay personas en un albergue habilitado que no provienen de las viviendas dañadas?",
+      "definicion": "Personas atendidas en un lugar especialmente habilitado para damnificados, aislados o evacuados; por ejemplo, evacuadas de forma preventiva.",
+      "contraejemplo": "Las familias de viviendas con daño mayor o destruidas que están en el albergue ya se contaron en la pantalla de viviendas: no las repitas aquí.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "damnificadas_laborales",
+      "etiqueta": "DAMNIFICADAS LABORALES",
+      "nombre": "Damnificadas laborales",
+      "pregunta": "¿Hay personas que perdieron su trabajo o su fuente de ingresos por el evento?",
+      "definicion": "Personas que con ocasión de la emergencia han perdido su fuente laboral, ocupación o empleo.",
+      "contraejemplo": "Un local cerrado por un día no deja damnificados laborales.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "desaparecidas",
+      "etiqueta": "DESAPARECIDAS",
+      "nombre": "Desaparecidas",
+      "pregunta": "¿Hay personas que no han sido ubicadas?",
+      "definicion": "Personas no ubicadas o presuntamente fallecidas que no han podido ser calificadas como tales por la autoridad competente. Debe existir una denuncia de presunta desgracia conforme a los mecanismos oficiales.",
+      "contraejemplo": "Quien no contesta el teléfono pero se sabe dónde está no es una persona desaparecida.",
+      "requiere_denuncia": true,
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "evacuadas",
+      "etiqueta": "EVACUADAS",
+      "nombre": "Evacuadas",
+      "pregunta": "¿Hay personas que salieron o fueron desalojadas de un lugar por el riesgo?",
+      "definicion": "Personas que, de forma preventiva o con ocasión de la emergencia, abandonaron o fueron desalojadas de un lugar o área por el riesgo directo o potencial de una amenaza.",
+      "contraejemplo": "Las familias de viviendas destruidas o con daño mayor se registran como damnificadas en la pantalla de viviendas, no aquí.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "extraviadas",
+      "etiqueta": "EXTRAVIADAS",
+      "nombre": "Extraviadas",
+      "pregunta": "¿Hay personas que perdieron la orientación o su ruta y podrían ser encontradas?",
+      "definicion": "Personas que de manera fortuita perdieron la orientación o se desviaron de su ruta sin llegar a destino, y que podrían ser encontradas.",
+      "contraejemplo": "Si ya hay denuncia de presunta desgracia, la persona es desaparecida, no extraviada.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "fallecidas",
+      "etiqueta": "FALLECIDAS",
+      "nombre": "Fallecidas",
+      "pregunta": "¿Hay personas fallecidas certificadas por la autoridad competente?",
+      "definicion": "Personas que con ocasión de la emergencia han perdido la vida, certificado por la autoridad competente.",
+      "contraejemplo": "Sin certificación de la autoridad, la persona se registra como desaparecida.",
+      "fuente": "Guía 2026, sección 4"
+    },
+    {
+      "id": "lesionadas",
+      "etiqueta": "LESIONADAS",
+      "nombre": "Lesionadas",
+      "pregunta": "¿Hay personas heridas o con algún daño en su cuerpo?",
+      "definicion": "Personas que con ocasión de la emergencia presentan algún tipo de daño en su cuerpo. Incluye a las personas heridas.",
+      "contraejemplo": "Las personas evacuadas sin lesiones no se cuentan aquí.",
+      "fuente": "Guía 2026, sección 4"
+    }
+  ],
+
   "definiciones": {
     "afectadas": "Personas que ven alterado directamente su modo de vida; por ejemplo, por cortes de luz, agua o teléfono, o por aislamiento (Guía 2026, sección 4).",
-    "damnificadas": "Personas que, por el daño a su vivienda, perdieron su condición de habitabilidad de forma temporal o permanente (Guía 2026, sección 4).",
+    "damnificadas": "Personas que, por el daño a su vivienda, perdieron su condición de habitabilidad de forma temporal o permanente (Guía 2026, sección 4). En la app nacen solo de las viviendas con daño mayor o destruidas.",
     "albergadas": "Personas atendidas en un lugar especialmente habilitado para damnificados, aislados o evacuados. Quien se queda con familiares o vecinos no cuenta como albergada (Guía 2026, sección 4; criterio de la Dirección Regional, D-14).",
-    "personas_unicas": "Una misma persona puede estar damnificada y albergada a la vez. Por eso la app no suma las categorías: cuenta aparte las personas únicas y usa ese número para sugerir cantidades."
+    "personas_unicas": "Una misma persona puede estar en más de una categoría. La app no suma a las albergadas, porque ya están contadas como damnificadas, evacuadas o aisladas; las demás categorías se suman como aproximación de personas únicas, que es la base para sugerir cantidades."
   },
 
   "tipos_evento": [
@@ -69,7 +154,7 @@
   ],
 
   "bases": {
-    "personas": { "nombre": "personas registradas", "descripcion": "Total de personas únicas registradas en las viviendas (afectadas más damnificadas)." },
+    "personas": { "nombre": "personas registradas", "descripcion": "Aproximación de personas únicas: todas las categorías salvo las albergadas, que ya están contadas en otra." },
     "personas_hombres": { "nombre": "hombres registrados (adultos y NNA)", "descripcion": "Suma de hombres adultos y NNA hombres registrados." },
     "personas_mujeres": { "nombre": "mujeres registradas (adultas y NNA)", "descripcion": "Suma de mujeres adultas y NNA mujeres registradas." },
     "personas_nna": { "nombre": "niños, niñas y adolescentes registrados", "descripcion": "Suma de NNA hombres y mujeres registrados." },
@@ -143,12 +228,12 @@
       "pantalla": "viviendas",
       "titulo": "Hay más personas en albergue que ocupantes",
       "que_no_cuadra": "En las viviendas que \"{condicion}\" registraste {ocupantes} {grupo}, pero indicaste que {albergados} de esas personas están en un albergue habilitado. No pueden ser más que quienes vivían ahí.",
-      "por_que": "Las personas albergadas de esas viviendas son parte de sus ocupantes: alguien que no vivía en ellas no puede contarse aquí. El formato pide totales que cuadren entre sí.",
+      "por_que": "Las personas albergadas de esas viviendas son parte de sus ocupantes: alguien que no vivía en ellas no puede contarse aquí. Si en el albergue hay otras personas, por ejemplo evacuadas de forma preventiva, se registran en la pantalla \"Otras personas afectadas\".",
       "como_resolver": [
         { "texto": "Revisar cuántas personas vivían en esas viviendas", "pantalla": "viviendas" },
         { "texto": "Revisar cuántas de ellas están realmente en un albergue habilitado", "pantalla": "viviendas" }
       ],
-      "caso_parecido": "Incendio con 2 viviendas destruidas y 7 personas. En el albergue había 9 personas, pero 2 eran vecinos evacuados por precaución, no ocupantes de esas casas. Se registraron 7 damnificadas, 7 albergadas, y los 2 vecinos como evacuados en la sección de otras personas afectadas."
+      "caso_parecido": "Incendio con 2 viviendas destruidas y 7 personas. En el albergue había 9 personas, pero 2 eran vecinos evacuados por precaución, no ocupantes de esas casas. Se registraron 7 damnificadas y 7 albergadas con las viviendas, y los 2 vecinos como evacuados y albergados en \"Otras personas afectadas\"."
     },
     {
       "id": "PERSONAS_SIN_VIVIENDA",
@@ -158,12 +243,12 @@
       "pantalla": "viviendas",
       "titulo": "Hay personas pero ninguna vivienda",
       "que_no_cuadra": "En la condición \"{condicion}\" registraste {ocupantes} personas pero 0 viviendas.",
-      "por_que": "En el Alfa las personas afectadas o damnificadas por daño a su vivienda se explican por las viviendas dañadas. Personas sin vivienda que las respalde es el descuadre más frecuente que observa la URAT.",
+      "por_que": "En esta pantalla las personas se cuentan como ocupantes de las viviendas dañadas: sin viviendas no hay a quién atribuirlas. Las personas afectadas por otras causas (corte de servicios, aislamiento, evacuación preventiva, lesionadas, fallecidas) se registran en la pantalla siguiente, \"Otras personas afectadas\".",
       "como_resolver": [
         { "texto": "Indicar cuántas viviendas quedaron en esa condición", "pantalla": "viviendas" },
-        { "texto": "Si esas personas no vivían en viviendas dañadas, dejar la condición en cero; corresponden a otra categoría (evacuadas, aisladas, afectadas por corte de servicio) que se registra en otra sección", "pantalla": "viviendas" }
+        { "texto": "Esas personas no vivían en viviendas dañadas: dejar esta tarjeta en cero y registrarlas en \"Otras personas afectadas\"", "accion": "vaciar_ocupantes" }
       ],
-      "caso_parecido": "Corte de agua potable: 120 personas afectadas y ninguna vivienda dañada. No se registran viviendas; las personas van como afectadas por interrupción de servicio en la sección de otras personas afectadas, no en la de viviendas."
+      "caso_parecido": "Corte de agua potable: 120 personas afectadas y ninguna vivienda dañada. Las viviendas quedan en cero y las 120 personas se registran como afectadas en \"Otras personas afectadas\"."
     },
     {
       "id": "SIN_OCUPANTES",
@@ -196,16 +281,63 @@
       "caso_parecido": "Incendio en una residencia de trabajadores: 1 vivienda destruida con 24 personas. Es correcto; en Observaciones se escribió \"Residencia colectiva de trabajadores de temporada\"."
     },
     {
+      "id": "CATEGORIA_VACIA",
+      "nombre": "Categoría de personas marcada sin cantidad",
+      "nivel": "bloqueo",
+      "fuente": "Formato Informe Alfa, sección 4",
+      "pantalla": "personas",
+      "titulo": "Falta la cantidad de personas",
+      "que_no_cuadra": "Marcaste que hay personas {categoria}, pero no anotaste cuántas.",
+      "por_que": "El formato pide el número de personas por sexo y por adultos o NNA. Una categoría marcada sin cantidad no entrega información a la URAT.",
+      "como_resolver": [
+        { "texto": "Anotar cuántas personas hay en esa categoría", "pantalla": "personas" },
+        { "texto": "Si finalmente no hay personas en esa categoría, desmarcarla", "pantalla": "personas" }
+      ],
+      "caso_parecido": "Un informe llegó con la casilla \"Lesionadas\" marcada con una cruz y sin número. La URAT tuvo que llamar al municipio para saber cuántas ambulancias coordinar."
+    },
+    {
+      "id": "ALBERGUE_TOTAL",
+      "nombre": "Albergadas totales mayores que damnificadas, evacuadas y aisladas",
+      "nivel": "bloqueo",
+      "fuente": "Formato Informe Alfa, sección 4; Guía 2026, definición de albergadas",
+      "pantalla": "personas",
+      "titulo": "Hay más albergadas que personas que pudieran estarlo",
+      "que_no_cuadra": "El informe suma {albergadas} personas albergadas, pero solo {suma} personas damnificadas, evacuadas o aisladas ({damnificadas} damnificadas, {evacuadas} evacuadas y {aisladas} aisladas). Según la Guía, los albergues atienden a damnificados, aislados y evacuados.",
+      "por_que": "Una persona albergada tuvo que salir de algún lugar: o perdió su vivienda, o fue evacuada, o quedó aislada. Si hay más albergadas que personas en esas situaciones, falta registrar a alguien o se contó a alguien dos veces.",
+      "como_resolver": [
+        { "texto": "Revisar las personas en albergue de las viviendas dañadas", "pantalla": "viviendas" },
+        { "texto": "Registrar a las personas evacuadas o aisladas que faltan, o corregir las otras albergadas", "pantalla": "personas" }
+      ],
+      "caso_parecido": "Nevazón: 40 personas en el gimnasio municipal y ninguna vivienda dañada. Eran vecinos evacuados de forma preventiva de un sector sin calefacción: se registraron 40 evacuadas y 40 albergadas."
+    },
+    {
+      "id": "DESAPARECIDAS_SIN_DENUNCIA",
+      "nombre": "Personas desaparecidas sin denuncia de presunta desgracia",
+      "nivel": "justificacion",
+      "fuente": "Guía 2026, sección 4",
+      "pantalla": "personas",
+      "titulo": "Desaparecidas sin denuncia",
+      "que_no_cuadra": "Registraste {desaparecidas} persona(s) desaparecida(s) sin indicar que exista una denuncia de presunta desgracia.",
+      "por_que": "La Guía exige una denuncia de presunta desgracia conforme a los mecanismos oficiales para clasificar a una persona como desaparecida. Sin ella, la persona se registra como extraviada.",
+      "como_resolver": [
+        { "texto": "Marcar que existe la denuncia, si ya se hizo", "pantalla": "personas" },
+        { "texto": "Si no hay denuncia, registrar a la persona como extraviada", "pantalla": "personas" },
+        { "texto": "Si la denuncia está en curso, escribir el motivo; quedará impreso en Observaciones", "accion": "justificar" }
+      ],
+      "caso_parecido": "Naufragio con 2 tripulantes no ubicados; Carabineros recibió la denuncia esa misma tarde. Se registraron 2 personas desaparecidas con denuncia."
+    },
+    {
       "id": "NECESIDAD_INCOMPLETA",
       "nombre": "Cada necesidad con elemento, cantidad y para qué",
       "nivel": "bloqueo",
       "fuente": "Guía 2026, sección 8; IT-LOG-01 v4, punto 7.4",
       "pantalla": "necesidad",
-      "titulo": "La necesidad está incompleta",
-      "que_no_cuadra": "Falta indicar: {faltantes}.",
+      "titulo": "La necesidad {numero} está incompleta",
+      "que_no_cuadra": "En la necesidad {numero} falta indicar: {faltantes}.",
       "por_que": "La Unidad de Recursos de Emergencia evalúa cada solicitud por su cantidad, su tipo y su justificación. Una necesidad sin alguno de los tres datos vuelve al municipio para aclaración y retrasa la ayuda.",
       "como_resolver": [
-        { "texto": "Completar la necesidad", "pantalla": "necesidad" }
+        { "texto": "Completar la necesidad", "pantalla": "necesidad" },
+        { "texto": "Si la fila sobra, quitarla", "pantalla": "necesidad" }
       ],
       "caso_parecido": "Se pidieron \"frazadas\" sin cantidad ni destino. La URE devolvió la solicitud. Al reenviarla como \"40 frazadas para 20 personas damnificadas alojadas en el gimnasio municipal\" se gestionó el mismo día."
     },

@@ -43,6 +43,12 @@
         <button type="button" id="btn-descartar" class="enlace" hidden>Descartar el borrador</button>
       </div>
 
+      <section id="historial" class="historial" hidden>
+        <h2>Informes de ejercicio generados en este teléfono</h2>
+        <p class="ayuda">“Ampliar” abre una copia del informe para actualizar lo que cambió; al firmarla recibe el número con letra (EJ-1-A, EJ-1-B).</p>
+        <ul id="lista-historial"></ul>
+      </section>
+
       <section id="instalacion" class="tarjeta suave" hidden>
         <h2>Instalar en este teléfono</h2>
         <p>Instalada, la app abre desde su propio ícono y funciona sin señal.</p>
@@ -52,18 +58,13 @@
         <p id="ya-instalada" class="ayuda" hidden>La app ya está instalada en este dispositivo.</p>
       </section>
 
-      <section id="historial" class="historial" hidden>
-        <h2>Informes de ejercicio generados en este teléfono</h2>
-        <ul id="lista-historial"></ul>
-      </section>
-
       <details class="como-funciona">
         <summary>¿Cómo funciona esta demo?</summary>
         <ol>
-          <li>Responde preguntas simples: dónde y cuándo, qué pasó, viviendas y personas, una necesidad.</li>
+          <li>Responde preguntas simples: dónde y cuándo, qué pasó, viviendas y personas, otras personas afectadas, necesidades.</li>
           <li>Si algo no cuadra, la app detiene el avance, explica por qué y muestra cómo resolverlo, con un caso parecido.</li>
           <li>Al firmar, el PDF con la disposición del Informe Alfa se genera en el propio teléfono, sin señal.</li>
-          <li>Compártelo al correo del teléfono o descárgalo. La dirección de destino se muestra con un botón para copiarla.</li>
+          <li>Envíalo por correo o compártelo. La dirección de destino se muestra con un botón para copiarla.</li>
         </ol>
         <p class="ayuda">Los campos de texto se pueden dictar con el micrófono del teclado del teléfono.</p>
       </details>
@@ -97,12 +98,13 @@
         </label>
       </div>
 
-      <p class="pregunta">¿Quién te entregó la información?</p>
-      <label class="campo">Fuente
-        <input type="text" list="lista-fuentes" data-ruta="identificacion.fuente" placeholder="Por ejemplo: Bomberos" autocomplete="off">
-        <datalist id="lista-fuentes"></datalist>
+      <p class="pregunta">¿De dónde salió la información de este informe?</p>
+      <p class="ayuda">Corresponde a las casillas FUENTE y CONTACTO del formato: la institución o persona que informó lo ocurrido, y cómo ubicarla para confirmar datos. Puedes marcar varias fuentes.</p>
+      <div id="lista-fuentes" class="lista-opciones compacta"></div>
+      <label class="campo">Otra fuente (opcional)
+        <input type="text" data-ruta="identificacion.fuenteOtra" placeholder="Por ejemplo: encargado de la empresa de transporte" autocomplete="off">
       </label>
-      <label class="campo">Contacto de la fuente (opcional)
+      <label class="campo">Contacto de quien informó (opcional)
         <input type="text" data-ruta="identificacion.contacto" placeholder="Solo datos de ejercicio, no reales" autocomplete="off">
       </label>
       <p class="ayuda">Puedes escribir o dictar con el micrófono del teclado.</p>
@@ -120,46 +122,39 @@
     <!-- 3. VIVIENDAS Y OCUPANTES -->
     <section class="pantalla" data-pantalla="viviendas" hidden>
       <p class="pregunta">¿Cuántas viviendas quedaron en cada condición y cuántas personas vivían en ellas?</p>
-      <p class="ayuda">Solo totales: no se identifican viviendas ni direcciones. El detalle por hogar corresponde a la FIBE. Si no hay viviendas dañadas, deja todo en cero y sigue.</p>
+      <p class="ayuda">Solo totales: no se identifican viviendas ni direcciones. El detalle por hogar corresponde a la FIBE. Si el evento no dañó viviendas, deja todo en cero y sigue: las personas afectadas por otras causas se registran en la pantalla siguiente.</p>
       <div id="tarjetas-viviendas"></div>
       <section class="resumen-vivo" id="resumen-vivo" aria-live="polite"></section>
     </section>
 
-    <!-- 4. NECESIDAD -->
+    <!-- 4. OTRAS PERSONAS AFECTADAS -->
+    <section class="pantalla" data-pantalla="personas" hidden>
+      <p class="pregunta">Además de las familias de las viviendas dañadas, ¿hay otras personas afectadas?</p>
+      <p class="ayuda">Marca solo las situaciones que correspondan y anota cuántas personas hay en cada una. Si ninguna aplica, sigue sin marcar nada. Las personas de las viviendas dañadas ya están contadas.</p>
+      <div id="tarjetas-personas"></div>
+      <section class="resumen-vivo" id="resumen-personas" aria-live="polite"></section>
+    </section>
+
+    <!-- 5. NECESIDADES -->
     <section class="pantalla" data-pantalla="necesidad" hidden>
       <p class="pregunta">¿Necesitas pedir algo que no puedas cubrir con recursos locales?</p>
       <div class="lista-opciones">
-        <label class="opcion"><input type="radio" name="hay-necesidad" value="si"><span><strong>Sí</strong><small>Registraré una necesidad</small></span></label>
+        <label class="opcion"><input type="radio" name="hay-necesidad" value="si"><span><strong>Sí</strong><small>Registraré una o más necesidades</small></span></label>
         <label class="opcion"><input type="radio" name="hay-necesidad" value="no"><span><strong>No, por ahora</strong><small>El municipio cubre la respuesta con sus recursos</small></span></label>
       </div>
       <div id="bloque-necesidad" hidden>
-        <label class="campo">¿Qué elemento?
-          <select id="in-elemento" data-ruta="necesidades.0.elemento"></select>
-        </label>
-        <label id="campo-otro-elemento" class="campo" hidden>¿Cuál?
-          <input type="text" data-ruta="necesidades.0.otroNombre" placeholder="Nombre del elemento">
-        </label>
-        <p id="criterio-elemento" class="ayuda" hidden></p>
-        <label class="campo">¿Cuántos?
-          <input type="number" min="0" step="1" inputmode="numeric" data-ruta="necesidades.0.cantidad">
-        </label>
-        <p id="sugerencia" class="sugerencia" hidden>
-          <span id="sugerencia-texto"></span>
-          <button type="button" id="btn-usar-sugerido" class="enlace">Usar esa cantidad</button>
-        </p>
-        <label class="campo">¿Para qué se requiere?
-          <textarea rows="3" data-ruta="necesidades.0.paraQue" placeholder="Por ejemplo: para 11 personas damnificadas alojadas en el gimnasio municipal"></textarea>
-        </label>
-        <p class="ayuda">Puedes dictar con el micrófono del teclado.</p>
+        <div id="lista-necesidades"></div>
+        <button type="button" class="secundario grande" data-accion="agregar-necesidad">+ Agregar otra necesidad</button>
+        <p class="ayuda">Cada necesidad lleva elemento, cantidad y para qué. Si el elemento no está en la lista, elige “Otro elemento (escribir cuál)”. Puedes dictar con el micrófono del teclado.</p>
       </div>
     </section>
 
-    <!-- 5. REVISIÓN Y FIRMA -->
+    <!-- 6. REVISIÓN Y FIRMA -->
     <section class="pantalla" data-pantalla="revision" hidden>
       <div id="revision-contenido"></div>
     </section>
 
-    <!-- 6. LISTO -->
+    <!-- 7. LISTO -->
     <section class="pantalla" data-pantalla="listo" hidden>
       <div id="listo-contenido"></div>
     </section>
