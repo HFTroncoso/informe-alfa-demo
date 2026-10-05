@@ -1,0 +1,1329 @@
+{
+ "_comentario": "Disposición del Informe Alfa (REX 78 de 19-01-2026) extraída del PDF oficial 'Informe Alfa 2026 (2).pdf'. Coordenadas en puntos, origen abajo-izquierda. Tamaño de hoja 13 x 8,5 pulgadas (Folio) horizontal. Los textos originales usan Calibri Bold; la demo usa Helvetica Bold ajustada al ancho original. El logo institucional no se incluye: queda un recuadro pendiente.",
+ "pagina": {
+  "ancho": 936.0,
+  "alto": 612.0
+ },
+ "rectangulos": [
+  {
+   "x": 290.78,
+   "y": 514.06,
+   "w": 138.74,
+   "h": 0.96
+  },
+  {
+   "x": 475.61,
+   "y": 514.06,
+   "w": 164.06,
+   "h": 0.96
+  },
+  {
+   "x": 290.78,
+   "y": 499.54,
+   "w": 348.89,
+   "h": 0.96
+  },
+  {
+   "x": 119.52,
+   "y": 463.54,
+   "w": 64.7,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 422.47,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 422.47,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 422.47,
+   "w": 143.06,
+   "h": 0.96
+  },
+  {
+   "x": 867.0,
+   "y": 528.58,
+   "w": 0.96,
+   "h": 24.0
+  },
+  {
+   "x": 233.3,
+   "y": 407.47,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 407.47,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 407.47,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 392.95,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 392.95,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 392.95,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 378.43,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 378.43,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 378.43,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 363.91,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 363.91,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 349.39,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 349.39,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 334.87,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 334.87,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 320.35,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 320.35,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 305.83,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 305.83,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 291.31,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 429.89,
+   "y": 291.31,
+   "w": 23.04,
+   "h": 0.96
+  },
+  {
+   "x": 233.3,
+   "y": 276.77,
+   "w": 20.52,
+   "h": 0.96
+  },
+  {
+   "x": 119.52,
+   "y": 262.25,
+   "w": 133.94,
+   "h": 0.96
+  },
+  {
+   "x": 54.96,
+   "y": 151.61,
+   "w": 469.99,
+   "h": 0.96
+  },
+  {
+   "x": 54.96,
+   "y": 137.06,
+   "w": 469.99,
+   "h": 0.96
+  },
+  {
+   "x": 54.96,
+   "y": 122.54,
+   "w": 469.99,
+   "h": 0.96
+  },
+  {
+   "x": 54.96,
+   "y": 86.54,
+   "w": 469.99,
+   "h": 0.96
+  },
+  {
+   "x": 54.96,
+   "y": 72.02,
+   "w": 469.99,
+   "h": 0.96
+  },
+  {
+   "x": 603.19,
+   "y": 72.02,
+   "w": 140.66,
+   "h": 0.96
+  },
+  {
+   "x": 49.92,
+   "y": 61.1,
+   "w": 1.92,
+   "h": 497.35
+  },
+  {
+   "x": 872.64,
+   "y": 61.1,
+   "w": 1.92,
+   "h": 495.43
+  },
+  {
+   "x": 715.06,
+   "y": 528.58,
+   "w": 0.96,
+   "h": 24.96
+  },
+  {
+   "x": 867.0,
+   "y": 378.43,
+   "w": 0.96,
+   "h": 44.04
+  },
+  {
+   "x": 564.31,
+   "y": 262.25,
+   "w": 0.96,
+   "h": 175.73
+  },
+  {
+   "x": 639.07,
+   "y": 262.25,
+   "w": 0.96,
+   "h": 174.77
+  },
+  {
+   "x": 707.38,
+   "y": 262.25,
+   "w": 0.96,
+   "h": 174.77
+  },
+  {
+   "x": 743.26,
+   "y": 262.25,
+   "w": 0.96,
+   "h": 174.77
+  },
+  {
+   "x": 232.34,
+   "y": 276.77,
+   "w": 0.96,
+   "h": 146.66
+  },
+  {
+   "x": 252.86,
+   "y": 276.77,
+   "w": 0.96,
+   "h": 145.7
+  },
+  {
+   "x": 428.93,
+   "y": 291.31,
+   "w": 0.96,
+   "h": 132.12
+  },
+  {
+   "x": 451.97,
+   "y": 291.31,
+   "w": 0.96,
+   "h": 131.16
+  },
+  {
+   "x": 602.71,
+   "y": 262.25,
+   "w": 0.96,
+   "h": 160.22
+  },
+  {
+   "x": 670.42,
+   "y": 262.25,
+   "w": 0.96,
+   "h": 160.22
+  },
+  {
+   "x": 826.42,
+   "y": 378.43,
+   "w": 0.96,
+   "h": 45.0
+  },
+  {
+   "x": 51.84,
+   "y": 556.54,
+   "w": 822.72,
+   "h": 1.92
+  },
+  {
+   "x": 716.02,
+   "y": 552.58,
+   "w": 151.94,
+   "h": 0.96
+  },
+  {
+   "x": 716.02,
+   "y": 528.58,
+   "w": 151.94,
+   "h": 0.96
+  },
+  {
+   "x": 715.54,
+   "y": 514.06,
+   "w": 152.06,
+   "h": 0.96
+  },
+  {
+   "x": 715.54,
+   "y": 499.54,
+   "w": 152.06,
+   "h": 0.96
+  },
+  {
+   "x": 232.82,
+   "y": 463.54,
+   "w": 58.08,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 437.02,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 827.38,
+   "y": 422.47,
+   "w": 40.58,
+   "h": 0.96
+  },
+  {
+   "x": 827.38,
+   "y": 407.47,
+   "w": 40.58,
+   "h": 0.96
+  },
+  {
+   "x": 827.38,
+   "y": 392.95,
+   "w": 40.58,
+   "h": 0.96
+  },
+  {
+   "x": 827.38,
+   "y": 378.43,
+   "w": 40.58,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 363.91,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 349.39,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 334.87,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 320.35,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 305.83,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 291.31,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 276.77,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 565.27,
+   "y": 262.25,
+   "w": 178.94,
+   "h": 0.96
+  },
+  {
+   "x": 51.84,
+   "y": 246.77,
+   "w": 822.72,
+   "h": 1.92
+  },
+  {
+   "x": 54.96,
+   "y": 203.69,
+   "w": 812.64,
+   "h": 0.96
+  },
+  {
+   "x": 54.96,
+   "y": 189.17,
+   "w": 812.64,
+   "h": 0.96
+  },
+  {
+   "x": 564.79,
+   "y": 151.61,
+   "w": 302.81,
+   "h": 0.96
+  },
+  {
+   "x": 564.79,
+   "y": 137.06,
+   "w": 302.81,
+   "h": 0.96
+  },
+  {
+   "x": 564.79,
+   "y": 122.54,
+   "w": 302.81,
+   "h": 0.96
+  },
+  {
+   "x": 639.55,
+   "y": 86.54,
+   "w": 228.05,
+   "h": 0.96
+  },
+  {
+   "x": 780.22,
+   "y": 72.02,
+   "w": 87.38,
+   "h": 0.96
+  },
+  {
+   "x": 51.84,
+   "y": 61.1,
+   "w": 822.72,
+   "h": 1.92
+  }
+ ],
+ "textos": [
+  {
+   "t": "N°",
+   "x": 692.74,
+   "y": 536.62,
+   "size": 12.96,
+   "bold": true,
+   "ancho_max": 12.95
+  },
+  {
+   "t": "REGIÓN:",
+   "x": 260.54,
+   "y": 519.1,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 28.72
+  },
+  {
+   "t": "FUENTE:",
+   "x": 260.9,
+   "y": 504.58,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 28.36
+  },
+  {
+   "t": "FECHA:",
+   "x": 93.96,
+   "y": 467.86,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 24.04
+  },
+  {
+   "t": "HORA:",
+   "x": 209.18,
+   "y": 467.86,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 22.13
+  },
+  {
+   "t": "H",
+   "x": 581.95,
+   "y": 411.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 5.07
+  },
+  {
+   "t": "M",
+   "x": 618.31,
+   "y": 411.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 7.03
+  },
+  {
+   "t": "H",
+   "x": 653.11,
+   "y": 411.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 5.07
+  },
+  {
+   "t": "M",
+   "x": 686.26,
+   "y": 411.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 7.03
+  },
+  {
+   "t": "ACTIVIDAD VOLCÁNICA",
+   "x": 56.52,
+   "y": 339.19,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 78.15
+  },
+  {
+   "t": "DESAPARECIDAS",
+   "x": 466.37,
+   "y": 324.67,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 55.58
+  },
+  {
+   "t": "EVACUADAS",
+   "x": 466.37,
+   "y": 310.15,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 41.8
+  },
+  {
+   "t": "EXTRAVIADAS",
+   "x": 466.37,
+   "y": 295.63,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 47.45
+  },
+  {
+   "t": "INCENDIO FORESTAL",
+   "x": 56.52,
+   "y": 281.09,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 69.01
+  },
+  {
+   "t": "FALLECIDAS",
+   "x": 466.37,
+   "y": 281.09,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 39.41
+  },
+  {
+   "t": "OTRO:",
+   "x": 56.52,
+   "y": 267.29,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 21.56
+  },
+  {
+   "t": "LESIONADAS",
+   "x": 466.37,
+   "y": 266.57,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 42.66
+  },
+  {
+   "t": "CONSIDERAR SOLO UNA CLASIFICACIÓN POR PERSONA",
+   "x": 453.65,
+   "y": 255.53,
+   "size": 5.04,
+   "bold": false,
+   "ancho_max": 113.82
+  },
+  {
+   "t": "//",
+   "x": 567.67,
+   "y": 255.53,
+   "size": 5.04,
+   "bold": true,
+   "ancho_max": 4.33
+  },
+  {
+   "t": "SE DEBE DESAGREGAR POR SEXO",
+   "x": 571.99,
+   "y": 255.53,
+   "size": 5.04,
+   "bold": false,
+   "ancho_max": 71.7
+  },
+  {
+   "t": "//",
+   "x": 643.87,
+   "y": 255.53,
+   "size": 5.04,
+   "bold": true,
+   "ancho_max": 4.33
+  },
+  {
+   "t": "*NNA: NIÑO, NIÑA O ADOLESCENTE",
+   "x": 648.19,
+   "y": 255.53,
+   "size": 5.04,
+   "bold": false,
+   "ancho_max": 75.11
+  },
+  {
+   "t": "6. DECISIONES: Acciones y soluciones inmediatas",
+   "x": 56.76,
+   "y": 237.05,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 201.66
+  },
+  {
+   "t": "FECHA:",
+   "x": 566.35,
+   "y": 76.34,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 24.04
+  },
+  {
+   "t": "HORA:",
+   "x": 752.5,
+   "y": 76.34,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 22.13
+  },
+  {
+   "t": "INTERRUPCIÓN DE CONECTIVIDAD",
+   "x": 261.02,
+   "y": 368.23,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 114.8
+  },
+  {
+   "t": "INTERRUPCIÓN DE SERVICIO BÁSICO",
+   "x": 261.02,
+   "y": 382.75,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 121.62
+  },
+  {
+   "t": "INTERRUPCIÓN DE SERVICIO DE AGUA POTABLE",
+   "x": 261.02,
+   "y": 398.47,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 159.8
+  },
+  {
+   "t": "INACCESIBILIDAD AL AGUA POTABLE",
+   "x": 261.02,
+   "y": 413.23,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 122.26
+  },
+  {
+   "t": "ACCIDENTE DE INFRAESTRUCTURA POR COLAPSO",
+   "x": 56.52,
+   "y": 354.91,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 164.67
+  },
+  {
+   "t": "DAMNIFICADAS",
+   "x": 466.37,
+   "y": 353.71,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 53.21
+  },
+  {
+   "t": "ACCIDENTE RECREACIONAL",
+   "x": 56.52,
+   "y": 369.43,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 90.93
+  },
+  {
+   "t": "ACCIDENTE CON MATERIALES PELIGROSOS",
+   "x": 56.52,
+   "y": 383.95,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 142.55
+  },
+  {
+   "t": "ACCIDENTE MINERO",
+   "x": 56.52,
+   "y": 413.23,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 67.9
+  },
+  {
+   "t": "AFECTADAS",
+   "x": 466.37,
+   "y": 397.27,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 39.4
+  },
+  {
+   "t": "AISLADAS",
+   "x": 466.37,
+   "y": 382.75,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 32.93
+  },
+  {
+   "t": "8. EVALUACIÓN DE NECESIDADES:",
+   "x": 566.59,
+   "y": 170.93,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 139.66
+  },
+  {
+   "t": "3. TIPO DE EVENTO:",
+   "x": 56.76,
+   "y": 441.82,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 81.6
+  },
+  {
+   "t": "ACCIDENTE MEDIO DE TRANSPORTE",
+   "x": 56.52,
+   "y": 398.47,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 120.38
+  },
+  {
+   "t": "7. RECURSOS INVOLUCRADOS (HUMANO - MATERIAL):",
+   "x": 56.76,
+   "y": 170.93,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 225.75
+  },
+  {
+   "t": "¿Cuáles son las medidas o acciones operativas de respuesta que se han realizado? // ¿Cuáles son las medidas o acciones operativas de respuesta que se llevarán a cabo o que se requieren implementar?",
+   "x": 56.52,
+   "y": 223.73,
+   "size": 8.04,
+   "bold": false,
+   "ancho_max": 652.3
+  },
+  {
+   "t": "9. OBSERVACIONES:",
+   "x": 56.76,
+   "y": 105.86,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 82.77
+  },
+  {
+   "t": "10. RESPONSABLE DEL INFORME:",
+   "x": 566.59,
+   "y": 105.86,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 136.25
+  },
+  {
+   "t": "IDENTIFICACIÓN:",
+   "x": 566.35,
+   "y": 90.86,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 56.79
+  },
+  {
+   "t": "INCENDIO ESTRUCTURAL",
+   "x": 56.52,
+   "y": 296.83,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 83.16
+  },
+  {
+   "t": "DÉFICIT HÍDRICO",
+   "x": 56.52,
+   "y": 311.35,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 55.57
+  },
+  {
+   "t": "VACIAMIENTO DE LAGO",
+   "x": 261.02,
+   "y": 296.83,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 80.26
+  },
+  {
+   "t": "TSUNAMI",
+   "x": 261.02,
+   "y": 310.15,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 32.49
+  },
+  {
+   "t": "SISMO",
+   "x": 261.02,
+   "y": 324.67,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 22.34
+  },
+  {
+   "t": "REMOCIÓN EN MASA",
+   "x": 261.02,
+   "y": 339.19,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 71.56
+  },
+  {
+   "t": "METEOROLÓGICO",
+   "x": 261.02,
+   "y": 353.71,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 60.02
+  },
+  {
+   "t": "DAMNIFICADAS LABORALES",
+   "x": 466.37,
+   "y": 339.19,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 93.85
+  },
+  {
+   "t": "BIOLÓGICO",
+   "x": 56.52,
+   "y": 325.87,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 37.82
+  },
+  {
+   "t": "CONTACTO:",
+   "x": 672.46,
+   "y": 505.06,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 39.52
+  },
+  {
+   "t": "COMUNA:",
+   "x": 672.46,
+   "y": 519.58,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 34.36
+  },
+  {
+   "t": "SISTEMA DE EVALUACIÓN DE DAÑOS Y NECESIDADES",
+   "x": 307.22,
+   "y": 537.1,
+   "size": 12.96,
+   "bold": true,
+   "ancho_max": 285.43
+  },
+  {
+   "t": "PROVINCIA:",
+   "x": 430.97,
+   "y": 519.58,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 39.99
+  },
+  {
+   "t": "INFORME ALFA",
+   "x": 135.72,
+   "y": 537.1,
+   "size": 12.96,
+   "bold": true,
+   "ancho_max": 81.75
+  },
+  {
+   "t": "2. OCURRENCIA DEL EVENTO:",
+   "x": 56.76,
+   "y": 482.86,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 121.31
+  },
+  {
+   "t": "1. IDENTIFICACIÓN:",
+   "x": 136.44,
+   "y": 518.86,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 80.26
+  },
+  {
+   "t": "5. DAÑO A VIVIENDAS:",
+   "x": 752.74,
+   "y": 441.34,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 94.18
+  },
+  {
+   "t": "4. AFECTACIÓN A PERSONAS:",
+   "x": 466.61,
+   "y": 441.34,
+   "size": 9.96,
+   "bold": true,
+   "ancho_max": 120.45
+  },
+  {
+   "t": "TOTAL",
+   "x": 715.42,
+   "y": 420.43,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 21.63
+  },
+  {
+   "t": "NNA*",
+   "x": 664.42,
+   "y": 426.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 19.47
+  },
+  {
+   "t": "DAÑO MENOR",
+   "x": 752.5,
+   "y": 411.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 48.66
+  },
+  {
+   "t": "DAÑO MAYOR",
+   "x": 752.5,
+   "y": 397.27,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 48.55
+  },
+  {
+   "t": "DESTRUIDA",
+   "x": 752.5,
+   "y": 382.75,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 38.7
+  },
+  {
+   "t": "ADULTAS",
+   "x": 586.99,
+   "y": 426.79,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 31.26
+  },
+  {
+   "t": "ALBERGADAS",
+   "x": 466.37,
+   "y": 368.23,
+   "size": 8.04,
+   "bold": true,
+   "ancho_max": 45.15
+  }
+ ],
+ "logo": {
+  "x": 56.4,
+  "y": 498.2,
+  "w": 62.6,
+  "h": 55.4
+ },
+ "campos": {
+  "numero": {
+   "x": 792.0,
+   "y": 536.6,
+   "alinear": "centro",
+   "size": 12,
+   "ancho": 145
+  },
+  "region": {
+   "x": 293.0,
+   "y": 517.4,
+   "size": 7.5,
+   "ancho": 134
+  },
+  "provincia": {
+   "x": 478.0,
+   "y": 517.4,
+   "size": 7.5,
+   "ancho": 159
+  },
+  "comuna": {
+   "x": 718.0,
+   "y": 517.4,
+   "size": 7.5,
+   "ancho": 147
+  },
+  "fuente": {
+   "x": 293.0,
+   "y": 502.9,
+   "size": 7.5,
+   "ancho": 344
+  },
+  "contacto": {
+   "x": 718.0,
+   "y": 502.9,
+   "size": 7.5,
+   "ancho": 147
+  },
+  "fecha": {
+   "x": 121.5,
+   "y": 466.9,
+   "size": 7.5,
+   "ancho": 61
+  },
+  "hora": {
+   "x": 235.0,
+   "y": 466.9,
+   "size": 7.5,
+   "ancho": 54
+  },
+  "otro": {
+   "x": 121.5,
+   "y": 265.7,
+   "size": 7.5,
+   "ancho": 130
+  },
+  "tipo_evento": {
+   "ACTIVIDAD VOLCÁNICA": {
+    "cx": 242.6,
+    "cy": 343.1,
+    "lado": 14.6
+   },
+   "INCENDIO FORESTAL": {
+    "cx": 242.6,
+    "cy": 285.0,
+    "lado": 14.6
+   },
+   "INTERRUPCIÓN DE CONECTIVIDAD": {
+    "cx": 440.45,
+    "cy": 372.15,
+    "lado": 14.5
+   },
+   "INTERRUPCIÓN DE SERVICIO BÁSICO": {
+    "cx": 440.45,
+    "cy": 386.65,
+    "lado": 14.5
+   },
+   "INTERRUPCIÓN DE SERVICIO DE AGUA POTABLE": {
+    "cx": 440.45,
+    "cy": 401.15,
+    "lado": 14.5
+   },
+   "INACCESIBILIDAD AL AGUA POTABLE": {
+    "cx": 440.45,
+    "cy": 415.9,
+    "lado": 15.0
+   },
+   "ACCIDENTE DE INFRAESTRUCTURA POR COLAPSO": {
+    "cx": 242.6,
+    "cy": 357.65,
+    "lado": 14.5
+   },
+   "ACCIDENTE RECREACIONAL": {
+    "cx": 242.6,
+    "cy": 372.15,
+    "lado": 14.5
+   },
+   "ACCIDENTE CON MATERIALES PELIGROSOS": {
+    "cx": 242.6,
+    "cy": 386.65,
+    "lado": 14.5
+   },
+   "ACCIDENTE MINERO": {
+    "cx": 242.6,
+    "cy": 415.9,
+    "lado": 15.0
+   },
+   "ACCIDENTE MEDIO DE TRANSPORTE": {
+    "cx": 242.6,
+    "cy": 401.15,
+    "lado": 14.5
+   },
+   "INCENDIO ESTRUCTURAL": {
+    "cx": 242.6,
+    "cy": 299.55,
+    "lado": 14.5
+   },
+   "DÉFICIT HÍDRICO": {
+    "cx": 242.6,
+    "cy": 314.05,
+    "lado": 14.5
+   },
+   "VACIAMIENTO DE LAGO": {
+    "cx": 440.45,
+    "cy": 299.55,
+    "lado": 14.5
+   },
+   "TSUNAMI": {
+    "cx": 440.45,
+    "cy": 314.05,
+    "lado": 14.5
+   },
+   "SISMO": {
+    "cx": 440.45,
+    "cy": 328.55,
+    "lado": 14.5
+   },
+   "REMOCIÓN EN MASA": {
+    "cx": 440.45,
+    "cy": 343.1,
+    "lado": 14.6
+   },
+   "METEOROLÓGICO": {
+    "cx": 440.45,
+    "cy": 357.65,
+    "lado": 14.5
+   },
+   "BIOLÓGICO": {
+    "cx": 242.6,
+    "cy": 328.55,
+    "lado": 14.5
+   }
+  },
+  "personas": {
+   "filas": {
+    "DESAPARECIDAS": 324.67,
+    "EVACUADAS": 310.15,
+    "EXTRAVIADAS": 295.63,
+    "FALLECIDAS": 281.09,
+    "LESIONADAS": 266.57,
+    "DAMNIFICADAS": 353.71,
+    "AFECTADAS": 397.27,
+    "AISLADAS": 382.75,
+    "DAMNIFICADAS LABORALES": 339.19,
+    "ALBERGADAS": 368.23
+   },
+   "columnas": {
+    "adH": 583.5,
+    "adM": 620.9,
+    "nnaH": 654.75,
+    "nnaM": 688.9,
+    "total": 725.35
+   },
+   "size": 8
+  },
+  "viviendas": {
+   "DAÑO MENOR": {
+    "cx": 846.7,
+    "cy": 415.9
+   },
+   "DAÑO MAYOR": {
+    "cx": 846.7,
+    "cy": 401.15
+   },
+   "DESTRUIDA": {
+    "cx": 846.7,
+    "cy": 386.65
+   }
+  },
+  "decisiones": {
+   "x": 57.0,
+   "ancho": 808.0,
+   "lineas": [
+    207.1,
+    192.6
+   ],
+   "size": 7.5
+  },
+  "recursos": {
+   "x": 57.0,
+   "ancho": 466.0,
+   "lineas": [
+    155.1,
+    140.5,
+    126.0
+   ],
+   "size": 7.5
+  },
+  "necesidades": {
+   "x": 567.0,
+   "ancho": 299.0,
+   "lineas": [
+    155.1,
+    140.5,
+    126.0
+   ],
+   "size": 7.5
+  },
+  "observaciones": {
+   "x": 57.0,
+   "ancho": 466.0,
+   "lineas": [
+    90.0,
+    75.5
+   ],
+   "size": 7.5
+  },
+  "identificacion": {
+   "x": 641.5,
+   "y": 90.0,
+   "size": 6.5,
+   "ancho": 84
+  },
+  "cargo": {
+   "x": 650.0,
+   "y": 80.5,
+   "size": 4.5,
+   "ancho": 142
+  },
+  "fecha_elaboracion": {
+   "x": 605.5,
+   "y": 75.5,
+   "size": 7.5,
+   "ancho": 137
+  },
+  "hora_elaboracion": {
+   "x": 783.0,
+   "y": 75.5,
+   "size": 7.5,
+   "ancho": 83
+  },
+  "firma": {
+   "x": 728.0,
+   "y": 88.5,
+   "w": 70.0,
+   "h": 26.0
+  },
+  "timbre": {
+   "x": 808.0,
+   "y": 65.0,
+   "w": 58.0,
+   "h": 58.0
+  },
+  "marca_agua": {
+   "cx": 468.0,
+   "cy": 306.0,
+   "size": 64,
+   "angulo": 28
+  },
+  "aviso_superior": {
+   "cx": 468.0,
+   "cy": 567.0,
+   "size": 9
+  },
+  "pie": {
+   "x": 52.0,
+   "y": 51.0,
+   "size": 6
+  }
+ }
+}

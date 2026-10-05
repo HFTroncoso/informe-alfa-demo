@@ -1,0 +1,6 @@
+# Archivos del sistema que no deben publicarse
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+*.tmp

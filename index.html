@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Informe Alfa – Demo de ejercicio</title>
+  <meta name="description" content="Demo del Sprint 1 de la App Informe Alfa: llenado guiado en modo ejercicio, bloqueo de errores de cuadratura y PDF generado en el teléfono. Sin valor oficial.">
+  <meta name="theme-color" content="#1f3a8a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="img/icono-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="img/icono-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Alfa EJ">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="cabecera">
+    <div class="cabecera-fila">
+      <span class="insignia" title="Modo ejercicio: nada de lo que generes tiene valor oficial">EJERCICIO</span>
+      <h1 id="titulo-pantalla">Modo ejercicio</h1>
+      <span id="estado-red" class="estado-red" aria-live="polite"></span>
+    </div>
+    <div id="progreso" class="progreso" hidden>
+      <div class="progreso-pista"><div id="progreso-barra" class="progreso-barra"></div></div>
+      <span id="progreso-texto"></span>
+    </div>
+  </header>
+
+  <main id="app">
+
+    <!-- 0. INICIO -->
+    <section class="pantalla" data-pantalla="inicio">
+      <p class="aviso">
+        Esta es una demostración en <strong>modo ejercicio</strong>. Todo lo que generes lleva la marca
+        “EJERCICIO – SIN VALOR”, un número con prefijo EJ y una firma y un timbre ficticios.
+        <strong>No ingreses datos reales de personas.</strong>
+      </p>
+      <div class="acciones-inicio">
+        <button type="button" id="btn-nuevo" class="primario grande">Nuevo informe de ejercicio</button>
+        <button type="button" id="btn-continuar" class="secundario grande" hidden>Continuar el borrador guardado</button>
+        <button type="button" id="btn-descartar" class="enlace" hidden>Descartar el borrador</button>
+      </div>
+
+      <section id="instalacion" class="tarjeta suave" hidden>
+        <h2>Instalar en este teléfono</h2>
+        <p>Instalada, la app abre desde su propio ícono y funciona sin señal.</p>
+        <button type="button" id="btn-instalar" class="secundario" hidden>Instalar la app</button>
+        <p id="ayuda-ios" class="ayuda" hidden>En iPhone: toca el botón Compartir de Safari y luego “Agregar a pantalla de inicio”.</p>
+        <p id="ayuda-android" class="ayuda" hidden>Si el navegador no ofrece instalarla, abre el menú ⋮ de Chrome y elige “Instalar app” o “Agregar a pantalla principal”.</p>
+        <p id="ya-instalada" class="ayuda" hidden>La app ya está instalada en este dispositivo.</p>
+      </section>
+
+      <section id="historial" class="historial" hidden>
+        <h2>Informes de ejercicio generados en este teléfono</h2>
+        <ul id="lista-historial"></ul>
+      </section>
+
+      <details class="como-funciona">
+        <summary>¿Cómo funciona esta demo?</summary>
+        <ol>
+          <li>Responde preguntas simples: dónde y cuándo, qué pasó, viviendas y personas, una necesidad.</li>
+          <li>Si algo no cuadra, la app detiene el avance, explica por qué y muestra cómo resolverlo, con un caso parecido.</li>
+          <li>Al firmar, el PDF con la disposición del Informe Alfa se genera en el propio teléfono, sin señal.</li>
+          <li>Compártelo al correo del teléfono o descárgalo. La dirección de destino se muestra con un botón para copiarla.</li>
+        </ol>
+        <p class="ayuda">Los campos de texto se pueden dictar con el micrófono del teclado del teléfono.</p>
+      </details>
+
+      <p class="pie-version">Versión <span id="version-app"></span> · Sprint 1 (prueba técnica) · Dirección Regional de SENAPRED Magallanes · Iniciativa piloto</p>
+    </section>
+
+    <!-- 1. DÓNDE Y CUÁNDO -->
+    <section class="pantalla" data-pantalla="donde" hidden>
+      <p class="pregunta">¿Dónde ocurrió?</p>
+      <div class="campo">
+        <span class="etiqueta-fija">Región</span>
+        <p id="in-region" class="valor-fijo"></p>
+      </div>
+      <label class="campo">Comuna
+        <select id="in-comuna" data-ruta="identificacion.comuna"></select>
+      </label>
+      <div class="campo">
+        <span class="etiqueta-fija">Provincia</span>
+        <p id="in-provincia" class="valor-fijo">—</p>
+        <small class="ayuda">Se completa sola según la comuna.</small>
+      </div>
+
+      <p class="pregunta">¿Cuándo empezó?</p>
+      <div class="fila2">
+        <label class="campo">Fecha de inicio
+          <input type="date" data-ruta="ocurrencia.fecha">
+        </label>
+        <label class="campo">Hora de inicio
+          <input type="time" data-ruta="ocurrencia.hora">
+        </label>
+      </div>
+
+      <p class="pregunta">¿Quién te entregó la información?</p>
+      <label class="campo">Fuente
+        <input type="text" list="lista-fuentes" data-ruta="identificacion.fuente" placeholder="Por ejemplo: Bomberos" autocomplete="off">
+        <datalist id="lista-fuentes"></datalist>
+      </label>
+      <label class="campo">Contacto de la fuente (opcional)
+        <input type="text" data-ruta="identificacion.contacto" placeholder="Solo datos de ejercicio, no reales" autocomplete="off">
+      </label>
+      <p class="ayuda">Puedes escribir o dictar con el micrófono del teclado.</p>
+    </section>
+
+    <!-- 2. QUÉ PASÓ -->
+    <section class="pantalla" data-pantalla="evento" hidden>
+      <p class="pregunta">¿Qué pasó? Elige el tipo de evento que mejor describe lo ocurrido.</p>
+      <div id="lista-eventos" class="lista-opciones"></div>
+      <label id="campo-otro" class="campo" hidden>¿Cuál?
+        <input type="text" data-ruta="evento.otro" placeholder="Describe el tipo de evento">
+      </label>
+    </section>
+
+    <!-- 3. VIVIENDAS Y OCUPANTES -->
+    <section class="pantalla" data-pantalla="viviendas" hidden>
+      <p class="pregunta">¿Cuántas viviendas quedaron en cada condición y cuántas personas vivían en ellas?</p>
+      <p class="ayuda">Solo totales: no se identifican viviendas ni direcciones. El detalle por hogar corresponde a la FIBE. Si no hay viviendas dañadas, deja todo en cero y sigue.</p>
+      <div id="tarjetas-viviendas"></div>
+      <section class="resumen-vivo" id="resumen-vivo" aria-live="polite"></section>
+    </section>
+
+    <!-- 4. NECESIDAD -->
+    <section class="pantalla" data-pantalla="necesidad" hidden>
+      <p class="pregunta">¿Necesitas pedir algo que no puedas cubrir con recursos locales?</p>
+      <div class="lista-opciones">
+        <label class="opcion"><input type="radio" name="hay-necesidad" value="si"><span><strong>Sí</strong><small>Registraré una necesidad</small></span></label>
+        <label class="opcion"><input type="radio" name="hay-necesidad" value="no"><span><strong>No, por ahora</strong><small>El municipio cubre la respuesta con sus recursos</small></span></label>
+      </div>
+      <div id="bloque-necesidad" hidden>
+        <label class="campo">¿Qué elemento?
+          <select id="in-elemento" data-ruta="necesidades.0.elemento"></select>
+        </label>
+        <label id="campo-otro-elemento" class="campo" hidden>¿Cuál?
+          <input type="text" data-ruta="necesidades.0.otroNombre" placeholder="Nombre del elemento">
+        </label>
+        <p id="criterio-elemento" class="ayuda" hidden></p>
+        <label class="campo">¿Cuántos?
+          <input type="number" min="0" step="1" inputmode="numeric" data-ruta="necesidades.0.cantidad">
+        </label>
+        <p id="sugerencia" class="sugerencia" hidden>
+          <span id="sugerencia-texto"></span>
+          <button type="button" id="btn-usar-sugerido" class="enlace">Usar esa cantidad</button>
+        </p>
+        <label class="campo">¿Para qué se requiere?
+          <textarea rows="3" data-ruta="necesidades.0.paraQue" placeholder="Por ejemplo: para 11 personas damnificadas alojadas en el gimnasio municipal"></textarea>
+        </label>
+        <p class="ayuda">Puedes dictar con el micrófono del teclado.</p>
+      </div>
+    </section>
+
+    <!-- 5. REVISIÓN Y FIRMA -->
+    <section class="pantalla" data-pantalla="revision" hidden>
+      <div id="revision-contenido"></div>
+    </section>
+
+    <!-- 6. LISTO -->
+    <section class="pantalla" data-pantalla="listo" hidden>
+      <div id="listo-contenido"></div>
+    </section>
+
+  </main>
+
+  <nav id="nav" class="nav" hidden>
+    <button type="button" id="btn-atras" class="secundario">Atrás</button>
+    <button type="button" id="btn-siguiente" class="primario">Siguiente</button>
+  </nav>
+
+  <dialog id="dlg-bloqueo" class="dialogo" aria-labelledby="dlg-titulo">
+    <button type="button" id="dlg-cerrar" class="cerrar" aria-label="Cerrar">×</button>
+    <div id="dlg-contenido"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="lib/pdf-lib.min.js"></script>
+  <script src="js/almacen.js"></script>
+  <script src="js/reglas.js"></script>
+  <script src="js/pdf.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

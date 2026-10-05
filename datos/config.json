@@ -1,0 +1,52 @@
+{
+  "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino la indicó el responsable del proyecto el 2026-10-05.",
+  "version_app": "demo-0.1",
+  "modo": "ejercicio",
+  "destinatario": {
+    "nombre": "UAT Magallanes",
+    "correo": "uatmagallanes@senapred.gob.cl",
+    "asunto_prefijo": "[EJERCICIO]",
+    "nota": "El menú de compartir del teléfono no garantiza dejar escrito el destinatario (bitácora, E-01). La app muestra la dirección con un botón para copiarla."
+  },
+  "numero": {
+    "prefijo": "EJ",
+    "nota": "Correlativo de ejercicio, separado del correlativo real. Se guarda en el teléfono."
+  },
+  "region": {
+    "nombre": "Magallanes y de la Antártica Chilena",
+    "nombre_corto": "Magallanes",
+    "codigo": "12"
+  },
+  "comunas": [
+    { "comuna": "Punta Arenas", "provincia": "Magallanes", "cut": "12101" },
+    { "comuna": "Río Verde", "provincia": "Magallanes", "cut": "12102" },
+    { "comuna": "Laguna Blanca", "provincia": "Magallanes", "cut": "12103" },
+    { "comuna": "San Gregorio", "provincia": "Magallanes", "cut": "12104" },
+    { "comuna": "Natales", "provincia": "Última Esperanza", "cut": "12201" },
+    { "comuna": "Torres del Paine", "provincia": "Última Esperanza", "cut": "12202" },
+    { "comuna": "Porvenir", "provincia": "Tierra del Fuego", "cut": "12301" },
+    { "comuna": "Primavera", "provincia": "Tierra del Fuego", "cut": "12302" },
+    { "comuna": "Timaukel", "provincia": "Tierra del Fuego", "cut": "12303" },
+    { "comuna": "Cabo de Hornos", "provincia": "Antártica Chilena", "cut": "12401" },
+    { "comuna": "Antártica", "provincia": "Antártica Chilena", "cut": "12402" }
+  ],
+  "fuentes_frecuentes": [
+    "Bomberos",
+    "Carabineros",
+    "Equipo municipal de emergencia",
+    "Empresa de servicios (agua, luz, gas)",
+    "Vecinos o junta de vecinos",
+    "Observación directa en terreno"
+  ],
+  "responsable_ejercicio": {
+    "nombre": "Funcionario(a) de ejercicio",
+    "cargo": "Encargado(a) comunal de emergencia (ejercicio)",
+    "institucion": "Municipalidad de ejercicio",
+    "nota": "Identidad ficticia. En la app real estos datos vienen de la credencial del funcionario."
+  },
+  "imagenes": {
+    "firma": "img/firma_ejercicio.png",
+    "timbre": "img/timbre_ejercicio.png"
+  },
+  "marca_agua": "EJERCICIO – SIN VALOR"
+}

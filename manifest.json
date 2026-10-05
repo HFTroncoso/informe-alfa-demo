@@ -1,0 +1,17 @@
+{
+  "name": "Informe Alfa – Demo de ejercicio",
+  "short_name": "Alfa EJ",
+  "description": "Demo del Sprint 1: guía el llenado del Informe Alfa en modo ejercicio, bloquea errores de cuadratura y genera el PDF en el teléfono. Sin valor oficial.",
+  "lang": "es-CL",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6fb",
+  "theme_color": "#1f3a8a",
+  "icons": [
+    { "src": "img/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icono-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
