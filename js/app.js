@@ -626,7 +626,7 @@
     const d = CONFIG.destinatario;
     const t = Reglas.totales(informe);
     const cuerpo = [
-      `Estimado turno de ${d.nombre}:`,
+      d.saludo || 'Estimado(a):',
       '',
       `Adjunto el Informe Alfa ${informe.numero} de EJERCICIO (sin valor oficial), comuna de ${informe.identificacion.comuna}, evento: ${tipoTexto(informe)}, inicio el ${fmtFecha(informe.ocurrencia.fecha)} a las ${informe.ocurrencia.hora}.`,
       `Totales: ${t.afectadas.total} afectadas, ${t.damnificadas.total} damnificadas, ${t.albergadas.total} albergadas; ${t.viviendas_danadas} viviendas dañadas.`,

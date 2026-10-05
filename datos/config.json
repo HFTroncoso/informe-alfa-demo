@@ -1,12 +1,13 @@
 {
-  "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino la indicó el responsable del proyecto el 2026-10-05.",
-  "version_app": "demo-0.2",
+  "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino es un correo de PRUEBA indicado por el responsable del proyecto el 2026-10-05; la dirección real de la URAT no se publica en este repositorio público para no facilitar la suplantación de informes (riesgo R-16 de la arquitectura).",
+  "version_app": "demo-0.2.1",
   "modo": "ejercicio",
   "destinatario": {
-    "nombre": "UAT Magallanes",
-    "correo": "uatmagallanes@senapred.gob.cl",
+    "nombre": "Correo de prueba del responsable del proyecto",
+    "correo": "htroncoso@senapred.gob.cl",
+    "saludo": "Estimado(a):",
     "asunto_prefijo": "[EJERCICIO]",
-    "nota": "El menú de compartir del teléfono no garantiza dejar escrito el destinatario (bitácora, E-01). La app muestra la dirección con un botón para copiarla."
+    "nota": "Correo de prueba. La dirección real de la URAT se configurará fuera del repositorio público en el piloto (R-16). El menú de compartir del teléfono no garantiza dejar escrito el destinatario (bitácora, E-01); la app muestra la dirección con un botón para copiarla."
   },
   "numero": {
     "prefijo": "EJ",
@@ -18,17 +19,61 @@
     "codigo": "12"
   },
   "comunas": [
-    { "comuna": "Punta Arenas", "provincia": "Magallanes", "cut": "12101" },
-    { "comuna": "Río Verde", "provincia": "Magallanes", "cut": "12102" },
-    { "comuna": "Laguna Blanca", "provincia": "Magallanes", "cut": "12103" },
-    { "comuna": "San Gregorio", "provincia": "Magallanes", "cut": "12104" },
-    { "comuna": "Natales", "provincia": "Última Esperanza", "cut": "12201" },
-    { "comuna": "Torres del Paine", "provincia": "Última Esperanza", "cut": "12202" },
-    { "comuna": "Porvenir", "provincia": "Tierra del Fuego", "cut": "12301" },
-    { "comuna": "Primavera", "provincia": "Tierra del Fuego", "cut": "12302" },
-    { "comuna": "Timaukel", "provincia": "Tierra del Fuego", "cut": "12303" },
-    { "comuna": "Cabo de Hornos", "provincia": "Antártica Chilena", "cut": "12401" },
-    { "comuna": "Antártica", "provincia": "Antártica Chilena", "cut": "12402" }
+    {
+      "comuna": "Punta Arenas",
+      "provincia": "Magallanes",
+      "cut": "12101"
+    },
+    {
+      "comuna": "Río Verde",
+      "provincia": "Magallanes",
+      "cut": "12102"
+    },
+    {
+      "comuna": "Laguna Blanca",
+      "provincia": "Magallanes",
+      "cut": "12103"
+    },
+    {
+      "comuna": "San Gregorio",
+      "provincia": "Magallanes",
+      "cut": "12104"
+    },
+    {
+      "comuna": "Natales",
+      "provincia": "Última Esperanza",
+      "cut": "12201"
+    },
+    {
+      "comuna": "Torres del Paine",
+      "provincia": "Última Esperanza",
+      "cut": "12202"
+    },
+    {
+      "comuna": "Porvenir",
+      "provincia": "Tierra del Fuego",
+      "cut": "12301"
+    },
+    {
+      "comuna": "Primavera",
+      "provincia": "Tierra del Fuego",
+      "cut": "12302"
+    },
+    {
+      "comuna": "Timaukel",
+      "provincia": "Tierra del Fuego",
+      "cut": "12303"
+    },
+    {
+      "comuna": "Cabo de Hornos",
+      "provincia": "Antártica Chilena",
+      "cut": "12401"
+    },
+    {
+      "comuna": "Antártica",
+      "provincia": "Antártica Chilena",
+      "cut": "12402"
+    }
   ],
   "fuentes_frecuentes": [
     "Bomberos",
