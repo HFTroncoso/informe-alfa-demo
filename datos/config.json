@@ -1,6 +1,6 @@
 {
   "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino es un correo de PRUEBA indicado por el responsable del proyecto el 2026-10-05; la dirección real de la URAT no se publica en este repositorio público para no facilitar la suplantación de informes (riesgo R-16 de la arquitectura).",
-  "version_app": "demo-0.2.3",
+  "version_app": "demo-0.3.0",
   "modo": "ejercicio",
   "destinatario": {
     "nombre": "Correo de prueba del responsable del proyecto",
@@ -90,13 +90,47 @@
   "fuentes_nota": "La Guía 2026, sección 1, pide señalar la(s) institución(es) que proporcionan la información y el contacto de la persona que la entregó. Se pueden marcar varias.",
   "responsable_ejercicio": {
     "nombre": "Funcionario(a) de ejercicio",
-    "cargo": "Encargado(a) comunal de emergencia (ejercicio)",
-    "institucion": "Municipalidad de ejercicio",
-    "nota": "Identidad ficticia. En la app real estos datos vienen de la credencial del funcionario."
+    "nota": "Identidad ficticia. El cargo y la institución salen del nivel elegido al inicio. En la app real estos datos vienen de la credencial."
   },
   "imagenes": {
     "firma": "img/firma_ejercicio.png",
     "timbre": "img/timbre_ejercicio.png"
   },
-  "marca_agua": "EJERCICIO – SIN VALOR"
+  "marca_agua": "EJERCICIO – SIN VALOR",
+  "elaboradores": [
+    {
+      "id": "comunal",
+      "nombre": "Municipalidad",
+      "nivel": "Nivel comunal",
+      "descripcion": "Encargado(a) comunal de emergencia o equipo municipal de gestión del riesgo. Informa sobre su comuna.",
+      "cargo": "Encargado(a) comunal de emergencia (ejercicio)",
+      "institucion": "Municipalidad de {comuna} (ejercicio)"
+    },
+    {
+      "id": "provincial",
+      "nombre": "Delegación Presidencial Provincial",
+      "nivel": "Nivel provincial",
+      "descripcion": "Encargado(a) provincial de emergencia. Informa sobre una o varias comunas de su provincia.",
+      "cargo": "Encargado(a) provincial de emergencia (ejercicio)",
+      "institucion": "Delegación Presidencial Provincial de {provincia} (ejercicio)"
+    },
+    {
+      "id": "regional",
+      "nombre": "Dirección Regional de SENAPRED",
+      "nivel": "Nivel regional",
+      "descripcion": "Profesional de la Dirección Regional. Informa sobre una o varias comunas de la región.",
+      "cargo": "Profesional de la Dirección Regional (ejercicio)",
+      "institucion": "Dirección Regional de SENAPRED Magallanes y de la Antártica Chilena (ejercicio)"
+    }
+  ],
+  "elaboradores_nota": "La arquitectura prevé que el nivel y la institución vengan de la credencial del funcionario. Mientras no exista, la app los pregunta al inicio (D-34).",
+  "lugar": {
+    "nota": "El formato no tiene casilla para el lugar exacto ni para coordenadas; se imprimen en Observaciones (D-35). La ubicación del teléfono usa el GPS del dispositivo y funciona sin señal, aunque puede tardar.",
+    "limites": {
+      "lat_min": -90,
+      "lat_max": 90,
+      "lon_min": -180,
+      "lon_max": 180
+    }
+  }
 }

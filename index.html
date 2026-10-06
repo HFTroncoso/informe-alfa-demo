@@ -61,10 +61,10 @@
       <details class="como-funciona">
         <summary>¿Cómo funciona esta demo?</summary>
         <ol>
-          <li>Responde preguntas simples: dónde y cuándo, qué pasó, viviendas y personas, otras personas afectadas, necesidades.</li>
+          <li>Responde preguntas simples: quién elabora, dónde y cuándo, qué pasó, viviendas y personas, otras personas afectadas, decisiones, recursos y necesidades.</li>
           <li>Si algo no cuadra, la app detiene el avance, explica por qué y muestra cómo resolverlo, con un caso parecido.</li>
-          <li>Al firmar, el PDF con la disposición del Informe Alfa se genera en el propio teléfono, sin señal.</li>
-          <li>Envíalo por correo o compártelo. La dirección de destino se muestra con un botón para copiarla.</li>
+          <li>Al firmar, el PDF con la disposición del Informe Alfa se genera en el propio teléfono, sin señal. La hoja se alarga si hay mucho texto.</li>
+          <li>Compártelo por correo con el PDF adjunto: la dirección de destino queda copiada para pegarla.</li>
         </ol>
         <p class="ayuda">Los campos de texto se pueden dictar con el micrófono del teclado del teléfono.</p>
       </details>
@@ -72,21 +72,54 @@
       <p class="pie-version">Versión <span id="version-app"></span> · Sprint 1 (prueba técnica) · Dirección Regional de SENAPRED Magallanes · Iniciativa piloto</p>
     </section>
 
-    <!-- 1. DÓNDE Y CUÁNDO -->
+    <!-- 1. QUIÉN ELABORA -->
+    <section class="pantalla" data-pantalla="elaborador" hidden>
+      <p class="pregunta">¿Quién elabora este informe?</p>
+      <p class="ayuda">El Informe Alfa lo elaboran municipios, delegaciones provinciales y la Dirección Regional. Según el nivel cambian el responsable del informe y las comunas que puedes registrar.</p>
+      <div id="lista-niveles" class="lista-opciones"></div>
+      <label id="campo-provincia-deleg" class="campo" hidden>¿De qué provincia?
+        <select id="in-provincia-deleg" data-ruta="elaborador.provincia"></select>
+      </label>
+      <p class="ayuda">En la app definitiva este dato vendrá de la credencial de cada funcionario.</p>
+    </section>
+
+    <!-- 2. DÓNDE Y CUÁNDO -->
     <section class="pantalla" data-pantalla="donde" hidden>
       <p class="pregunta">¿Dónde ocurrió?</p>
       <div class="campo">
         <span class="etiqueta-fija">Región</span>
         <p id="in-region" class="valor-fijo"></p>
       </div>
-      <label class="campo">Comuna
-        <select id="in-comuna" data-ruta="identificacion.comuna"></select>
+      <label id="bloque-comuna-unica" class="campo">Comuna
+        <select id="in-comuna" name="comuna-unica"></select>
       </label>
+      <div id="bloque-comunas-varias" hidden>
+        <span class="etiqueta-fija">Comunas afectadas (marca una o varias)</span>
+        <div id="lista-comunas" class="lista-opciones compacta"></div>
+      </div>
       <div class="campo">
         <span class="etiqueta-fija">Provincia</span>
         <p id="in-provincia" class="valor-fijo">—</p>
         <small class="ayuda">Se completa sola según la comuna.</small>
       </div>
+
+      <p class="pregunta">¿En qué lugar exactamente?</p>
+      <p class="ayuda">Dirección, sector o punto de referencia. El formato no tiene una casilla para esto, así que se imprime en Observaciones.</p>
+      <label class="campo">Dirección o lugar de referencia (opcional)
+        <textarea rows="2" data-ruta="lugar.descripcion" placeholder="Por ejemplo: población Río de la Mano, pasaje 3 con calle 4, frente a la sede vecinal"></textarea>
+      </label>
+      <div class="fila2">
+        <label class="campo">Latitud (opcional)
+          <input type="text" inputmode="decimal" data-ruta="lugar.lat" placeholder="-53.16250">
+        </label>
+        <label class="campo">Longitud (opcional)
+          <input type="text" inputmode="decimal" data-ruta="lugar.lon" placeholder="-70.90850">
+        </label>
+      </div>
+      <div class="acciones-fila">
+        <button type="button" id="btn-gps" class="secundario">Usar la ubicación del teléfono</button>
+      </div>
+      <p id="gps-estado" class="ayuda">El GPS funciona sin señal, pero al aire libre y puede tardar unos segundos. El teléfono te pedirá permiso la primera vez.</p>
 
       <p class="pregunta">¿Cuándo empezó?</p>
       <div class="fila2">
@@ -110,7 +143,7 @@
       <p class="ayuda">Puedes escribir o dictar con el micrófono del teclado.</p>
     </section>
 
-    <!-- 2. QUÉ PASÓ -->
+    <!-- 3. QUÉ PASÓ -->
     <section class="pantalla" data-pantalla="evento" hidden>
       <p class="pregunta">¿Qué pasó? Elige el tipo de evento que mejor describe lo ocurrido.</p>
       <div id="lista-eventos" class="lista-opciones"></div>
@@ -119,7 +152,7 @@
       </label>
     </section>
 
-    <!-- 3. VIVIENDAS Y OCUPANTES -->
+    <!-- 4. VIVIENDAS Y OCUPANTES -->
     <section class="pantalla" data-pantalla="viviendas" hidden>
       <p class="pregunta">¿Cuántas viviendas quedaron en cada condición y cuántas personas vivían en ellas?</p>
       <p class="ayuda">Solo totales: no se identifican viviendas ni direcciones. El detalle por hogar corresponde a la FIBE. Si el evento no dañó viviendas, deja todo en cero y sigue: las personas afectadas por otras causas se registran en la pantalla siguiente.</p>
@@ -127,7 +160,7 @@
       <section class="resumen-vivo" id="resumen-vivo" aria-live="polite"></section>
     </section>
 
-    <!-- 4. OTRAS PERSONAS AFECTADAS -->
+    <!-- 5. OTRAS PERSONAS AFECTADAS -->
     <section class="pantalla" data-pantalla="personas" hidden>
       <p class="pregunta">Además de las familias de las viviendas dañadas, ¿hay otras personas afectadas?</p>
       <p class="ayuda">Marca solo las situaciones que correspondan y anota cuántas personas hay en cada una. Si ninguna aplica, sigue sin marcar nada. Las personas de las viviendas dañadas ya están contadas.</p>
@@ -135,7 +168,29 @@
       <section class="resumen-vivo" id="resumen-personas" aria-live="polite"></section>
     </section>
 
-    <!-- 5. NECESIDADES -->
+    <!-- 6. DECISIONES -->
+    <section class="pantalla" data-pantalla="decisiones" hidden>
+      <p class="pregunta">¿Qué se ha hecho hasta ahora?</p>
+      <p class="ayuda">Sección 6 del formato. Cuenta qué acciones de respuesta se realizaron, quién las hizo y cuándo. Por ejemplo: “Bomberos controló el incendio a las 07:30; las 11 personas fueron trasladadas al gimnasio municipal a las 08:00”.</p>
+      <label class="campo">Acciones realizadas: qué, quién y cuándo
+        <textarea rows="4" data-ruta="decisiones.realizadas" placeholder="Puedes dictar con el micrófono del teclado"></textarea>
+      </label>
+      <p class="pregunta">¿Qué falta por hacer o qué se requiere?</p>
+      <p class="ayuda">Acciones en curso, proyectadas o que se necesita implementar. Si no hay pendientes, escríbelo: “Sin acciones pendientes”.</p>
+      <label class="campo">Acciones por realizar o requeridas
+        <textarea rows="4" data-ruta="decisiones.pendientes" placeholder="Por ejemplo: falta evaluar las viviendas vecinas y habilitar el albergue para la noche"></textarea>
+      </label>
+    </section>
+
+    <!-- 7. RECURSOS INVOLUCRADOS -->
+    <section class="pantalla" data-pantalla="recursos" hidden>
+      <p class="pregunta">¿Quiénes están trabajando en la respuesta y con qué medios?</p>
+      <p class="ayuda">Sección 7 del formato: recursos humanos y materiales de todos los organismos presentes, incluida la ayuda ya entregada. Marca cada organismo y anota personas y medios (vehículos, maquinaria, equipos, ayuda).</p>
+      <label class="conmutador destacado"><input type="checkbox" data-ruta="recursos.sinRecursos"><span>No hay recursos desplegados por ahora</span></label>
+      <div id="tarjetas-recursos"></div>
+    </section>
+
+    <!-- 8. NECESIDADES -->
     <section class="pantalla" data-pantalla="necesidad" hidden>
       <p class="pregunta">¿Necesitas pedir algo que no puedas cubrir con recursos locales?</p>
       <div class="lista-opciones">
@@ -149,12 +204,12 @@
       </div>
     </section>
 
-    <!-- 6. REVISIÓN Y FIRMA -->
+    <!-- 9. REVISIÓN Y FIRMA -->
     <section class="pantalla" data-pantalla="revision" hidden>
       <div id="revision-contenido"></div>
     </section>
 
-    <!-- 7. LISTO -->
+    <!-- 10. LISTO -->
     <section class="pantalla" data-pantalla="listo" hidden>
       <div id="listo-contenido"></div>
     </section>

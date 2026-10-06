@@ -1,7 +1,6 @@
 {
   "_comentario": "Catálogo de elementos, condiciones de vivienda, categorías de personas, tipos de evento y reglas de validación de la demo. VERSIÓN PROVISORIA redactada en el Sprint 1 a partir de ARQUITECTURA.md, la Guía de Aplicación 2026 y el IT-LOG-01 v4. Debe ser revisada en Cowork y validada con la URAT (riesgo R-12) antes del piloto. Si cambia el instructivo, se edita este archivo, no el código.",
-  "version": "demo-0.2 provisoria",
-
+  "version": "demo-0.3 provisoria",
   "condiciones_vivienda": [
     {
       "id": "menor",
@@ -37,7 +36,6 @@
       "fuente": "Guía de Aplicación 2026, sección 5"
     }
   ],
-
   "categorias_personas": [
     {
       "id": "afectadas",
@@ -122,87 +120,337 @@
       "fuente": "Guía 2026, sección 4"
     }
   ],
-
   "definiciones": {
     "afectadas": "Personas que ven alterado directamente su modo de vida; por ejemplo, por cortes de luz, agua o teléfono, o por aislamiento (Guía 2026, sección 4).",
     "damnificadas": "Personas que, por el daño a su vivienda, perdieron su condición de habitabilidad de forma temporal o permanente (Guía 2026, sección 4). En la app nacen solo de las viviendas con daño mayor o destruidas.",
     "albergadas": "Personas atendidas en un lugar especialmente habilitado para damnificados, aislados o evacuados. Quien se queda con familiares o vecinos no cuenta como albergada (Guía 2026, sección 4; criterio de la Dirección Regional, D-14).",
     "personas_unicas": "Una misma persona puede estar en más de una categoría. La app no suma a las albergadas, porque ya están contadas como damnificadas, evacuadas o aisladas; las demás categorías se suman como aproximación de personas únicas, que es la base para sugerir cantidades."
   },
-
   "tipos_evento": [
-    { "id": "ACCIDENTE MINERO", "ejemplo": "Derrumbe o accidente en una faena minera" },
-    { "id": "ACCIDENTE MEDIO DE TRANSPORTE", "ejemplo": "Volcamiento de bus, choque múltiple, accidente aéreo o marítimo" },
-    { "id": "ACCIDENTE CON MATERIALES PELIGROSOS", "ejemplo": "Fuga de gas o derrame de combustible o químicos" },
-    { "id": "ACCIDENTE RECREACIONAL", "ejemplo": "Accidente en una actividad deportiva o turística" },
-    { "id": "ACCIDENTE DE INFRAESTRUCTURA POR COLAPSO", "ejemplo": "Caída de un techo, puente o muro" },
-    { "id": "ACTIVIDAD VOLCÁNICA", "ejemplo": "Erupción, caída de ceniza" },
-    { "id": "BIOLÓGICO", "ejemplo": "Brote de enfermedad, plaga, marea roja" },
-    { "id": "DÉFICIT HÍDRICO", "ejemplo": "Sequía que afecta el abastecimiento de agua" },
-    { "id": "INCENDIO ESTRUCTURAL", "ejemplo": "Incendio de una o varias viviendas o edificios" },
-    { "id": "INCENDIO FORESTAL", "ejemplo": "Incendio de pastizales, matorrales o bosque" },
-    { "id": "INACCESIBILIDAD AL AGUA POTABLE", "ejemplo": "La gente no puede llegar al agua potable aunque el servicio exista" },
-    { "id": "INTERRUPCIÓN DE SERVICIO DE AGUA POTABLE", "ejemplo": "Corte del suministro de agua potable" },
-    { "id": "INTERRUPCIÓN DE SERVICIO BÁSICO", "ejemplo": "Corte de luz, gas o telecomunicaciones" },
-    { "id": "INTERRUPCIÓN DE CONECTIVIDAD", "ejemplo": "Corte de ruta, puente o paso fronterizo; sin acceso terrestre, marítimo o aéreo" },
-    { "id": "METEOROLÓGICO", "ejemplo": "Nevazón, viento fuerte, lluvias intensas, frío extremo" },
-    { "id": "REMOCIÓN EN MASA", "ejemplo": "Deslizamiento de tierra, aluvión, caída de rocas" },
-    { "id": "SISMO", "ejemplo": "Temblor o terremoto con daños" },
-    { "id": "TSUNAMI", "ejemplo": "Inundación por tsunami" },
-    { "id": "VACIAMIENTO DE LAGO", "ejemplo": "Vaciamiento repentino de una laguna glaciar (GLOF)" },
-    { "id": "OTRO", "ejemplo": "Cualquier evento que no esté en la lista; se escribe cuál" }
+    {
+      "id": "ACCIDENTE MINERO",
+      "ejemplo": "Derrumbe o accidente en una faena minera"
+    },
+    {
+      "id": "ACCIDENTE MEDIO DE TRANSPORTE",
+      "ejemplo": "Volcamiento de bus, choque múltiple, accidente aéreo o marítimo"
+    },
+    {
+      "id": "ACCIDENTE CON MATERIALES PELIGROSOS",
+      "ejemplo": "Fuga de gas o derrame de combustible o químicos"
+    },
+    {
+      "id": "ACCIDENTE RECREACIONAL",
+      "ejemplo": "Accidente en una actividad deportiva o turística"
+    },
+    {
+      "id": "ACCIDENTE DE INFRAESTRUCTURA POR COLAPSO",
+      "ejemplo": "Caída de un techo, puente o muro"
+    },
+    {
+      "id": "ACTIVIDAD VOLCÁNICA",
+      "ejemplo": "Erupción, caída de ceniza"
+    },
+    {
+      "id": "BIOLÓGICO",
+      "ejemplo": "Brote de enfermedad, plaga, marea roja"
+    },
+    {
+      "id": "DÉFICIT HÍDRICO",
+      "ejemplo": "Sequía que afecta el abastecimiento de agua"
+    },
+    {
+      "id": "INCENDIO ESTRUCTURAL",
+      "ejemplo": "Incendio de una o varias viviendas o edificios"
+    },
+    {
+      "id": "INCENDIO FORESTAL",
+      "ejemplo": "Incendio de pastizales, matorrales o bosque"
+    },
+    {
+      "id": "INACCESIBILIDAD AL AGUA POTABLE",
+      "ejemplo": "La gente no puede llegar al agua potable aunque el servicio exista"
+    },
+    {
+      "id": "INTERRUPCIÓN DE SERVICIO DE AGUA POTABLE",
+      "ejemplo": "Corte del suministro de agua potable"
+    },
+    {
+      "id": "INTERRUPCIÓN DE SERVICIO BÁSICO",
+      "ejemplo": "Corte de luz, gas o telecomunicaciones"
+    },
+    {
+      "id": "INTERRUPCIÓN DE CONECTIVIDAD",
+      "ejemplo": "Corte de ruta, puente o paso fronterizo; sin acceso terrestre, marítimo o aéreo"
+    },
+    {
+      "id": "METEOROLÓGICO",
+      "ejemplo": "Nevazón, viento fuerte, lluvias intensas, frío extremo"
+    },
+    {
+      "id": "REMOCIÓN EN MASA",
+      "ejemplo": "Deslizamiento de tierra, aluvión, caída de rocas"
+    },
+    {
+      "id": "SISMO",
+      "ejemplo": "Temblor o terremoto con daños"
+    },
+    {
+      "id": "TSUNAMI",
+      "ejemplo": "Inundación por tsunami"
+    },
+    {
+      "id": "VACIAMIENTO DE LAGO",
+      "ejemplo": "Vaciamiento repentino de una laguna glaciar (GLOF)"
+    },
+    {
+      "id": "OTRO",
+      "ejemplo": "Cualquier evento que no esté en la lista; se escribe cuál"
+    }
   ],
-
   "bases": {
-    "personas": { "nombre": "personas registradas", "descripcion": "Aproximación de personas únicas: todas las categorías salvo las albergadas, que ya están contadas en otra." },
-    "personas_hombres": { "nombre": "hombres registrados (adultos y NNA)", "descripcion": "Suma de hombres adultos y NNA hombres registrados." },
-    "personas_mujeres": { "nombre": "mujeres registradas (adultas y NNA)", "descripcion": "Suma de mujeres adultas y NNA mujeres registradas." },
-    "personas_nna": { "nombre": "niños, niñas y adolescentes registrados", "descripcion": "Suma de NNA hombres y mujeres registrados." },
-    "viviendas_no_habitables": { "nombre": "viviendas con daño mayor o destruidas", "descripcion": "Viviendas que perdieron la habitabilidad." },
-    "viviendas_danadas": { "nombre": "viviendas dañadas", "descripcion": "Todas las viviendas registradas con daño menor, mayor o destruidas." }
+    "personas": {
+      "nombre": "personas registradas",
+      "descripcion": "Aproximación de personas únicas: todas las categorías salvo las albergadas, que ya están contadas en otra."
+    },
+    "personas_hombres": {
+      "nombre": "hombres registrados (adultos y NNA)",
+      "descripcion": "Suma de hombres adultos y NNA hombres registrados."
+    },
+    "personas_mujeres": {
+      "nombre": "mujeres registradas (adultas y NNA)",
+      "descripcion": "Suma de mujeres adultas y NNA mujeres registradas."
+    },
+    "personas_nna": {
+      "nombre": "niños, niñas y adolescentes registrados",
+      "descripcion": "Suma de NNA hombres y mujeres registrados."
+    },
+    "viviendas_no_habitables": {
+      "nombre": "viviendas con daño mayor o destruidas",
+      "descripcion": "Viviendas que perdieron la habitabilidad."
+    },
+    "viviendas_danadas": {
+      "nombre": "viviendas dañadas",
+      "descripcion": "Todas las viviendas registradas con daño menor, mayor o destruidas."
+    }
   },
-
   "catalogo_elementos": [
-    { "id": "vivienda_emergencia", "nombre": "Vivienda de emergencia", "unidad": "unidades", "criterio": "1 por vivienda destruida o con daño mayor", "base": "viviendas_no_habitables", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1",
-      "caso_parecido": "Temporal con 4 viviendas anegadas que no pueden volver a ocuparse y 2 con daño menor. Se registran 4 viviendas con daño mayor y 2 con daño menor, y se piden 4 viviendas de emergencia, no 6: las de daño menor se reparan." },
-    { "id": "cama", "nombre": "Cama 1 plaza con kit de alojamiento", "unidad": "unidades", "criterio": "1 por persona", "base": "personas", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "colchon", "nombre": "Colchón forrado en tela D-21", "unidad": "unidades", "criterio": "1 por persona", "base": "personas", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "sabanas", "nombre": "Juego de sábanas 1 plaza", "unidad": "juegos", "criterio": "1 por persona", "base": "personas", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "frazada", "nombre": "Frazada", "unidad": "unidades", "criterio": "Hasta 2 por persona; puede variar según la zona y la estación del año", "base": "personas", "factor": 2, "nivel_tope": "justificacion", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_higiene_hombre", "nombre": "Kit de higiene personal hombre", "unidad": "kits", "criterio": "1 por persona por 30 días", "base": "personas_hombres", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_higiene_mujer", "nombre": "Kit de higiene personal mujer", "unidad": "kits", "criterio": "1 por persona por 30 días", "base": "personas_mujeres", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_higiene_infantil", "nombre": "Kit de higiene infantil", "unidad": "kits", "criterio": "1 por persona por 30 días", "base": "personas_nna", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_aseo", "nombre": "Kit de aseo domiciliario", "unidad": "kits", "criterio": "1 por vivienda", "base": "viviendas_danadas", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_cocina", "nombre": "Kit de cocina familiar con habitabilidad", "unidad": "kits", "criterio": "1 por vivienda", "base": "viviendas_danadas", "factor": 1, "nivel_tope": "bloqueo", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_alimentacion_44", "nombre": "Kit de alimentación 4.4 (4 personas, 4 días)", "unidad": "kits", "criterio": "1 para 4 personas por 4 días", "base": "personas", "factor": 0.25, "nivel_tope": "justificacion", "regla_72h": true, "fuente": "IT-LOG-01 v4, tabla 1 y punto 4.1 a)" },
-    { "id": "kit_alimentacion_47", "nombre": "Kit de alimentación 4.7 (4 personas, 7 días)", "unidad": "kits", "criterio": "1 para 4 personas por 7 días", "base": "personas", "factor": 0.25, "nivel_tope": "justificacion", "regla_72h": true, "fuente": "IT-LOG-01 v4, tabla 1 y punto 4.1 a)" },
-    { "id": "estanque", "nombre": "Estanque vertical domiciliario", "unidad": "unidades", "criterio": "1 por familia", "base": "viviendas_danadas", "factor": 1, "nivel_tope": "justificacion", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "film_plastico", "nombre": "Bobina de film plástico", "unidad": "rollos", "criterio": "1 rollo para 10 viviendas (unos 20 metros por vivienda)", "base": "viviendas_danadas", "factor": 0.1, "nivel_tope": "justificacion", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "kit_techo", "nombre": "Kit para reparación de techos", "unidad": "kits", "criterio": "Hasta 10 kits por vivienda", "base": "viviendas_danadas", "factor": 10, "nivel_tope": "justificacion", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "saco_defensa", "nombre": "Saco de defensa fluvial", "unidad": "sacos", "criterio": "Hasta 30 por vivienda", "base": "viviendas_danadas", "factor": 30, "nivel_tope": "justificacion", "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "racion_12h", "nombre": "Ración alimenticia 12 horas", "unidad": "raciones", "criterio": "1 por persona cada 12 horas", "base": null, "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "agua", "nombre": "Agua embotellada", "unidad": "litros", "criterio": "Referencia: 10 litros al día por familia (tabla 4)", "base": null, "fuente": "IT-LOG-01 v4, tabla 4" },
-    { "id": "carbon", "nombre": "Carbón (bolsa o saco)", "unidad": "kilos", "criterio": "70 a 80 kg para 4 días por vivienda", "base": null, "fuente": "IT-LOG-01 v4, tabla 1" },
-    { "id": "otro", "nombre": "Otro elemento (escribir cuál)", "unidad": "", "criterio": "", "base": null, "fuente": "" }
+    {
+      "id": "vivienda_emergencia",
+      "nombre": "Vivienda de emergencia",
+      "unidad": "unidades",
+      "criterio": "1 por vivienda destruida o con daño mayor",
+      "base": "viviendas_no_habitables",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1",
+      "caso_parecido": "Temporal con 4 viviendas anegadas que no pueden volver a ocuparse y 2 con daño menor. Se registran 4 viviendas con daño mayor y 2 con daño menor, y se piden 4 viviendas de emergencia, no 6: las de daño menor se reparan."
+    },
+    {
+      "id": "cama",
+      "nombre": "Cama 1 plaza con kit de alojamiento",
+      "unidad": "unidades",
+      "criterio": "1 por persona",
+      "base": "personas",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "colchon",
+      "nombre": "Colchón forrado en tela D-21",
+      "unidad": "unidades",
+      "criterio": "1 por persona",
+      "base": "personas",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "sabanas",
+      "nombre": "Juego de sábanas 1 plaza",
+      "unidad": "juegos",
+      "criterio": "1 por persona",
+      "base": "personas",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "frazada",
+      "nombre": "Frazada",
+      "unidad": "unidades",
+      "criterio": "Hasta 2 por persona; puede variar según la zona y la estación del año",
+      "base": "personas",
+      "factor": 2,
+      "nivel_tope": "justificacion",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_higiene_hombre",
+      "nombre": "Kit de higiene personal hombre",
+      "unidad": "kits",
+      "criterio": "1 por persona por 30 días",
+      "base": "personas_hombres",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_higiene_mujer",
+      "nombre": "Kit de higiene personal mujer",
+      "unidad": "kits",
+      "criterio": "1 por persona por 30 días",
+      "base": "personas_mujeres",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_higiene_infantil",
+      "nombre": "Kit de higiene infantil",
+      "unidad": "kits",
+      "criterio": "1 por persona por 30 días",
+      "base": "personas_nna",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_aseo",
+      "nombre": "Kit de aseo domiciliario",
+      "unidad": "kits",
+      "criterio": "1 por vivienda",
+      "base": "viviendas_danadas",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_cocina",
+      "nombre": "Kit de cocina familiar con habitabilidad",
+      "unidad": "kits",
+      "criterio": "1 por vivienda",
+      "base": "viviendas_danadas",
+      "factor": 1,
+      "nivel_tope": "bloqueo",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_alimentacion_44",
+      "nombre": "Kit de alimentación 4.4 (4 personas, 4 días)",
+      "unidad": "kits",
+      "criterio": "1 para 4 personas por 4 días",
+      "base": "personas",
+      "factor": 0.25,
+      "nivel_tope": "justificacion",
+      "regla_72h": true,
+      "fuente": "IT-LOG-01 v4, tabla 1 y punto 4.1 a)"
+    },
+    {
+      "id": "kit_alimentacion_47",
+      "nombre": "Kit de alimentación 4.7 (4 personas, 7 días)",
+      "unidad": "kits",
+      "criterio": "1 para 4 personas por 7 días",
+      "base": "personas",
+      "factor": 0.25,
+      "nivel_tope": "justificacion",
+      "regla_72h": true,
+      "fuente": "IT-LOG-01 v4, tabla 1 y punto 4.1 a)"
+    },
+    {
+      "id": "estanque",
+      "nombre": "Estanque vertical domiciliario",
+      "unidad": "unidades",
+      "criterio": "1 por familia",
+      "base": "viviendas_danadas",
+      "factor": 1,
+      "nivel_tope": "justificacion",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "film_plastico",
+      "nombre": "Bobina de film plástico",
+      "unidad": "rollos",
+      "criterio": "1 rollo para 10 viviendas (unos 20 metros por vivienda)",
+      "base": "viviendas_danadas",
+      "factor": 0.1,
+      "nivel_tope": "justificacion",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "kit_techo",
+      "nombre": "Kit para reparación de techos",
+      "unidad": "kits",
+      "criterio": "Hasta 10 kits por vivienda",
+      "base": "viviendas_danadas",
+      "factor": 10,
+      "nivel_tope": "justificacion",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "saco_defensa",
+      "nombre": "Saco de defensa fluvial",
+      "unidad": "sacos",
+      "criterio": "Hasta 30 por vivienda",
+      "base": "viviendas_danadas",
+      "factor": 30,
+      "nivel_tope": "justificacion",
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "racion_12h",
+      "nombre": "Ración alimenticia 12 horas",
+      "unidad": "raciones",
+      "criterio": "1 por persona cada 12 horas",
+      "base": null,
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "agua",
+      "nombre": "Agua embotellada",
+      "unidad": "litros",
+      "criterio": "Referencia: 10 litros al día por familia (tabla 4)",
+      "base": null,
+      "fuente": "IT-LOG-01 v4, tabla 4"
+    },
+    {
+      "id": "carbon",
+      "nombre": "Carbón (bolsa o saco)",
+      "unidad": "kilos",
+      "criterio": "70 a 80 kg para 4 días por vivienda",
+      "base": null,
+      "fuente": "IT-LOG-01 v4, tabla 1"
+    },
+    {
+      "id": "otro",
+      "nombre": "Otro elemento (escribir cuál)",
+      "unidad": "",
+      "criterio": "",
+      "base": null,
+      "fuente": ""
+    }
   ],
-
   "parametros": {
     "umbral_personas_por_vivienda": 10,
     "horas_minimas_kit_alimentacion": 72,
-    "largo_minimo_para_que": 12
+    "largo_minimo_para_que": 12,
+    "largo_minimo_decision": 10
   },
-
   "reglas": [
     {
       "id": "CAMPOS_OBLIGATORIOS",
       "nombre": "Datos mínimos del informe completos",
       "nivel": "bloqueo",
-      "fuente": "Formato Informe Alfa, secciones 1, 2 y 3",
+      "fuente": "Formato Informe Alfa, secciones 1, 2, 3 y 10",
       "titulo": "Faltan datos obligatorios",
       "que_no_cuadra": "Todavía no has indicado: {faltantes}.",
-      "por_que": "Sin comuna, fecha, hora y tipo de evento la URAT no puede ubicar la emergencia ni activar la respuesta. Son los datos mínimos que exige el formato del Informe Alfa.",
+      "por_que": "Sin quién elabora, comuna, fecha, hora y tipo de evento la URAT no puede ubicar la emergencia ni activar la respuesta. Son los datos mínimos que exige el formato del Informe Alfa.",
       "como_resolver": [
-        { "texto": "Completar los datos que faltan", "pantalla": "{pantalla_faltante}" }
+        {
+          "texto": "Completar los datos que faltan",
+          "pantalla": "{pantalla_faltante}"
+        }
       ],
       "caso_parecido": "Un informe de nevazón llegó sin hora de inicio. La URAT no pudo calcular cuántas horas llevaban aisladas las familias y debió llamar al municipio antes de gestionar la ayuda."
     },
@@ -216,7 +464,10 @@
       "que_no_cuadra": "Registraste que el evento empezó el {fecha} a las {hora}, pero ese momento todavía no llega.",
       "por_que": "El Informe Alfa describe un evento que ya ocurrió o está ocurriendo. Una fecha futura suele ser un error de tipeo o de hora del teléfono.",
       "como_resolver": [
-        { "texto": "Corregir la fecha o la hora de inicio", "pantalla": "donde" }
+        {
+          "texto": "Corregir la fecha o la hora de inicio",
+          "pantalla": "donde"
+        }
       ],
       "caso_parecido": "Un funcionario anotó 2027 en lugar de 2026 al escribir el año. Al corregirlo, el informe quedó con la fecha real del evento."
     },
@@ -230,8 +481,14 @@
       "que_no_cuadra": "En las viviendas que \"{condicion}\" registraste {ocupantes} {grupo}, pero indicaste que {albergados} de esas personas están en un albergue habilitado. No pueden ser más que quienes vivían ahí.",
       "por_que": "Las personas albergadas de esas viviendas son parte de sus ocupantes: alguien que no vivía en ellas no puede contarse aquí. Si en el albergue hay otras personas, por ejemplo evacuadas de forma preventiva, se registran en la pantalla \"Otras personas afectadas\".",
       "como_resolver": [
-        { "texto": "Revisar cuántas personas vivían en esas viviendas", "pantalla": "viviendas" },
-        { "texto": "Revisar cuántas de ellas están realmente en un albergue habilitado", "pantalla": "viviendas" }
+        {
+          "texto": "Revisar cuántas personas vivían en esas viviendas",
+          "pantalla": "viviendas"
+        },
+        {
+          "texto": "Revisar cuántas de ellas están realmente en un albergue habilitado",
+          "pantalla": "viviendas"
+        }
       ],
       "caso_parecido": "Incendio con 2 viviendas destruidas y 7 personas. En el albergue había 9 personas, pero 2 eran vecinos evacuados por precaución, no ocupantes de esas casas. Se registraron 7 damnificadas y 7 albergadas con las viviendas, y los 2 vecinos como evacuados y albergados en \"Otras personas afectadas\"."
     },
@@ -245,8 +502,14 @@
       "que_no_cuadra": "En la condición \"{condicion}\" registraste {ocupantes} personas pero 0 viviendas.",
       "por_que": "En esta pantalla las personas se cuentan como ocupantes de las viviendas dañadas: sin viviendas no hay a quién atribuirlas. Las personas afectadas por otras causas (corte de servicios, aislamiento, evacuación preventiva, lesionadas, fallecidas) se registran en la pantalla siguiente, \"Otras personas afectadas\".",
       "como_resolver": [
-        { "texto": "Indicar cuántas viviendas quedaron en esa condición", "pantalla": "viviendas" },
-        { "texto": "Esas personas no vivían en viviendas dañadas: dejar esta tarjeta en cero y registrarlas en \"Otras personas afectadas\"", "accion": "vaciar_ocupantes" }
+        {
+          "texto": "Indicar cuántas viviendas quedaron en esa condición",
+          "pantalla": "viviendas"
+        },
+        {
+          "texto": "Esas personas no vivían en viviendas dañadas: dejar esta tarjeta en cero y registrarlas en \"Otras personas afectadas\"",
+          "accion": "vaciar_ocupantes"
+        }
       ],
       "caso_parecido": "Corte de agua potable: 120 personas afectadas y ninguna vivienda dañada. Las viviendas quedan en cero y las 120 personas se registran como afectadas en \"Otras personas afectadas\"."
     },
@@ -260,8 +523,14 @@
       "que_no_cuadra": "Registraste {viviendas} vivienda(s) que \"{condicion}\" pero 0 personas viviendo en ellas.",
       "por_que": "Según la Guía, el daño mayor y la destrucción se asocian al concepto de damnificado: lo normal es que esas viviendas tuvieran ocupantes. Puede ser correcto si estaban deshabitadas, eran de veraneo o bodegas, pero hay que decirlo.",
       "como_resolver": [
-        { "texto": "Agregar las personas que vivían en esas viviendas", "pantalla": "viviendas" },
-        { "texto": "Si de verdad estaban deshabitadas, escribir el motivo; quedará impreso en Observaciones", "accion": "justificar" }
+        {
+          "texto": "Agregar las personas que vivían en esas viviendas",
+          "pantalla": "viviendas"
+        },
+        {
+          "texto": "Si de verdad estaban deshabitadas, escribir el motivo; quedará impreso en Observaciones",
+          "accion": "justificar"
+        }
       ],
       "caso_parecido": "Incendio de 2 cabañas de veraneo sin moradores en invierno. Se registran 2 viviendas destruidas, 0 personas, y en Observaciones: \"Cabañas de temporada deshabitadas al momento del incendio\"."
     },
@@ -275,8 +544,14 @@
       "que_no_cuadra": "En la condición \"{condicion}\" registraste {ocupantes} personas en {viviendas} vivienda(s): un promedio de {promedio} por vivienda, cuando lo habitual es menos de {umbral}.",
       "por_que": "Un promedio tan alto suele indicar que se sumaron personas de otras viviendas o se escribió un cero de más. Puede ser correcto en un hogar colectivo, una residencia o un campamento, pero hay que explicarlo.",
       "como_resolver": [
-        { "texto": "Revisar el número de viviendas o de personas", "pantalla": "viviendas" },
-        { "texto": "Si el número es correcto (residencia, hogar colectivo, campamento), escribir el motivo; quedará impreso en Observaciones", "accion": "justificar" }
+        {
+          "texto": "Revisar el número de viviendas o de personas",
+          "pantalla": "viviendas"
+        },
+        {
+          "texto": "Si el número es correcto (residencia, hogar colectivo, campamento), escribir el motivo; quedará impreso en Observaciones",
+          "accion": "justificar"
+        }
       ],
       "caso_parecido": "Incendio en una residencia de trabajadores: 1 vivienda destruida con 24 personas. Es correcto; en Observaciones se escribió \"Residencia colectiva de trabajadores de temporada\"."
     },
@@ -290,8 +565,14 @@
       "que_no_cuadra": "Marcaste que hay personas {categoria}, pero no anotaste cuántas.",
       "por_que": "El formato pide el número de personas por sexo y por adultos o NNA. Una categoría marcada sin cantidad no entrega información a la URAT.",
       "como_resolver": [
-        { "texto": "Anotar cuántas personas hay en esa categoría", "pantalla": "personas" },
-        { "texto": "Si finalmente no hay personas en esa categoría, desmarcarla", "pantalla": "personas" }
+        {
+          "texto": "Anotar cuántas personas hay en esa categoría",
+          "pantalla": "personas"
+        },
+        {
+          "texto": "Si finalmente no hay personas en esa categoría, desmarcarla",
+          "pantalla": "personas"
+        }
       ],
       "caso_parecido": "Un informe llegó con la casilla \"Lesionadas\" marcada con una cruz y sin número. La URAT tuvo que llamar al municipio para saber cuántas ambulancias coordinar."
     },
@@ -305,8 +586,14 @@
       "que_no_cuadra": "El informe suma {albergadas} personas albergadas, pero solo {suma} personas damnificadas, evacuadas o aisladas ({damnificadas} damnificadas, {evacuadas} evacuadas y {aisladas} aisladas). Según la Guía, los albergues atienden a damnificados, aislados y evacuados.",
       "por_que": "Una persona albergada tuvo que salir de algún lugar: o perdió su vivienda, o fue evacuada, o quedó aislada. Si hay más albergadas que personas en esas situaciones, falta registrar a alguien o se contó a alguien dos veces.",
       "como_resolver": [
-        { "texto": "Revisar las personas en albergue de las viviendas dañadas", "pantalla": "viviendas" },
-        { "texto": "Registrar a las personas evacuadas o aisladas que faltan, o corregir las otras albergadas", "pantalla": "personas" }
+        {
+          "texto": "Revisar las personas en albergue de las viviendas dañadas",
+          "pantalla": "viviendas"
+        },
+        {
+          "texto": "Registrar a las personas evacuadas o aisladas que faltan, o corregir las otras albergadas",
+          "pantalla": "personas"
+        }
       ],
       "caso_parecido": "Nevazón: 40 personas en el gimnasio municipal y ninguna vivienda dañada. Eran vecinos evacuados de forma preventiva de un sector sin calefacción: se registraron 40 evacuadas y 40 albergadas."
     },
@@ -320,9 +607,18 @@
       "que_no_cuadra": "Registraste {desaparecidas} persona(s) desaparecida(s) sin indicar que exista una denuncia de presunta desgracia.",
       "por_que": "La Guía exige una denuncia de presunta desgracia conforme a los mecanismos oficiales para clasificar a una persona como desaparecida. Sin ella, la persona se registra como extraviada.",
       "como_resolver": [
-        { "texto": "Marcar que existe la denuncia, si ya se hizo", "pantalla": "personas" },
-        { "texto": "Si no hay denuncia, registrar a la persona como extraviada", "pantalla": "personas" },
-        { "texto": "Si la denuncia está en curso, escribir el motivo; quedará impreso en Observaciones", "accion": "justificar" }
+        {
+          "texto": "Marcar que existe la denuncia, si ya se hizo",
+          "pantalla": "personas"
+        },
+        {
+          "texto": "Si no hay denuncia, registrar a la persona como extraviada",
+          "pantalla": "personas"
+        },
+        {
+          "texto": "Si la denuncia está en curso, escribir el motivo; quedará impreso en Observaciones",
+          "accion": "justificar"
+        }
       ],
       "caso_parecido": "Naufragio con 2 tripulantes no ubicados; Carabineros recibió la denuncia esa misma tarde. Se registraron 2 personas desaparecidas con denuncia."
     },
@@ -336,8 +632,14 @@
       "que_no_cuadra": "En la necesidad {numero} falta indicar: {faltantes}.",
       "por_que": "La Unidad de Recursos de Emergencia evalúa cada solicitud por su cantidad, su tipo y su justificación. Una necesidad sin alguno de los tres datos vuelve al municipio para aclaración y retrasa la ayuda.",
       "como_resolver": [
-        { "texto": "Completar la necesidad", "pantalla": "necesidad" },
-        { "texto": "Si la fila sobra, quitarla", "pantalla": "necesidad" }
+        {
+          "texto": "Completar la necesidad",
+          "pantalla": "necesidad"
+        },
+        {
+          "texto": "Si la fila sobra, quitarla",
+          "pantalla": "necesidad"
+        }
       ],
       "caso_parecido": "Se pidieron \"frazadas\" sin cantidad ni destino. La URE devolvió la solicitud. Al reenviarla como \"40 frazadas para 20 personas damnificadas alojadas en el gimnasio municipal\" se gestionó el mismo día."
     },
@@ -351,13 +653,28 @@
       "que_no_cuadra": "Pediste {cantidad} {unidad} de \"{elemento}\". El criterio es {criterio} y en el informe hay {base_valor} {base_nombre}: el máximo que cuadra es {tope}.",
       "por_que": "El IT-LOG-01 fija criterios de cantidad por elemento para que lo solicitado se corresponda con la afectación registrada. Una cantidad mayor sin explicación es observada por la Unidad de Recursos de Emergencia.",
       "como_resolver": [
-        { "texto": "Ajustar la cantidad al máximo que cuadra", "accion": "ajustar_cantidad" },
-        { "texto": "Revisar las viviendas y personas registradas, si faltó alguna", "pantalla": "viviendas" }
+        {
+          "texto": "Ajustar la cantidad al máximo que cuadra",
+          "accion": "ajustar_cantidad"
+        },
+        {
+          "texto": "Revisar las viviendas y personas registradas, si faltó alguna",
+          "pantalla": "viviendas"
+        }
       ],
       "como_resolver_justificacion": [
-        { "texto": "Ajustar la cantidad al máximo que cuadra", "accion": "ajustar_cantidad" },
-        { "texto": "Revisar las viviendas y personas registradas, si faltó alguna", "pantalla": "viviendas" },
-        { "texto": "Si la cantidad es necesaria (por ejemplo, por el frío de la zona), escribir el motivo; quedará impreso en Observaciones", "accion": "justificar" }
+        {
+          "texto": "Ajustar la cantidad al máximo que cuadra",
+          "accion": "ajustar_cantidad"
+        },
+        {
+          "texto": "Revisar las viviendas y personas registradas, si faltó alguna",
+          "pantalla": "viviendas"
+        },
+        {
+          "texto": "Si la cantidad es necesaria (por ejemplo, por el frío de la zona), escribir el motivo; quedará impreso en Observaciones",
+          "accion": "justificar"
+        }
       ],
       "caso_parecido": "Incendio con 3 viviendas destruidas y 11 personas damnificadas. Se pidieron 20 camas \"por si acaso\". El criterio es 1 por persona: se corrigió a 11 camas y la solicitud se aprobó sin observaciones."
     },
@@ -371,10 +688,146 @@
       "que_no_cuadra": "Pediste \"{elemento}\" y el evento empezó hace {horas} horas. En situaciones de aislamiento, SENAPRED gestiona los kits de alimentación una vez transcurridas 72 horas desde el inicio.",
       "por_que": "Durante las primeras 72 horas la alimentación corresponde al municipio con sus recursos y a la autogestión de las personas. SENAPRED puede evaluar excepciones según la naturaleza y magnitud del evento.",
       "como_resolver": [
-        { "texto": "Quitar los kits de alimentación de esta solicitud y pedirlos en una ampliación cuando se cumplan las 72 horas", "pantalla": "necesidad" },
-        { "texto": "Si el evento lo amerita (por ejemplo, familias que lo perdieron todo y sin red de apoyo), escribir el motivo; quedará impreso en Observaciones", "accion": "justificar" }
+        {
+          "texto": "Quitar los kits de alimentación de esta solicitud y pedirlos en una ampliación cuando se cumplan las 72 horas",
+          "pantalla": "necesidad"
+        },
+        {
+          "texto": "Si el evento lo amerita (por ejemplo, familias que lo perdieron todo y sin red de apoyo), escribir el motivo; quedará impreso en Observaciones",
+          "accion": "justificar"
+        }
       ],
       "caso_parecido": "Nevazón con 30 personas aisladas desde hace 20 horas. El municipio cubrió la alimentación con recursos locales y pidió los kits en la ampliación 1-A, al cumplirse las 72 horas."
+    },
+    {
+      "id": "DECISIONES_INCOMPLETAS",
+      "nombre": "Decisiones: acciones realizadas y por realizar respondidas",
+      "nivel": "bloqueo",
+      "fuente": "Formato Informe Alfa y Guía 2026, sección 6",
+      "pantalla": "decisiones",
+      "titulo": "Faltan las decisiones",
+      "que_no_cuadra": "Falta responder: {faltantes}.",
+      "por_que": "El formato pregunta qué acciones de respuesta se han realizado y cuáles se llevarán a cabo o se requieren. Sin esas dos respuestas la URAT no sabe qué está cubierto y qué falta. Si no hay acciones pendientes, escríbelo.",
+      "como_resolver": [
+        {
+          "texto": "Responder las preguntas de la sección Decisiones",
+          "pantalla": "decisiones"
+        }
+      ],
+      "caso_parecido": "Un Alfa decía solo \"se activó el COE\". La URAT tuvo que llamar para saber si las familias seguían en la calle. Con \"Bomberos controló el incendio a las 07:30; las 11 personas fueron trasladadas al gimnasio municipal a las 08:00; falta evaluar las viviendas vecinas\" no hizo falta la llamada."
+    },
+    {
+      "id": "RECURSOS_INCOMPLETOS",
+      "nombre": "Recursos involucrados declarados",
+      "nivel": "bloqueo",
+      "fuente": "Guía 2026, sección 7",
+      "pantalla": "recursos",
+      "titulo": "Faltan los recursos involucrados",
+      "que_no_cuadra": "{detalle}",
+      "por_que": "La Guía pide los recursos humanos y materiales de todos los organismos que trabajan en la respuesta. Si todavía no hay recursos desplegados, hay que decirlo expresamente.",
+      "como_resolver": [
+        {
+          "texto": "Marcar los organismos presentes e indicar personas o medios",
+          "pantalla": "recursos"
+        },
+        {
+          "texto": "Si todavía no hay recursos desplegados, marcar esa casilla",
+          "pantalla": "recursos"
+        }
+      ],
+      "caso_parecido": "Nevazón: se marcó Vialidad sin indicar medios. Al completar \"2 motoniveladoras y 1 camión tolva\" la URAT pudo pedir refuerzo a la provincia vecina con el dato preciso."
+    },
+    {
+      "id": "LUGAR_COORDENADAS",
+      "nombre": "Coordenadas completas y dentro de rango",
+      "nivel": "bloqueo",
+      "fuente": "Criterio de la Dirección Regional (D-35)",
+      "pantalla": "donde",
+      "titulo": "Las coordenadas no son válidas",
+      "que_no_cuadra": "{detalle}",
+      "por_que": "Las coordenadas se imprimen en Observaciones y viajan en los datos del informe; un valor incompleto o fuera de rango confunde más que ayuda.",
+      "como_resolver": [
+        {
+          "texto": "Corregir o borrar las coordenadas",
+          "pantalla": "donde"
+        },
+        {
+          "texto": "Usar la ubicación del teléfono",
+          "pantalla": "donde"
+        }
+      ],
+      "caso_parecido": "Se escribió la latitud -53,16 pero no la longitud. Al usar la ubicación del teléfono quedaron -53,1625 y -70,9085 con precisión de 12 metros."
     }
-  ]
+  ],
+  "organismos_respuesta": [
+    {
+      "id": "bomberos",
+      "nombre": "Bomberos"
+    },
+    {
+      "id": "carabineros",
+      "nombre": "Carabineros"
+    },
+    {
+      "id": "pdi",
+      "nombre": "PDI"
+    },
+    {
+      "id": "armada",
+      "nombre": "Armada"
+    },
+    {
+      "id": "ejercito",
+      "nombre": "Ejército"
+    },
+    {
+      "id": "fach",
+      "nombre": "FACh"
+    },
+    {
+      "id": "salud",
+      "nombre": "SAMU y Salud"
+    },
+    {
+      "id": "municipalidad",
+      "nombre": "Municipalidad (emergencia, DIDECO, obras)"
+    },
+    {
+      "id": "conaf",
+      "nombre": "CONAF"
+    },
+    {
+      "id": "delegacion",
+      "nombre": "Delegación Presidencial"
+    },
+    {
+      "id": "senapred",
+      "nombre": "SENAPRED"
+    },
+    {
+      "id": "electrica",
+      "nombre": "Empresa eléctrica"
+    },
+    {
+      "id": "sanitaria",
+      "nombre": "Empresa sanitaria"
+    },
+    {
+      "id": "mop",
+      "nombre": "Vialidad o MOP"
+    },
+    {
+      "id": "cruz_roja",
+      "nombre": "Cruz Roja"
+    },
+    {
+      "id": "defensa_civil",
+      "nombre": "Defensa Civil"
+    },
+    {
+      "id": "vecinos",
+      "nombre": "Juntas de vecinos"
+    }
+  ],
+  "organismos_nota": "Lista provisoria de organismos de respuesta para la sección 7. Se edita aquí sin tocar el código (D-36)."
 }

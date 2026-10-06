@@ -243,3 +243,12 @@ button { font: inherit; cursor: pointer; }
 .historial li { flex-wrap: wrap; }
 .acciones-historial { display: flex; gap: 6px; margin-left: auto; }
 .acciones-historial .secundario { min-height: 40px; padding: 6px 12px; font-size: 0.9rem; }
+
+/* ---- Versión 0.3: quién elabora, lugar y GPS, decisiones, recursos ---- */
+.conmutador.destacado { background: var(--amarillo-suave); border: 1px solid var(--amarillo); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.tarjeta.recurso { padding: 10px 14px; margin-bottom: 8px; }
+.tarjeta.recurso .conmutador { margin: 0; }
+.bloque-recurso { margin-top: 8px; border-left: 3px solid var(--azul); padding-left: 10px; }
+.bloque-recurso .fila2 .campo { margin-bottom: 8px; }
+#gps-estado { margin-top: -4px; }
+.etiqueta-fija + .lista-opciones { margin-top: 6px; }

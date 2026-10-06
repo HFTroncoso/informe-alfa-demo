@@ -1,29 +1,32 @@
-/* App Informe Alfa – demo Sprint 1 (versión 0.2).
+/* App Informe Alfa – demo Sprint 1 (versión 0.3).
    Flujo de pantallas y enlace entre el motor de reglas (reglas.js), el generador de PDF (pdf.js)
    y el almacén local (almacen.js). Sin servidor: todo ocurre en el teléfono. */
 (function () {
   'use strict';
 
-  const ORDEN = ['inicio', 'donde', 'evento', 'viviendas', 'personas', 'necesidad', 'revision', 'listo'];
+  const ORDEN = ['inicio', 'elaborador', 'donde', 'evento', 'viviendas', 'personas', 'decisiones', 'recursos', 'necesidad', 'revision', 'listo'];
   const TITULOS = {
     inicio: 'Modo ejercicio',
+    elaborador: '¿Quién elabora el informe?',
     donde: '¿Dónde y cuándo ocurrió?',
     evento: '¿Qué pasó?',
     viviendas: 'Viviendas y sus ocupantes',
     personas: 'Otras personas afectadas',
+    decisiones: 'Decisiones y acciones',
+    recursos: 'Recursos involucrados',
     necesidad: 'Necesidades',
     revision: 'Revisa y firma',
     listo: 'Informe generado'
   };
-  const PASOS_TOTAL = 6;
+  const PASOS_TOTAL = 9;
   const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   let CONFIG = null, DATOS = null, PLANTILLA = null;
   let informe = null;
   let pantalla = 'inicio';
-  let ultimoPdf = null;          // Uint8Array del último PDF generado
-  let eventoInstalacion = null;  // beforeinstallprompt (Android/Chrome)
-  let imagenes = null;           // bytes de firma y timbre
+  let ultimoPdf = null;
+  let eventoInstalacion = null;
+  let imagenes = null;
 
   const $ = (sel, raiz) => (raiz || document).querySelector(sel);
   const $$ = (sel, raiz) => Array.from((raiz || document).querySelectorAll(sel));
@@ -53,36 +56,40 @@
   }
   function ocupantes(v) { return v ? (v.adH | 0) + (v.adM | 0) + (v.nnaH | 0) + (v.nnaM | 0) : 0; }
   function tipoTexto(inf) { return inf.evento.tipo === 'OTRO' ? (inf.evento.otro || 'Otro') : cap(inf.evento.tipo); }
+  function elaboradorDe(inf) { return CONFIG.elaboradores.find(e => e.id === (inf.elaborador || {}).nivel) || null; }
+  function provincias() { return [...new Set(CONFIG.comunas.map(c => c.provincia))]; }
 
   // ---------- estado ----------
   function filaVacia() { return { adH: 0, adM: 0, nnaH: 0, nnaM: 0 }; }
   function necesidadVacia() { return { elemento: '', otroNombre: '', cantidad: 0, paraQue: '' }; }
+  function recursoVacio() { return { hay: false, personas: 0, medios: '' }; }
 
   function nuevoInforme() {
     const viviendas = {};
-    DATOS.condiciones_vivienda.forEach(c => {
-      viviendas[c.id] = Object.assign(filaVacia(), { viviendas: 0, hayAlbergue: false, albergue: filaVacia() });
-    });
+    DATOS.condiciones_vivienda.forEach(c => { viviendas[c.id] = Object.assign(filaVacia(), { viviendas: 0, hayAlbergue: false, albergue: filaVacia() }); });
     const otras = {};
-    DATOS.categorias_personas.forEach(c => {
-      otras[c.id] = Object.assign(filaVacia(), { hay: false });
-      if (c.requiere_denuncia) otras[c.id].denuncia = false;
-    });
+    DATOS.categorias_personas.forEach(c => { otras[c.id] = Object.assign(filaVacia(), { hay: false }); if (c.requiere_denuncia) otras[c.id].denuncia = false; });
+    const organismos = {};
+    (DATOS.organismos_respuesta || []).forEach(o => { organismos[o.id] = recursoVacio(); });
     return {
       version: CONFIG.version_app,
       modo: 'ejercicio',
       numero: null,
       amplia: null,
       creado: new Date().toISOString(),
-      identificacion: { region: CONFIG.region.nombre, provincia: '', comuna: '', fuentes: [], fuenteOtra: '', contacto: '' },
+      elaborador: { nivel: '', provincia: '' },
+      identificacion: { region: CONFIG.region.nombre, provincia: '', comunas: [], fuentes: [], fuenteOtra: '', contacto: '' },
+      lugar: { descripcion: '', lat: '', lon: '', precision: null, origen: '' },
       ocurrencia: { fecha: hoyISO(), hora: ahoraHHMM() },
       evento: { tipo: '', otro: '' },
       viviendas,
       otras,
+      decisiones: { realizadas: '', pendientes: '' },
+      recursos: { sinRecursos: false, organismos, otro: Object.assign(recursoVacio(), { nombre: '' }) },
       hayNecesidad: null,
       necesidades: [necesidadVacia()],
       justificaciones: {},
-      responsable: Object.assign({}, CONFIG.responsable_ejercicio),
+      responsable: { nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' },
       elaboracion: null
     };
   }
@@ -90,12 +97,20 @@
   // Completa informes guardados con versiones anteriores de la app.
   function normalizar(inf) {
     const base = nuevoInforme();
+    inf.elaborador = Object.assign({}, base.elaborador, inf.elaborador || {});
     inf.identificacion = Object.assign({}, base.identificacion, inf.identificacion || {});
+    if (!Array.isArray(inf.identificacion.comunas)) inf.identificacion.comunas = [];
+    if (inf.identificacion.comuna) {
+      if (!inf.identificacion.comunas.length) inf.identificacion.comunas = [inf.identificacion.comuna];
+      delete inf.identificacion.comuna;
+    }
+    if (!inf.elaborador.nivel && inf.identificacion.comunas.length) inf.elaborador.nivel = 'comunal';
     if (!Array.isArray(inf.identificacion.fuentes)) inf.identificacion.fuentes = [];
     if (inf.identificacion.fuente) {
       if (!inf.identificacion.fuentes.length && !inf.identificacion.fuenteOtra) inf.identificacion.fuenteOtra = inf.identificacion.fuente;
       delete inf.identificacion.fuente;
     }
+    inf.lugar = Object.assign({}, base.lugar, inf.lugar || {});
     inf.ocurrencia = Object.assign({}, base.ocurrencia, inf.ocurrencia || {});
     inf.evento = Object.assign({}, base.evento, inf.evento || {});
     inf.viviendas = inf.viviendas || {};
@@ -105,21 +120,40 @@
     }
     inf.otras = inf.otras || {};
     for (const k of Object.keys(base.otras)) inf.otras[k] = Object.assign({}, base.otras[k], inf.otras[k] || {});
+    inf.decisiones = Object.assign({}, base.decisiones, inf.decisiones || {});
+    inf.recursos = Object.assign({}, base.recursos, inf.recursos || {});
+    inf.recursos.organismos = inf.recursos.organismos || {};
+    for (const k of Object.keys(base.recursos.organismos)) inf.recursos.organismos[k] = Object.assign(recursoVacio(), inf.recursos.organismos[k] || {});
+    inf.recursos.otro = Object.assign(recursoVacio(), { nombre: '' }, inf.recursos.otro || {});
     if (!Array.isArray(inf.necesidades) || !inf.necesidades.length) inf.necesidades = [necesidadVacia()];
     if (inf.hayNecesidad === undefined) inf.hayNecesidad = null;
     inf.justificaciones = inf.justificaciones || {};
     if (inf.amplia === undefined) inf.amplia = null;
-    inf.responsable = inf.responsable || Object.assign({}, CONFIG.responsable_ejercicio);
+    inf.responsable = Object.assign({}, base.responsable, inf.responsable || {});
+    actualizarProvincia(inf);
+    actualizarResponsable(inf);
     return inf;
+  }
+
+  function actualizarProvincia(inf) {
+    const provs = [...new Set((inf.identificacion.comunas || []).map(c => (CONFIG.comunas.find(x => x.comuna === c) || {}).provincia).filter(Boolean))];
+    inf.identificacion.provincia = provs.length === 1 ? provs[0] : (provs.length > 1 ? 'Varias' : '');
+  }
+  function actualizarResponsable(inf) {
+    const e = elaboradorDe(inf);
+    if (!e) return;
+    const comunas = inf.identificacion.comunas || [];
+    inf.responsable.cargo = e.cargo;
+    inf.responsable.institucion = e.institucion
+      .replace('{comuna}', comunas.length === 1 ? comunas[0] : (comunas.length ? 'varias comunas' : 'la comuna'))
+      .replace('{provincia}', inf.elaborador.provincia || inf.identificacion.provincia || 'la provincia');
   }
 
   function guardar() { if (informe && !informe.elaboracion) Almacen.guardarBorrador(informe); }
 
   // ---------- numeración ----------
   function siguienteLetra(base) {
-    const usadas = Almacen.leerHistorial()
-      .filter(h => h.numero && h.numero.startsWith(base + '-'))
-      .map(h => h.numero.slice(base.length + 1));
+    const usadas = Almacen.leerHistorial().filter(h => h.numero && h.numero.startsWith(base + '-')).map(h => h.numero.slice(base.length + 1));
     let i = 0;
     while (i < LETRAS.length - 1 && usadas.includes(LETRAS[i])) i++;
     return LETRAS[i];
@@ -154,12 +188,13 @@
   }
 
   function construirListas() {
+    $('#lista-niveles').innerHTML = CONFIG.elaboradores.map(e =>
+      `<label class="opcion"><input type="radio" name="nivel" value="${esc(e.id)}"><span><strong>${esc(e.nombre)}</strong><small>${esc(e.nivel)} · ${esc(e.descripcion)}</small></span></label>`).join('');
+    $('#in-provincia-deleg').innerHTML = '<option value="">Elige la provincia…</option>' + provincias().map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+
     const sel = $('#in-comuna');
-    const provincias = [...new Set(CONFIG.comunas.map(c => c.provincia))];
-    sel.innerHTML = '<option value="">Elige la comuna…</option>' + provincias.map(p =>
-      `<optgroup label="Provincia de ${esc(p)}">` +
-      CONFIG.comunas.filter(c => c.provincia === p).map(c => `<option value="${esc(c.comuna)}">${esc(c.comuna)}</option>`).join('') +
-      '</optgroup>').join('');
+    sel.innerHTML = '<option value="">Elige la comuna…</option>' + provincias().map(p =>
+      `<optgroup label="Provincia de ${esc(p)}">` + CONFIG.comunas.filter(c => c.provincia === p).map(c => `<option value="${esc(c.comuna)}">${esc(c.comuna)}</option>`).join('') + '</optgroup>').join('');
     $('#in-region').textContent = CONFIG.region.nombre;
 
     $('#lista-fuentes').innerHTML = CONFIG.fuentes_frecuentes.map(f =>
@@ -170,6 +205,15 @@
 
     $('#tarjetas-viviendas').innerHTML = DATOS.condiciones_vivienda.map(tarjetaVivienda).join('');
     $('#tarjetas-personas').innerHTML = DATOS.categorias_personas.map(tarjetaCategoria).join('');
+    $('#tarjetas-recursos').innerHTML = (DATOS.organismos_respuesta || []).map(o => tarjetaRecurso(o.id, o.nombre, false)).join('') + tarjetaRecurso('otro', 'Otro organismo', true);
+  }
+
+  function renderListaComunas() {
+    const E = informe.elaborador;
+    const lista = E.nivel === 'provincial' ? CONFIG.comunas.filter(c => c.provincia === E.provincia) : CONFIG.comunas;
+    const grupos = [...new Set(lista.map(c => c.provincia))];
+    $('#lista-comunas').innerHTML = grupos.map(p => lista.filter(c => c.provincia === p).map(c =>
+      `<label class="opcion"><input type="checkbox" name="comuna-multi" value="${esc(c.comuna)}"><span><strong>${esc(c.comuna)}</strong><small>Provincia de ${esc(c.provincia)}</small></span></label>`).join('')).join('');
   }
 
   function gridPersonas(prefijo) {
@@ -220,9 +264,23 @@
       </section>`;
   }
 
+  function tarjetaRecurso(id, nombre, esOtro) {
+    const r = esOtro ? 'recursos.otro' : `recursos.organismos.${id}`;
+    return `
+      <section class="tarjeta recurso" data-recurso="${esc(id)}">
+        <label class="conmutador"><input type="checkbox" data-ruta="${r}.hay"><span><strong>${esc(nombre)}</strong></span></label>
+        <div class="bloque-recurso" data-bloque-rec="${esc(id)}" hidden>
+          ${esOtro ? `<label class="campo">¿Qué organismo?<input type="text" data-ruta="${r}.nombre" placeholder="Nombre del organismo o empresa"></label>` : ''}
+          <div class="fila2">
+            <label class="campo">Personas<input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-ruta="${r}.personas"></label>
+            <label class="campo">Medios<input type="text" data-ruta="${r}.medios" placeholder="Vehículos, maquinaria, equipos, ayuda entregada"></label>
+          </div>
+        </div>
+      </section>`;
+  }
+
   function renderNecesidades() {
-    const opciones = '<option value="">Elige el elemento…</option>' +
-      DATOS.catalogo_elementos.map(e => `<option value="${esc(e.id)}">${esc(e.nombre)}</option>`).join('');
+    const opciones = '<option value="">Elige el elemento…</option>' + DATOS.catalogo_elementos.map(e => `<option value="${esc(e.id)}">${esc(e.nombre)}</option>`).join('');
     const varias = informe.necesidades.length > 1;
     $('#lista-necesidades').innerHTML = informe.necesidades.map((nec, i) => `
       <section class="tarjeta necesidad" data-necesidad="${i}">
@@ -248,19 +306,20 @@
     $('#btn-siguiente').addEventListener('click', siguiente);
     $('#btn-nuevo').addEventListener('click', () => {
       if (Almacen.leerBorrador() && !confirm('Hay un borrador guardado que se reemplazará. ¿Empezar un informe nuevo?')) return;
-      informe = nuevoInforme(); guardar(); mostrar('donde');
+      informe = nuevoInforme(); guardar(); mostrar('elaborador');
     });
     $('#btn-continuar').addEventListener('click', () => {
       const b = Almacen.leerBorrador();
       if (!b) { toast('No hay un borrador guardado.'); return; }
       informe = normalizar(b);
-      mostrar('donde');
+      mostrar('elaborador');
     });
     $('#btn-descartar').addEventListener('click', () => {
       if (confirm('¿Descartar el borrador guardado?')) { Almacen.borrarBorrador(); informe = null; mostrar('inicio'); }
     });
     $('#dlg-cerrar').addEventListener('click', () => $('#dlg-bloqueo').close());
     $('#btn-instalar').addEventListener('click', instalar);
+    $('#btn-gps').addEventListener('click', usarGPS);
     window.addEventListener('online', estadoConexion);
     window.addEventListener('offline', estadoConexion);
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); eventoInstalacion = e; if (pantalla === 'inicio') renderInicio(); });
@@ -274,6 +333,15 @@
   function alCambiar(e) {
     const el = e.target;
     if (!informe || !el) return;
+    if (el.name === 'nivel') {
+      if (el.checked) {
+        informe.elaborador.nivel = el.value;
+        $('#campo-provincia-deleg').hidden = el.value !== 'provincial';
+        if (el.value === 'comunal' && informe.identificacion.comunas.length > 1) informe.identificacion.comunas = informe.identificacion.comunas.slice(0, 1);
+        actualizarProvincia(informe); actualizarResponsable(informe); guardar();
+      }
+      return;
+    }
     if (el.name === 'tipo-evento') {
       if (el.checked) { informe.evento.tipo = el.value; $('#campo-otro').hidden = el.value !== 'OTRO'; guardar(); }
       return;
@@ -287,9 +355,17 @@
       }
       return;
     }
-    if (el.name === 'fuente') {
-      informe.identificacion.fuentes = $$('input[name="fuente"]:checked').map(x => x.value);
-      guardar();
+    if (el.name === 'fuente') { informe.identificacion.fuentes = $$('input[name="fuente"]:checked').map(x => x.value); guardar(); return; }
+    if (el.name === 'comuna-unica') {
+      informe.identificacion.comunas = el.value ? [el.value] : [];
+      actualizarProvincia(informe); actualizarResponsable(informe); guardar();
+      $('#in-provincia').textContent = informe.identificacion.provincia || '—';
+      return;
+    }
+    if (el.name === 'comuna-multi') {
+      informe.identificacion.comunas = $$('input[name="comuna-multi"]:checked').map(x => x.value);
+      actualizarProvincia(informe); actualizarResponsable(informe); guardar();
+      $('#in-provincia').textContent = informe.identificacion.provincia || '—';
       return;
     }
     const ruta = el.dataset ? el.dataset.ruta : null;
@@ -300,17 +376,13 @@
     else v = el.value;
     asignar(informe, ruta, v);
 
-    if (ruta === 'identificacion.comuna') {
-      const c = CONFIG.comunas.find(x => x.comuna === v);
-      informe.identificacion.provincia = c ? c.provincia : '';
-      $('#in-provincia').textContent = informe.identificacion.provincia || '—';
-    }
-    if (ruta.endsWith('.hayAlbergue')) {
-      const bloque = $(`[data-albergue="${ruta.split('.')[1]}"]`);
-      if (bloque) bloque.hidden = !v;
-    }
+    if (ruta === 'elaborador.provincia') { informe.identificacion.comunas = []; actualizarProvincia(informe); actualizarResponsable(informe); }
+    if (ruta === 'lugar.lat' || ruta === 'lugar.lon') { informe.lugar.origen = 'manual'; informe.lugar.precision = null; $('#gps-estado').textContent = 'Coordenadas escritas a mano.'; }
+    if (ruta.endsWith('.hayAlbergue')) { const bloque = $(`[data-albergue="${ruta.split('.')[1]}"]`); if (bloque) bloque.hidden = !v; }
     const mHay = ruta.match(/^otras\.(\w+)\.hay$/);
     if (mHay) { const bloque = $(`[data-bloque="${mHay[1]}"]`); if (bloque) bloque.hidden = !v; }
+    const mRec = ruta.match(/^recursos\.(?:organismos\.(\w+)|(otro))\.hay$/);
+    if (mRec) { const bloque = $(`[data-bloque-rec="${mRec[1] || mRec[2]}"]`); if (bloque) bloque.hidden = !v; }
     const mNec = ruta.match(/^necesidades\.(\d+)\.(\w+)$/);
     if (mNec) {
       const i = +mNec[1];
@@ -331,9 +403,21 @@
       else if (el.type === 'number') el.value = (v === 0 || v == null) ? '' : v;
       else el.value = v == null ? '' : v;
     });
+    if (pantalla === 'elaborador') {
+      $$('input[name="nivel"]').forEach(r => { r.checked = r.value === informe.elaborador.nivel; });
+      $('#campo-provincia-deleg').hidden = informe.elaborador.nivel !== 'provincial';
+    }
     if (pantalla === 'donde') {
+      const comunal = informe.elaborador.nivel === 'comunal' || !informe.elaborador.nivel;
+      $('#bloque-comuna-unica').hidden = !comunal;
+      $('#bloque-comunas-varias').hidden = comunal;
+      if (comunal) $('#in-comuna').value = informe.identificacion.comunas[0] || '';
+      else { renderListaComunas(); $$('input[name="comuna-multi"]').forEach(x => { x.checked = informe.identificacion.comunas.includes(x.value); }); }
       $('#in-provincia').textContent = informe.identificacion.provincia || '—';
       $$('input[name="fuente"]').forEach(x => { x.checked = (informe.identificacion.fuentes || []).includes(x.value); });
+      const l = informe.lugar;
+      $('#gps-estado').textContent = l.origen === 'gps' ? `Posición tomada del teléfono${l.precision ? ` con precisión de ±${l.precision} m` : ''}.`
+        : (l.lat || l.lon) ? 'Coordenadas escritas a mano.' : 'El GPS funciona sin señal, pero al aire libre y puede tardar unos segundos. El teléfono te pedirá permiso la primera vez.';
     }
     if (pantalla === 'evento') {
       $$('input[name="tipo-evento"]').forEach(r => { r.checked = r.value === informe.evento.tipo; });
@@ -347,16 +431,32 @@
       DATOS.categorias_personas.forEach(c => { const b = $(`[data-bloque="${c.id}"]`); if (b) b.hidden = !informe.otras[c.id].hay; });
       actualizarResumenPersonas();
     }
-    if (pantalla === 'necesidad') {
-      $$('input[name="hay-necesidad"]').forEach(r => {
-        r.checked = (informe.hayNecesidad === true && r.value === 'si') || (informe.hayNecesidad === false && r.value === 'no');
-      });
-      $('#bloque-necesidad').hidden = informe.hayNecesidad !== true;
-      informe.necesidades.forEach((nec, i) => {
-        const otro = $(`[data-otro="${i}"]`); if (otro) otro.hidden = nec.elemento !== 'otro';
-        actualizarSugerencia(i);
-      });
+    if (pantalla === 'recursos') {
+      (DATOS.organismos_respuesta || []).forEach(o => { const b = $(`[data-bloque-rec="${o.id}"]`); if (b) b.hidden = !informe.recursos.organismos[o.id].hay; });
+      const bo = $('[data-bloque-rec="otro"]'); if (bo) bo.hidden = !informe.recursos.otro.hay;
     }
+    if (pantalla === 'necesidad') {
+      $$('input[name="hay-necesidad"]').forEach(r => { r.checked = (informe.hayNecesidad === true && r.value === 'si') || (informe.hayNecesidad === false && r.value === 'no'); });
+      $('#bloque-necesidad').hidden = informe.hayNecesidad !== true;
+      informe.necesidades.forEach((nec, i) => { const otro = $(`[data-otro="${i}"]`); if (otro) otro.hidden = nec.elemento !== 'otro'; actualizarSugerencia(i); });
+    }
+  }
+
+  function usarGPS() {
+    if (!navigator.geolocation) { toast('Este dispositivo no entrega ubicación.'); return; }
+    const est = $('#gps-estado');
+    est.textContent = 'Buscando la posición del teléfono… puede tardar unos segundos.';
+    navigator.geolocation.getCurrentPosition(pos => {
+      informe.lugar.lat = pos.coords.latitude.toFixed(5);
+      informe.lugar.lon = pos.coords.longitude.toFixed(5);
+      informe.lugar.precision = Math.round(pos.coords.accuracy);
+      informe.lugar.origen = 'gps';
+      guardar(); cargarValores();
+      toast('Posición tomada del teléfono.');
+    }, err => {
+      const motivo = err.code === 1 ? 'permiso denegado' : err.code === 2 ? 'sin señal de GPS' : 'tiempo agotado';
+      est.textContent = `No se pudo obtener la posición (${motivo}). Puedes escribir las coordenadas a mano o dejarlas vacías.`;
+    }, { enableHighAccuracy: true, timeout: 25000, maximumAge: 60000 });
   }
 
   function actualizarResumenVivo() {
@@ -375,19 +475,17 @@
   }
   function ocupantesOtras(cat) { const o = informe.otras && informe.otras[cat]; return o && o.hay ? ocupantes(o) : 0; }
 
+  const NOMBRES = { afectadas: 'Afectadas', aisladas: 'Aisladas', albergadas: 'Albergadas', damnificadas: 'Damnificadas', damnificadas_laborales: 'Damnificadas laborales', desaparecidas: 'Desaparecidas', evacuadas: 'Evacuadas', extraviadas: 'Extraviadas', fallecidas: 'Fallecidas', lesionadas: 'Lesionadas' };
+
   function actualizarResumenPersonas() {
     if (!informe) return;
     const t = Reglas.totales(informe);
-    const nombres = { afectadas: 'Afectadas', aisladas: 'Aisladas', albergadas: 'Albergadas', damnificadas: 'Damnificadas', damnificadas_laborales: 'Damnificadas laborales', desaparecidas: 'Desaparecidas', evacuadas: 'Evacuadas', extraviadas: 'Extraviadas', fallecidas: 'Fallecidas', lesionadas: 'Lesionadas' };
-    const filas = Reglas.CATEGORIAS.filter(k => t[k].total > 0).map(k => `<tr><td>${nombres[k]}</td><td>${t[k].total}</td></tr>`).join('');
+    const filas = Reglas.CATEGORIAS.filter(k => t[k].total > 0).map(k => `<tr><td>${NOMBRES[k]}</td><td>${t[k].total}</td></tr>`).join('');
     $('#resumen-personas').innerHTML = `
       <table>${filas || '<tr><td>Sin personas registradas todavía</td><td></td></tr>'}</table>
       <div class="fila"><span>Personas únicas (aprox.)</span><strong>${t.personas}</strong></div>
       <p class="nota">Incluye a las personas de las viviendas dañadas. Las albergadas no se suman porque ya están contadas como damnificadas, evacuadas o aisladas.</p>`;
-    DATOS.categorias_personas.forEach(c => {
-      const el = $(`[data-total-cat="${c.id}"]`);
-      if (el) el.textContent = `${ocupantesOtras(c.id)} persona(s) en esta categoría`;
-    });
+    DATOS.categorias_personas.forEach(c => { const el = $(`[data-total-cat="${c.id}"]`); if (el) el.textContent = `${ocupantesOtras(c.id)} persona(s) en esta categoría`; });
   }
 
   function actualizarSugerencia(i) {
@@ -469,15 +567,14 @@
       const o = h.como_resolver[+b.dataset.i];
       if (o.accion === 'justificar') { $('#dlg-justificar').hidden = false; $('#dlg-motivo').focus(); return; }
       if (o.accion === 'ajustar_cantidad') {
-        const i = h.datos.indice || 0;
-        informe.necesidades[i].cantidad = h.datos.tope;
+        informe.necesidades[h.datos.indice || 0].cantidad = h.datos.tope;
         guardar(); dlg.close(); cargarValores();
         toast(`Cantidad ajustada a ${h.datos.tope}. Pulsa Siguiente para continuar.`);
         return;
       }
       if (o.accion === 'vaciar_ocupantes') {
         const v = informe.viviendas[h.datos.condicion_id];
-        if (v) { Object.assign(v, filaVacia(), { hayAlbergue: false, albergue: filaVacia() }); }
+        if (v) Object.assign(v, filaVacia(), { hayAlbergue: false, albergue: filaVacia() });
         guardar(); dlg.close(); cargarValores();
         toast('Tarjeta en cero. Registra a esas personas en la pantalla siguiente.', 5000);
         siguiente();
@@ -498,33 +595,29 @@
   }
 
   // ---------- revisión ----------
-  function tituloRegla(clave) { const r = DATOS.reglas.find(x => x.id === clave.split(':')[0]); return r ? Reglas.plantilla(r.titulo, { numero: '' }).replace(/\s+/g, ' ').trim() : clave; }
-
   function renderRevision() {
+    actualizarProvincia(informe); actualizarResponsable(informe);
     const t = Reglas.totales(informe);
     const id = informe.identificacion, oc = informe.ocurrencia, ev = informe.evento;
-    const justif = Object.entries(informe.justificaciones || {}).filter(([, v]) => v && String(v).trim());
+    const S = Reglas.textosSecciones(informe, CONFIG);
     const hallazgos = Reglas.evaluar(informe, { todas: true });
-    const nombres = { afectadas: 'Afectadas', aisladas: 'Aisladas', albergadas: 'Albergadas', damnificadas: 'Damnificadas', damnificadas_laborales: 'Damnificadas laborales', desaparecidas: 'Desaparecidas', evacuadas: 'Evacuadas', extraviadas: 'Extraviadas', fallecidas: 'Fallecidas', lesionadas: 'Lesionadas' };
-    const fila = (k) => { const f = t[k]; return `<tr><td>${nombres[k]}</td><td>${f.adH}</td><td>${f.adM}</td><td>${f.nnaH}</td><td>${f.nnaM}</td><td class="total">${f.total}</td></tr>`; };
+    const fila = k => { const f = t[k]; return `<tr><td>${NOMBRES[k]}</td><td>${f.adH}</td><td>${f.adM}</td><td>${f.nnaH}</td><td>${f.nnaM}</td><td class="total">${f.total}</td></tr>`; };
     const filasPersonas = Reglas.CATEGORIAS.filter(k => t[k].total > 0 || ['afectadas', 'damnificadas', 'albergadas'].includes(k)).map(fila).join('');
     const editar = p => `<button type="button" class="enlace editar" data-accion="ir" data-pantalla="${p}">Editar</button>`;
-    const fuentes = Reglas.fuentesTexto(informe);
-    const necesidadesHtml = informe.hayNecesidad === true
-      ? informe.necesidades.map((nec, i) => {
-          const el = Reglas.elemento(nec.elemento);
-          return `<p><strong>${i + 1}. ${nec.cantidad} ${esc(el ? el.unidad : '')}</strong> de ${esc(nec.elemento === 'otro' ? nec.otroNombre : (el ? el.nombre : '—'))}<br><span class="ayuda">¿Para qué?: ${esc(nec.paraQue || '—')}</span></p>`;
-        }).join('')
-      : informe.hayNecesidad === false ? '<p>Sin necesidades que no puedan cubrirse con recursos locales.</p>' : '<p class="vacio">sin indicar</p>';
+    const lista = items => items.length ? items.map(x => `<p>${esc(x)}</p>`).join('') : '<p class="vacio">sin indicar</p>';
+    const elab = elaboradorDe(informe);
     const avisoNumero = informe.amplia
       ? `<p class="aviso"><strong>Ampliación de ${esc(informe.amplia.de)}</strong> (del ${esc(fmtFecha(informe.amplia.fecha))} ${esc(informe.amplia.hora || '')}). Número previsto: <strong>${esc(numeroPrevisto())}</strong>. El PDF contiene el estado completo y actualizado del evento: revisa y corrige lo que cambió.</p>`
-      : `<p class="aviso">Número previsto: <strong>${esc(numeroPrevisto())}</strong>. Revisa cada sección. Al firmar, la app vuelve a comprobar todas las reglas, asigna el número y genera el PDF en este dispositivo.</p>`;
+      : `<p class="aviso">Número previsto: <strong>${esc(numeroPrevisto())}</strong>. Revisa cada sección. Al firmar, la app vuelve a comprobar todas las reglas, asigna el número y genera el PDF en este dispositivo. Si hay mucho texto, la hoja se alarga hacia abajo.</p>`;
     $('#revision-contenido').innerHTML = `
       ${avisoNumero}
       ${hallazgos.length ? `<p class="etiqueta roja">Hay ${hallazgos.length} punto(s) por resolver antes de firmar</p>` : '<p class="etiqueta verde">Todas las reglas cuadran</p>'}
+      <section class="rev-seccion"><h3>Quién elabora ${editar('elaborador')}</h3>
+        <p>${elab ? esc(elab.nombre) + ' · ' + esc(elab.nivel) : '<span class="vacio">sin indicar</span>'}</p></section>
       <section class="rev-seccion"><h3>1. Identificación ${editar('donde')}</h3>
-        <p>${esc(id.region)} · Provincia de ${esc(id.provincia || '—')} · Comuna de <strong>${esc(id.comuna || '—')}</strong></p>
-        <p>Fuente: ${fuentes ? esc(fuentes) : '<span class="vacio">sin indicar</span>'}${id.contacto ? ' · Contacto: ' + esc(id.contacto) : ''}</p></section>
+        <p>${esc(id.region)} · Provincia: ${esc(id.provincia || '—')} · Comuna(s): <strong>${esc(Reglas.comunasTexto(informe) || '—')}</strong></p>
+        <p>Fuente: ${Reglas.fuentesTexto(informe) ? esc(Reglas.fuentesTexto(informe)) : '<span class="vacio">sin indicar</span>'}${id.contacto ? ' · Contacto: ' + esc(id.contacto) : ''}</p>
+        <p>${Reglas.lugarTexto(informe) ? esc(Reglas.lugarTexto(informe)) + ' <span class="ayuda">(se imprime en Observaciones)</span>' : '<span class="vacio">Sin lugar exacto ni coordenadas</span>'}</p></section>
       <section class="rev-seccion"><h3>2. Ocurrencia ${editar('donde')}</h3><p>${esc(fmtFecha(oc.fecha) || '—')} a las ${esc(oc.hora || '—')}</p></section>
       <section class="rev-seccion"><h3>3. Tipo de evento ${editar('evento')}</h3>
         <p>${ev.tipo ? esc(tipoTexto(informe)) : '<span class="vacio">sin indicar</span>'}</p></section>
@@ -535,14 +628,12 @@
       <section class="rev-seccion"><h3>5. Daño a viviendas ${editar('viviendas')}</h3>
         ${DATOS.condiciones_vivienda.map(c => `<p>${esc(c.nivel_largo)}: <strong>${t.viviendas[c.id]}</strong></p>`).join('')}
         <p>Total de viviendas dañadas: <strong>${t.viviendas_danadas}</strong></p></section>
-      <section class="rev-seccion"><h3>6 y 7. Decisiones y recursos</h3><p class="vacio">No se capturan en esta demo del Sprint 1. Quedan en blanco en el PDF.</p></section>
-      <section class="rev-seccion"><h3>8. Evaluación de necesidades ${editar('necesidad')}</h3>${necesidadesHtml}</section>
-      <section class="rev-seccion"><h3>9. Observaciones</h3>
-        ${informe.amplia ? `<p>Ampliación del Informe Alfa ${esc(informe.amplia.de)}.</p>` : ''}
-        ${justif.length ? justif.map(([k, v]) => `<p><strong>${esc(tituloRegla(k))}:</strong> ${esc(v)}</p>`).join('') : '<p class="vacio">Sin justificaciones registradas.</p>'}
-        <p class="ayuda">Se agrega la leyenda de informe de ejercicio.</p></section>
+      <section class="rev-seccion"><h3>6. Decisiones ${editar('decisiones')}</h3>${lista(S.decisiones)}</section>
+      <section class="rev-seccion"><h3>7. Recursos involucrados ${editar('recursos')}</h3>${lista(S.recursos)}</section>
+      <section class="rev-seccion"><h3>8. Evaluación de necesidades ${editar('necesidad')}</h3>${lista(S.necesidades)}</section>
+      <section class="rev-seccion"><h3>9. Observaciones</h3>${lista(S.observaciones)}</section>
       <section class="rev-seccion"><h3>10. Responsable del informe</h3>
-        <p>${esc(informe.responsable.nombre)} · ${esc(informe.responsable.cargo)} · ${esc(informe.responsable.institucion)}</p>
+        <p>${esc(informe.responsable.nombre)}${informe.responsable.cargo ? ' · ' + esc(informe.responsable.cargo) : ''}${informe.responsable.institucion ? ' · ' + esc(informe.responsable.institucion) : ''}</p>
         <p class="ayuda">Identidad ficticia de ejercicio. La fecha y la hora de elaboración se registran al firmar. Se estampan la firma y el timbre de ejercicio y la marca de agua “${esc(CONFIG.marca_agua)}”.</p></section>`;
   }
 
@@ -558,11 +649,13 @@
     const img = await cargarImagenes();
     return AlfaPDF.generar(inf, {
       PDFLib: window.PDFLib, config: CONFIG, datos: DATOS, plantilla: PLANTILLA,
-      totales: Reglas.totales(inf), firmaPng: img.firmaPng, timbrePng: img.timbrePng
+      totales: Reglas.totales(inf), secciones: Reglas.textosSecciones(inf, CONFIG),
+      firmaPng: img.firmaPng, timbrePng: img.timbrePng
     });
   }
 
   async function firmar() {
+    actualizarProvincia(informe); actualizarResponsable(informe);
     const hallazgos = Reglas.evaluar(informe, { todas: true });
     if (hallazgos.length) { mostrarBloqueo(hallazgos[0]); return; }
     const btn = $('#btn-siguiente');
@@ -583,11 +676,13 @@
   }
 
   function asunto() {
-    return `${CONFIG.destinatario.asunto_prefijo} Informe Alfa ${informe.numero} – ${informe.identificacion.comuna || 'sin comuna'} – ${tipoTexto(informe)}`;
+    return `${CONFIG.destinatario.asunto_prefijo} Informe Alfa ${informe.numero} – ${Reglas.comunasTexto(informe) || 'sin comuna'} – ${tipoTexto(informe)}`;
   }
   function nombreArchivo() {
-    const comuna = (informe.identificacion.comuna || 'comuna').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_');
-    return `Informe_Alfa_${informe.numero}_${comuna}_${informe.elaboracion.fecha}.pdf`;
+    const comunas = informe.identificacion.comunas || [];
+    const base = comunas.length === 1 ? comunas[0] : (comunas.length > 1 ? 'varias_comunas' : 'comuna');
+    const limpio = base.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_');
+    return `Informe_Alfa_${informe.numero}_${limpio}_${informe.elaboracion.fecha}.pdf`;
   }
   function blobPdf() { return new Blob([ultimoPdf], { type: 'application/pdf' }); }
 
@@ -595,7 +690,7 @@
     const d = CONFIG.destinatario;
     const puedeCompartir = !!(navigator.share && navigator.canShare);
     $('#listo-contenido').innerHTML = `
-      <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> generado en este dispositivo${informe.identificacion.comuna ? ', comuna de ' + esc(informe.identificacion.comuna) : ''}.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
+      <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> generado en este dispositivo${Reglas.comunasTexto(informe) ? ', ' + esc(Reglas.comunasTexto(informe)) : ''}.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
       <div class="acciones-fila">
         <button type="button" class="primario" data-accion="compartir">Compartir el PDF por correo</button>
       </div>
@@ -615,7 +710,7 @@
         <button type="button" class="enlace" data-accion="copiar" data-texto="${esc(d.correo)}">Copiar la dirección</button></div>
       <div class="correo-caja">Asunto sugerido:<br><code>${esc(asunto())}</code><br>
         <button type="button" class="enlace" data-accion="copiar" data-texto="${esc(asunto())}">Copiar el asunto</button></div>
-      <p class="ayuda">Antes de enviar un ejercicio a la casilla real, avisa al turno de la URAT (riesgo R-14 de la arquitectura).</p>
+      <p class="ayuda">El destinatario configurado es un correo de prueba. Si alguna vez se envía un ejercicio a la casilla real de la URAT, avisa antes al turno (riesgo R-14 de la arquitectura).</p>
       <div class="acciones-inicio">
         <button type="button" class="secundario grande" data-accion="otro">Hacer otro informe de ejercicio</button>
         <button type="button" class="enlace" data-accion="inicio">Volver al inicio</button>
@@ -629,7 +724,7 @@
     const cuerpo = [
       d.saludo || 'Estimado(a):',
       '',
-      `Adjunto el Informe Alfa ${informe.numero} de EJERCICIO (sin valor oficial), comuna de ${informe.identificacion.comuna}, evento: ${tipoTexto(informe)}, inicio el ${fmtFecha(informe.ocurrencia.fecha)} a las ${informe.ocurrencia.hora}.`,
+      `Adjunto el Informe Alfa ${informe.numero} de EJERCICIO (sin valor oficial), ${Reglas.comunasTexto(informe) || 'sin comuna'}, evento: ${tipoTexto(informe)}, inicio el ${fmtFecha(informe.ocurrencia.fecha)} a las ${informe.ocurrencia.hora}.`,
       `Totales: ${t.afectadas.total} afectadas, ${t.damnificadas.total} damnificadas, ${t.albergadas.total} albergadas; ${t.viviendas_danadas} viviendas dañadas.`,
       '',
       `Archivo adjunto: ${nombreArchivo()}`,
@@ -646,14 +741,11 @@
     if (!ultimoPdf) { toast('Primero genera el PDF.'); return; }
     const d = CONFIG.destinatario;
     const archivo = new File([ultimoPdf], nombreArchivo(), { type: 'application/pdf' });
-    const texto = `Para: ${d.correo}
-${asunto()}. Documento de ejercicio, sin valor oficial.`;
+    const texto = `Para: ${d.correo}\n${asunto()}. Documento de ejercicio, sin valor oficial.`;
     const datos = { files: [archivo], title: asunto(), text: texto };
     if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
       let copiado = false;
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(d.correo); copiado = true; }
-      } catch (e) { /* sin acceso al portapapeles: la dirección va igual en el texto */ }
+      try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(d.correo); copiado = true; } } catch (e) { /* la dirección va igual en el texto */ }
       toast(copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en la primera línea del texto.', 8000);
       try { await navigator.share(datos); }
       catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir: ' + e.message, 6000); }
@@ -698,7 +790,7 @@ ${asunto()}. Documento de ejercicio, sin valor oficial.`;
     informe = copia;
     guardar();
     toast(`Ampliación de ${h.numero}: actualiza solo lo que cambió.`, 5000);
-    mostrar('donde');
+    mostrar('elaborador');
   }
 
   async function accionDinamica(accion, ds) {
@@ -709,8 +801,7 @@ ${asunto()}. Documento de ejercicio, sin valor oficial.`;
       case 'descargar': descargar(); break;
       case 'ver': ver(); break;
       case 'copiar': await copiar(ds.texto); break;
-      case 'otro':
-        informe = nuevoInforme(); guardar(); mostrar('donde'); break;
+      case 'otro': informe = nuevoInforme(); guardar(); mostrar('elaborador'); break;
       case 'inicio': mostrar('inicio'); break;
       case 'ampliar': ampliar(+ds.i); break;
       case 'agregar-necesidad':
@@ -746,10 +837,10 @@ ${asunto()}. Documento de ejercicio, sin valor oficial.`;
     $('#btn-continuar').hidden = !borrador;
     $('#btn-descartar').hidden = !borrador;
     if (borrador) {
-      const etiqueta = borrador.amplia ? `ampliación de ${borrador.amplia.de}` : (borrador.identificacion && borrador.identificacion.comuna ? borrador.identificacion.comuna : '');
+      const comunas = (borrador.identificacion && (borrador.identificacion.comunas || (borrador.identificacion.comuna ? [borrador.identificacion.comuna] : []))) || [];
+      const etiqueta = borrador.amplia ? `ampliación de ${borrador.amplia.de}` : comunas.join(', ');
       $('#btn-continuar').textContent = 'Continuar el borrador guardado' + (etiqueta ? ` (${etiqueta})` : '');
     }
-
     const instalada = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
     const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     $('#instalacion').hidden = false;
@@ -760,12 +851,14 @@ ${asunto()}. Documento de ejercicio, sin valor oficial.`;
 
     const hist = Almacen.leerHistorial();
     $('#historial').hidden = hist.length === 0;
-    $('#lista-historial').innerHTML = hist.map((h, i) =>
-      `<li><span><strong>${esc(h.numero)}</strong> · ${esc(h.identificacion.comuna || '')} · ${esc(fmtFecha(h.elaboracion && h.elaboracion.fecha))} ${esc(h.elaboracion && h.elaboracion.hora || '')}</span>
+    $('#lista-historial').innerHTML = hist.map((h, i) => {
+      const comunas = (h.identificacion.comunas || (h.identificacion.comuna ? [h.identificacion.comuna] : [])).join(', ');
+      return `<li><span><strong>${esc(h.numero)}</strong> · ${esc(comunas)} · ${esc(fmtFecha(h.elaboracion && h.elaboracion.fecha))} ${esc(h.elaboracion && h.elaboracion.hora || '')}</span>
        <span class="acciones-historial">
          <button type="button" class="secundario" data-accion="ampliar" data-i="${i}">Ampliar</button>
          <button type="button" class="secundario" data-accion="reabrir" data-i="${i}">Compartir</button>
-       </span></li>`).join('');
+       </span></li>`;
+    }).join('');
   }
 
   async function instalar() {
@@ -791,9 +884,7 @@ ${asunto()}. Documento de ejercicio, sin valor oficial.`;
       reg.addEventListener('updatefound', () => {
         const nuevo = reg.installing;
         if (!nuevo) return;
-        nuevo.addEventListener('statechange', () => {
-          if (nuevo.state === 'installed' && navigator.serviceWorker.controller) avisar();
-        });
+        nuevo.addEventListener('statechange', () => { if (nuevo.state === 'installed' && navigator.serviceWorker.controller) avisar(); });
       });
     }).catch(e => console.warn('Service worker no registrado:', e));
   }

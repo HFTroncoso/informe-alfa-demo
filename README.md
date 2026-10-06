@@ -16,12 +16,12 @@ No contiene datos reales de personas ni de emergencias.
 | `css/estilos.css` | Estilos pensados para teléfono |
 | `js/app.js` | Flujo de pantallas, borradores, firma, compartir y descargar |
 | `js/reglas.js` | Motor de reglas: totales, sugerencias de cantidad y bloqueos |
-| `js/pdf.js` | Generador del PDF sobre la disposición oficial, con pdf-lib |
+| `js/pdf.js` | Generador del PDF: la parte superior se dibuja desde la plantilla y las secciones 6 a 10 con altura variable, con pdf-lib |
 | `js/almacen.js` | Guardado local en el teléfono (borrador, correlativo EJ, historial) |
 | `sw.js` | Service worker: precarga todos los archivos para funcionar sin conexión |
 | `manifest.json` | Datos de instalación (nombre, íconos, colores) |
-| `datos/reglas.json` | Catálogo de elementos del IT-LOG-01, condiciones de vivienda, tipos de evento, reglas y casos de solución. Versión provisoria |
-| `datos/config.json` | Configuración: destinatario, región y comunas, responsable de ejercicio |
+| `datos/reglas.json` | Catálogo de elementos del IT-LOG-01, condiciones de vivienda, categorías de personas, organismos de respuesta, tipos de evento, reglas y casos de solución. Versión provisoria |
+| `datos/config.json` | Configuración: destinatario de prueba, región y comunas, niveles de quien elabora, responsable de ejercicio |
 | `datos/plantilla_alfa.json` | Geometría del formato oficial (líneas, rótulos y posición de cada casilla), extraída del PDF de la REX 78 |
 | `lib/pdf-lib.min.js` | Biblioteca pdf-lib 1.17.1 (licencia MIT), guardada localmente para funcionar sin internet |
 | `img/` | Firma y timbre ficticios e íconos de la app, generados para la demo |
@@ -37,6 +37,7 @@ Sin paso de compilación y sin `node_modules`: se publica tal cual en cualquier 
 | demo-0.2.1 | 2026-10-05 | Seguridad: el destinatario pasa a un correo de prueba del responsable; la dirección real de la URAT no se publica en el repositorio público (R-16) |
 | demo-0.2.2 | 2026-10-05 | Corrección del service worker: la precarga pide cada archivo con la versión en la dirección y sin usar el caché HTTP, para no guardar copias antiguas al actualizar |
 | demo-0.2.3 | 2026-10-06 | "Compartir el PDF por correo" pasa a ser el botón principal: copia la dirección de destino y adjunta el PDF; el camino por enlace de correo queda como alternativa "sin adjunto" (prueba en teléfono, D-33) |
+| demo-0.3.0 | 2026-10-06 | Quién elabora (comunal, provincial, regional) con varias comunas; lugar de la emergencia con coordenadas escritas o del GPS, impreso en Observaciones; pantallas de Decisiones (sección 6) y Recursos involucrados (sección 7) con catálogo de organismos; PDF de altura variable para las secciones 6 a 10 |
 
 ## Probar en el computador
 
