@@ -44,6 +44,7 @@ Sin paso de compilación y sin `node_modules`: se publica tal cual en cualquier 
 | demo-0.2.2 | 2026-10-05 | Corrección del service worker: la precarga pide cada archivo con la versión en la dirección y sin usar el caché HTTP, para no guardar copias antiguas al actualizar |
 | demo-0.2.3 | 2026-10-06 | "Compartir el PDF por correo" pasa a ser el botón principal: copia la dirección de destino y adjunta el PDF; el camino por enlace de correo queda como alternativa "sin adjunto" (prueba en teléfono, D-33) |
 | demo-0.3.0 | 2026-10-06 | Quién elabora (comunal, provincial, regional) con varias comunas; lugar de la emergencia con coordenadas escritas o del GPS, impreso en Observaciones; pantallas de Decisiones (sección 6) y Recursos involucrados (sección 7) con catálogo de organismos; PDF de altura variable para las secciones 6 a 10 |
+| demo-0.3.1 | 2026-10-06 | Prueba en iPhone: el texto compartido lleva primero el asunto (el correo de iPhone toma la primera línea como asunto); línea "Seleccionado: …" en la pantalla del tipo de evento y tipo de evento en la pantalla final; el nivel regional pasa a ser la Delegación Presidencial Regional |
 
 ## Probar en el computador
 

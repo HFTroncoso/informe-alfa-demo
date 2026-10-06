@@ -252,3 +252,7 @@ button { font: inherit; cursor: pointer; }
 .bloque-recurso .fila2 .campo { margin-bottom: 8px; }
 #gps-estado { margin-top: -4px; }
 .etiqueta-fija + .lista-opciones { margin-top: 6px; }
+
+/* ---- Versión 0.3.1 ---- */
+.seleccion { position: sticky; bottom: 92px; background: var(--azul-oscuro); color: #fff; border-radius: var(--radio); padding: 12px 14px; margin-top: 12px; font-size: 1.05rem; box-shadow: 0 -2px 8px rgba(0,0,0,0.12); }
+.seleccion strong { color: var(--amarillo); }

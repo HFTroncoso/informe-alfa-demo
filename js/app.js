@@ -343,7 +343,7 @@
       return;
     }
     if (el.name === 'tipo-evento') {
-      if (el.checked) { informe.evento.tipo = el.value; $('#campo-otro').hidden = el.value !== 'OTRO'; guardar(); }
+      if (el.checked) { informe.evento.tipo = el.value; $('#campo-otro').hidden = el.value !== 'OTRO'; actualizarSeleccionEvento(); guardar(); }
       return;
     }
     if (el.name === 'hay-necesidad') {
@@ -377,6 +377,7 @@
     asignar(informe, ruta, v);
 
     if (ruta === 'elaborador.provincia') { informe.identificacion.comunas = []; actualizarProvincia(informe); actualizarResponsable(informe); }
+    if (ruta === 'evento.otro') actualizarSeleccionEvento();
     if (ruta === 'lugar.lat' || ruta === 'lugar.lon') { informe.lugar.origen = 'manual'; informe.lugar.precision = null; $('#gps-estado').textContent = 'Coordenadas escritas a mano.'; }
     if (ruta.endsWith('.hayAlbergue')) { const bloque = $(`[data-albergue="${ruta.split('.')[1]}"]`); if (bloque) bloque.hidden = !v; }
     const mHay = ruta.match(/^otras\.(\w+)\.hay$/);
@@ -422,6 +423,7 @@
     if (pantalla === 'evento') {
       $$('input[name="tipo-evento"]').forEach(r => { r.checked = r.value === informe.evento.tipo; });
       $('#campo-otro').hidden = informe.evento.tipo !== 'OTRO';
+      actualizarSeleccionEvento();
     }
     if (pantalla === 'viviendas') {
       DATOS.condiciones_vivienda.forEach(c => { const b = $(`[data-albergue="${c.id}"]`); if (b) b.hidden = !informe.viviendas[c.id].hayAlbergue; });
@@ -440,6 +442,11 @@
       $('#bloque-necesidad').hidden = informe.hayNecesidad !== true;
       informe.necesidades.forEach((nec, i) => { const otro = $(`[data-otro="${i}"]`); if (otro) otro.hidden = nec.elemento !== 'otro'; actualizarSugerencia(i); });
     }
+  }
+
+  function actualizarSeleccionEvento() {
+    const t = informe && informe.evento.tipo;
+    $('#evento-seleccionado').innerHTML = 'Seleccionado: <strong>' + (t ? esc(t === 'OTRO' ? 'Otro' + (informe.evento.otro ? ': ' + informe.evento.otro : '') : cap(t)) : 'ninguno todavía') + '</strong>';
   }
 
   function usarGPS() {
@@ -690,7 +697,7 @@
     const d = CONFIG.destinatario;
     const puedeCompartir = !!(navigator.share && navigator.canShare);
     $('#listo-contenido').innerHTML = `
-      <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> generado en este dispositivo${Reglas.comunasTexto(informe) ? ', ' + esc(Reglas.comunasTexto(informe)) : ''}.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
+      <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> · <strong>${esc(tipoTexto(informe))}</strong>${Reglas.comunasTexto(informe) ? ' · ' + esc(Reglas.comunasTexto(informe)) : ''}, generado en este dispositivo.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
       <div class="acciones-fila">
         <button type="button" class="primario" data-accion="compartir">Compartir el PDF por correo</button>
       </div>
@@ -701,7 +708,7 @@
       <ol class="pasos-correo">
         ${puedeCompartir
           ? `<li><strong>Compartir el PDF por correo</strong> copia la dirección de destino y abre el menú de compartir con el PDF ya adjunto. Elige tu aplicación de correo.</li>
-             <li>En el correo, mantén presionado el campo <strong>Para</strong> y pega la dirección. El asunto y el texto ya van escritos, y la dirección aparece también en la primera línea del texto.</li>`
+             <li>En el correo, mantén presionado el campo <strong>Para</strong> y pega la dirección. El asunto y el texto ya van escritos, y la dirección aparece también en el texto del correo.</li>`
           : `<li>Este navegador no ofrece el menú de compartir con archivos (es normal en un computador). Usa la alternativa siguiente.</li>`}
         <li>Alternativa sin adjunto: <button type="button" class="enlace" data-accion="correo">abrir el correo con el destinatario ya escrito</button>. El PDF se descarga y debes adjuntarlo tú desde Descargas: <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede enviar el correo ni adjuntar el archivo por sí sola.</li>
       </ol>
@@ -741,12 +748,12 @@
     if (!ultimoPdf) { toast('Primero genera el PDF.'); return; }
     const d = CONFIG.destinatario;
     const archivo = new File([ultimoPdf], nombreArchivo(), { type: 'application/pdf' });
-    const texto = `Para: ${d.correo}\n${asunto()}. Documento de ejercicio, sin valor oficial.`;
+    const texto = `${asunto()}\nDestinatario: ${d.correo}\nDocumento de ejercicio, sin valor oficial.`;
     const datos = { files: [archivo], title: asunto(), text: texto };
     if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
       let copiado = false;
       try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(d.correo); copiado = true; } } catch (e) { /* la dirección va igual en el texto */ }
-      toast(copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en la primera línea del texto.', 8000);
+      toast(copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en el texto del correo.', 8000);
       try { await navigator.share(datos); }
       catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir: ' + e.message, 6000); }
     } else {

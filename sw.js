@@ -1,6 +1,6 @@
 /* Service worker de la demo: precarga todos los archivos para que la app abra sin señal.
    Para publicar una versión nueva, cambiar VERSION. */
-const VERSION = 'alfa-demo-v0.3.0';
+const VERSION = 'alfa-demo-v0.3.1';
 const ARCHIVOS = [
   './',
   './index.html',
