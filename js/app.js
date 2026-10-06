@@ -1,6 +1,6 @@
-/* App Informe Alfa – demo Sprint 1 (versión 0.3).
-   Flujo de pantallas y enlace entre el motor de reglas (reglas.js), el generador de PDF (pdf.js)
-   y el almacén local (almacen.js). Sin servidor: todo ocurre en el teléfono. */
+/* App Informe Alfa – demo (versión 0.4).
+   Flujo de pantallas y enlace entre el motor de reglas (reglas.js), las credenciales (credencial.js),
+   el generador de PDF (pdf.js) y el almacén local (almacen.js). Sin servidor: todo ocurre en el teléfono. */
 (function () {
   'use strict';
 
@@ -26,7 +26,8 @@
   let pantalla = 'inicio';
   let ultimoPdf = null;
   let eventoInstalacion = null;
-  let imagenes = null;
+  let recursosPdf = null;     // fuentes, logo e imágenes ficticias, en memoria
+  let credResumen = null;     // resumen de la credencial cargada (sin imágenes ni PIN)
 
   const $ = (sel, raiz) => (raiz || document).querySelector(sel);
   const $$ = (sel, raiz) => Array.from((raiz || document).querySelectorAll(sel));
@@ -71,14 +72,15 @@
     DATOS.categorias_personas.forEach(c => { otras[c.id] = Object.assign(filaVacia(), { hay: false }); if (c.requiere_denuncia) otras[c.id].denuncia = false; });
     const organismos = {};
     (DATOS.organismos_respuesta || []).forEach(o => { organismos[o.id] = recursoVacio(); });
+    const cr = credResumen;
     return {
       version: CONFIG.version_app,
       modo: 'ejercicio',
       numero: null,
       amplia: null,
       creado: new Date().toISOString(),
-      elaborador: { nivel: '', provincia: '' },
-      identificacion: { region: CONFIG.region.nombre, provincia: '', comunas: [], fuentes: [], fuenteOtra: '', contacto: '' },
+      elaborador: cr ? { nivel: cr.nivel, provincia: cr.provincia || '' } : { nivel: '', provincia: '' },
+      identificacion: { region: CONFIG.region.nombre, provincia: '', comunas: cr && cr.nivel === 'comunal' ? cr.comunas.slice(0, 1) : [], fuentes: [], fuenteOtra: '', contacto: '' },
       lugar: { descripcion: '', lat: '', lon: '', precision: null, origen: '' },
       ocurrencia: { fecha: hoyISO(), hora: ahoraHHMM() },
       evento: { tipo: '', otro: '' },
@@ -89,7 +91,8 @@
       hayNecesidad: null,
       necesidades: [necesidadVacia()],
       justificaciones: {},
-      responsable: { nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' },
+      responsable: cr ? { nombre: cr.nombre, cargo: cr.cargo, institucion: cr.institucion, credencial: cr.id } : { nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' },
+      firmante: null,
       elaboracion: null
     };
   }
@@ -129,7 +132,8 @@
     if (inf.hayNecesidad === undefined) inf.hayNecesidad = null;
     inf.justificaciones = inf.justificaciones || {};
     if (inf.amplia === undefined) inf.amplia = null;
-    inf.responsable = Object.assign({}, base.responsable, inf.responsable || {});
+    if (inf.firmante === undefined) inf.firmante = null;
+    inf.responsable = Object.assign({ nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' }, inf.responsable || {});
     actualizarProvincia(inf);
     actualizarResponsable(inf);
     return inf;
@@ -140,6 +144,7 @@
     inf.identificacion.provincia = provs.length === 1 ? provs[0] : (provs.length > 1 ? 'Varias' : '');
   }
   function actualizarResponsable(inf) {
+    if (inf.responsable && inf.responsable.credencial) return; // la identidad viene de la credencial
     const e = elaboradorDe(inf);
     if (!e) return;
     const comunas = inf.identificacion.comunas || [];
@@ -178,6 +183,8 @@
       return;
     }
     Reglas.cargar(DATOS);
+    const reg = Almacen.leerCredencial();
+    credResumen = reg && reg.resumen ? reg.resumen : null;
     $('#version-app').textContent = CONFIG.version_app;
     construirListas();
     enlazarEventos();
@@ -210,7 +217,8 @@
 
   function renderListaComunas() {
     const E = informe.elaborador;
-    const lista = E.nivel === 'provincial' ? CONFIG.comunas.filter(c => c.provincia === E.provincia) : CONFIG.comunas;
+    let lista = E.nivel === 'provincial' ? CONFIG.comunas.filter(c => c.provincia === E.provincia) : CONFIG.comunas;
+    if (credResumen && credResumen.comunas && credResumen.comunas.length) lista = lista.filter(c => credResumen.comunas.includes(c.comuna));
     const grupos = [...new Set(lista.map(c => c.provincia))];
     $('#lista-comunas').innerHTML = grupos.map(p => lista.filter(c => c.provincia === p).map(c =>
       `<label class="opcion"><input type="checkbox" name="comuna-multi" value="${esc(c.comuna)}"><span><strong>${esc(c.comuna)}</strong><small>Provincia de ${esc(c.provincia)}</small></span></label>`).join('')).join('');
@@ -320,6 +328,7 @@
     $('#dlg-cerrar').addEventListener('click', () => $('#dlg-bloqueo').close());
     $('#btn-instalar').addEventListener('click', instalar);
     $('#btn-gps').addEventListener('click', usarGPS);
+    $('#in-credencial').addEventListener('change', e => { const f = e.target.files[0]; if (f) cargarCredencialArchivo(f); e.target.value = ''; });
     window.addEventListener('online', estadoConexion);
     window.addEventListener('offline', estadoConexion);
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); eventoInstalacion = e; if (pantalla === 'inicio') renderInicio(); });
@@ -405,14 +414,20 @@
       else el.value = v == null ? '' : v;
     });
     if (pantalla === 'elaborador') {
-      $$('input[name="nivel"]').forEach(r => { r.checked = r.value === informe.elaborador.nivel; });
+      const fijo = !!(credResumen && informe.responsable && informe.responsable.credencial);
+      $$('input[name="nivel"]').forEach(r => { r.checked = r.value === informe.elaborador.nivel; r.disabled = fijo; });
       $('#campo-provincia-deleg').hidden = informe.elaborador.nivel !== 'provincial';
+      $('#in-provincia-deleg').disabled = fijo;
+      const nota = $('#nota-credencial-nivel');
+      nota.hidden = !fijo;
+      if (fijo) nota.innerHTML = `Según tu credencial: <strong>${esc(credResumen.institucion)}</strong>, ${esc(credResumen.cargo)}. El nivel lo fija la credencial; para informar por otra institución, carga otra credencial o quítala en el inicio.`;
     }
     if (pantalla === 'donde') {
       const comunal = informe.elaborador.nivel === 'comunal' || !informe.elaborador.nivel;
+      const fijo = !!(credResumen && informe.responsable && informe.responsable.credencial);
       $('#bloque-comuna-unica').hidden = !comunal;
       $('#bloque-comunas-varias').hidden = comunal;
-      if (comunal) $('#in-comuna').value = informe.identificacion.comunas[0] || '';
+      if (comunal) { $('#in-comuna').value = informe.identificacion.comunas[0] || ''; $('#in-comuna').disabled = fijo && credResumen.comunas.length === 1; }
       else { renderListaComunas(); $$('input[name="comuna-multi"]').forEach(x => { x.checked = informe.identificacion.comunas.includes(x.value); }); }
       $('#in-provincia').textContent = informe.identificacion.provincia || '—';
       $$('input[name="fuente"]').forEach(x => { x.checked = (informe.identificacion.fuentes || []).includes(x.value); });
@@ -601,6 +616,65 @@
     dlg.showModal();
   }
 
+  // ---------- credencial y PIN ----------
+  function pedirPin(op) {
+    return new Promise(resolve => {
+      const dlg = $('#dlg-pin');
+      const aceptar = $('#dlg-pin-aceptar'), cancelar = $('#dlg-pin-cancelar'), cerrar = $('#dlg-pin-cerrar');
+      const errorEl = $('#dlg-pin-error');
+      const min = (CONFIG.credenciales && CONFIG.credenciales.pin_minimo) || 4;
+      $('#dlg-pin-titulo').textContent = op.titulo || 'PIN';
+      $('#dlg-pin-texto').textContent = op.texto || '';
+      $('#dlg-pin-2-campo').hidden = !op.definir;
+      $('#dlg-pin-1').value = ''; $('#dlg-pin-2').value = ''; errorEl.hidden = true;
+      const terminar = v => { aceptar.onclick = cancelar.onclick = cerrar.onclick = null; dlg.oncancel = null; if (dlg.open) dlg.close(); resolve(v); };
+      const error = m => { errorEl.textContent = m; errorEl.hidden = false; };
+      aceptar.onclick = () => {
+        const p1 = $('#dlg-pin-1').value.trim();
+        if (!/^\d+$/.test(p1) || p1.length < min) { error(`El PIN debe tener al menos ${min} dígitos, solo números.`); return; }
+        if (op.definir && p1 !== $('#dlg-pin-2').value.trim()) { error('Los dos PIN no coinciden.'); return; }
+        terminar(p1);
+      };
+      cancelar.onclick = () => terminar(null);
+      cerrar.onclick = () => terminar(null);
+      dlg.oncancel = e => { e.preventDefault(); terminar(null); };
+      dlg.showModal();
+      $('#dlg-pin-1').focus();
+    });
+  }
+
+  async function cargarCredencialArchivo(archivo) {
+    try {
+      const cred = JSON.parse(await archivo.text());
+      if (!CONFIG.credenciales || !CONFIG.credenciales.clave_publica) { toast('Esta versión de la app no tiene clave pública para comprobar credenciales.', 6000); return; }
+      const r = await Credencial.verificar(cred, CONFIG.credenciales.clave_publica);
+      if (!r.valida) { toast('Credencial rechazada: ' + r.motivo, 8000); return; }
+      const pin = await pedirPin({ definir: true, titulo: 'Define un PIN para esta credencial', texto: `Credencial de ${cred.datos.nombre}, ${cred.datos.cargo}. El PIN protege tu firma en este teléfono y se pedirá cada vez que firmes.` });
+      if (!pin) { toast('Carga cancelada.'); return; }
+      const paquete = await Credencial.cifrar(JSON.stringify(cred), pin);
+      const resumen = Credencial.resumen(cred);
+      Almacen.guardarCredencial({ resumen, paquete, cargada: new Date().toISOString() });
+      credResumen = resumen;
+      toast('Credencial cargada. Desde ahora los informes nuevos se firman con ella.', 6000);
+      renderInicio();
+    } catch (e) {
+      toast('No se pudo leer la credencial: ' + e.message, 7000);
+    }
+  }
+
+  // Devuelve { cred } con la credencial descifrada, { cancelado: true } si el usuario desiste, o null si no hay credencial.
+  async function abrirCredencial(texto) {
+    const reg = Almacen.leerCredencial();
+    if (!reg) return null;
+    for (let intento = 0; intento < 3; intento++) {
+      const pin = await pedirPin({ definir: false, titulo: 'PIN de tu credencial', texto: texto || `Firmar como ${reg.resumen.nombre}. Escribe tu PIN para usar tu firma y tu timbre.` });
+      if (pin === null) return { cancelado: true };
+      try { return { cred: JSON.parse(await Credencial.descifrar(reg.paquete, pin)) }; }
+      catch (e) { toast(intento < 2 ? 'PIN incorrecto. Inténtalo de nuevo.' : 'PIN incorrecto.', 4000); }
+    }
+    return { cancelado: true };
+  }
+
   // ---------- revisión ----------
   function renderRevision() {
     actualizarProvincia(informe); actualizarResponsable(informe);
@@ -613,6 +687,7 @@
     const editar = p => `<button type="button" class="enlace editar" data-accion="ir" data-pantalla="${p}">Editar</button>`;
     const lista = items => items.length ? items.map(x => `<p>${esc(x)}</p>`).join('') : '<p class="vacio">sin indicar</p>';
     const elab = elaboradorDe(informe);
+    const conCred = !!(informe.responsable && informe.responsable.credencial && Almacen.leerCredencial());
     const avisoNumero = informe.amplia
       ? `<p class="aviso"><strong>Ampliación de ${esc(informe.amplia.de)}</strong> (del ${esc(fmtFecha(informe.amplia.fecha))} ${esc(informe.amplia.hora || '')}). Número previsto: <strong>${esc(numeroPrevisto())}</strong>. El PDF contiene el estado completo y actualizado del evento: revisa y corrige lo que cambió.</p>`
       : `<p class="aviso">Número previsto: <strong>${esc(numeroPrevisto())}</strong>. Revisa cada sección. Al firmar, la app vuelve a comprobar todas las reglas, asigna el número y genera el PDF en este dispositivo. Si hay mucho texto, la hoja se alarga hacia abajo.</p>`;
@@ -641,23 +716,36 @@
       <section class="rev-seccion"><h3>9. Observaciones</h3>${lista(S.observaciones)}</section>
       <section class="rev-seccion"><h3>10. Responsable del informe</h3>
         <p>${esc(informe.responsable.nombre)}${informe.responsable.cargo ? ' · ' + esc(informe.responsable.cargo) : ''}${informe.responsable.institucion ? ' · ' + esc(informe.responsable.institucion) : ''}</p>
-        <p class="ayuda">Identidad ficticia de ejercicio. La fecha y la hora de elaboración se registran al firmar. Se estampan la firma y el timbre de ejercicio y la marca de agua “${esc(CONFIG.marca_agua)}”.</p></section>`;
+        <p class="ayuda">${conCred
+          ? 'Al firmar se pedirá el PIN de tu credencial y se estamparán tu firma y tu timbre. La fecha y la hora de elaboración se registran al firmar. El PDF conserva la marca de agua “' + esc(CONFIG.marca_agua) + '” porque esta versión solo genera informes de ejercicio.'
+          : 'Identidad ficticia de ejercicio. La fecha y la hora de elaboración se registran al firmar. Se estampan la firma y el timbre de ejercicio y la marca de agua “' + esc(CONFIG.marca_agua) + '”.'}</p></section>`;
   }
 
   // ---------- firma y PDF ----------
-  async function cargarImagenes() {
-    if (imagenes) return imagenes;
-    const [firma, timbre] = await Promise.all([CONFIG.imagenes.firma, CONFIG.imagenes.timbre].map(u => fetch(u).then(r => { if (!r.ok) throw new Error('No se pudo leer ' + u); return r.arrayBuffer(); })));
-    imagenes = { firmaPng: new Uint8Array(firma), timbrePng: new Uint8Array(timbre) };
-    return imagenes;
+  async function recursosParaPdf() {
+    if (recursosPdf) return recursosPdf;
+    const leer = async u => { if (!u) return null; const r = await fetch(u); if (!r.ok) throw new Error('No se pudo leer ' + u); return new Uint8Array(await r.arrayBuffer()); };
+    const [firma, timbre, logo, regular, negrita] = await Promise.all([
+      leer(CONFIG.imagenes.firma), leer(CONFIG.imagenes.timbre), leer(CONFIG.imagenes.logo || null),
+      leer('lib/Carlito-Regular.ttf'), leer('lib/Carlito-Bold.ttf')
+    ]);
+    recursosPdf = { firmaPng: firma, timbrePng: timbre, logoPng: logo, fuentes: { regular, negrita } };
+    return recursosPdf;
   }
-  async function generarPdf(inf) {
+  async function generarPdf(inf, cred) {
     if (!window.PDFLib) throw new Error('la biblioteca de PDF no está cargada');
-    const img = await cargarImagenes();
+    const rec = await recursosParaPdf();
+    let firmaBytes = rec.firmaPng, timbreBytes = rec.timbrePng, combinada = false;
+    if (cred && cred.datos && cred.datos.firma_png) {
+      firmaBytes = Credencial.dataUrlABytes(cred.datos.firma_png);
+      timbreBytes = cred.datos.timbre_png ? Credencial.dataUrlABytes(cred.datos.timbre_png) : null;
+      combinada = !!cred.datos.combinada;
+    }
     return AlfaPDF.generar(inf, {
-      PDFLib: window.PDFLib, config: CONFIG, datos: DATOS, plantilla: PLANTILLA,
+      PDFLib: window.PDFLib, fontkit: window.fontkit || null, fuentes: rec.fuentes, logoPng: rec.logoPng,
+      config: CONFIG, datos: DATOS, plantilla: PLANTILLA,
       totales: Reglas.totales(inf), secciones: Reglas.textosSecciones(inf, CONFIG),
-      firmaPng: img.firmaPng, timbrePng: img.timbrePng
+      firmaPng: firmaBytes, timbrePng: timbreBytes, firmaCombinada: combinada
     });
   }
 
@@ -665,12 +753,22 @@
     actualizarProvincia(informe); actualizarResponsable(informe);
     const hallazgos = Reglas.evaluar(informe, { todas: true });
     if (hallazgos.length) { mostrarBloqueo(hallazgos[0]); return; }
+    let cred = null;
+    if (Almacen.leerCredencial()) {
+      const r = await abrirCredencial();
+      if (!r || r.cancelado) { toast('Firma cancelada: no se generó el informe.'); return; }
+      cred = r.cred;
+      informe.responsable = { nombre: cred.datos.nombre, cargo: cred.datos.cargo, institucion: cred.datos.institucion, credencial: cred.datos.id };
+      informe.firmante = { id: cred.datos.id, kid: cred.sello.kid, nombre: cred.datos.nombre, institucion: cred.datos.institucion };
+    } else {
+      informe.firmante = null;
+    }
     const btn = $('#btn-siguiente');
     btn.disabled = true; btn.textContent = 'Generando el PDF…';
     try {
       informe.elaboracion = { fecha: hoyISO(), hora: ahoraHHMM(), iso: new Date().toISOString() };
       if (!informe.numero) informe.numero = asignarNumero();
-      ultimoPdf = await generarPdf(informe);
+      ultimoPdf = await generarPdf(informe, cred);
       Almacen.guardarHistorial(informe);
       Almacen.borrarBorrador();
       mostrar('listo');
@@ -698,6 +796,7 @@
     const puedeCompartir = !!(navigator.share && navigator.canShare);
     $('#listo-contenido').innerHTML = `
       <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> · <strong>${esc(tipoTexto(informe))}</strong>${Reglas.comunasTexto(informe) ? ' · ' + esc(Reglas.comunasTexto(informe)) : ''}, generado en este dispositivo.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
+      <p class="cred-firmante">${informe.firmante ? 'Firmado con la credencial de ' + esc(informe.firmante.nombre) + ' (' + esc(informe.firmante.institucion || '') + ').' : 'Firmado con la identidad ficticia de ejercicio.'}</p>
       <div class="acciones-fila">
         <button type="button" class="primario" data-accion="compartir">Compartir el PDF por correo</button>
       </div>
@@ -736,7 +835,7 @@
       '',
       `Archivo adjunto: ${nombreArchivo()}`,
       '',
-      'Generado con la App Informe Alfa (demo Sprint 1).'
+      'Generado con la App Informe Alfa (demo).'
     ].join('\n');
     descargar();
     const url = `mailto:${d.correo}?subject=${encodeURIComponent(asunto())}&body=${encodeURIComponent(cuerpo)}`;
@@ -793,11 +892,32 @@
     copia.amplia = { de: h.numero, base: h.amplia && h.amplia.base ? h.amplia.base : h.numero, fecha: h.elaboracion && h.elaboracion.fecha, hora: h.elaboracion && h.elaboracion.hora };
     copia.numero = null;
     copia.elaboracion = null;
+    copia.firmante = null;
     copia.creado = new Date().toISOString();
     informe = copia;
     guardar();
     toast(`Ampliación de ${h.numero}: actualiza solo lo que cambió.`, 5000);
     mostrar('elaborador');
+  }
+
+  async function reabrir(i) {
+    const h = Almacen.leerHistorial()[i];
+    if (!h) return;
+    informe = normalizar(h);
+    let cred = null;
+    if (informe.firmante) {
+      const reg = Almacen.leerCredencial();
+      if (reg && reg.resumen.id === informe.firmante.id) {
+        const r = await abrirCredencial('Para volver a generar el PDF con tu firma, escribe tu PIN.');
+        if (!r || r.cancelado) { toast('Cancelado.'); return; }
+        cred = r.cred;
+      } else {
+        toast('La credencial con la que se firmó este informe no está en este teléfono; el PDF se genera con la firma de ejercicio.', 7000);
+      }
+    }
+    toast('Generando el PDF otra vez…');
+    try { ultimoPdf = await generarPdf(informe, cred); mostrar('listo'); }
+    catch (e) { toast('No se pudo generar el PDF: ' + e.message, 6000); }
   }
 
   async function accionDinamica(accion, ds) {
@@ -811,6 +931,13 @@
       case 'otro': informe = nuevoInforme(); guardar(); mostrar('elaborador'); break;
       case 'inicio': mostrar('inicio'); break;
       case 'ampliar': ampliar(+ds.i); break;
+      case 'reabrir': await reabrir(+ds.i); break;
+      case 'cargar-credencial': $('#in-credencial').click(); break;
+      case 'quitar-credencial':
+        if (confirm('¿Quitar la credencial de este teléfono? Los informes nuevos volverán a firmarse con la identidad ficticia de ejercicio.')) {
+          Almacen.borrarCredencial(); credResumen = null; renderInicio(); toast('Credencial quitada.');
+        }
+        break;
       case 'agregar-necesidad':
         informe.necesidades.push(necesidadVacia()); guardar(); renderNecesidades(); cargarValores();
         { const ultimo = $$('#lista-necesidades select').pop(); if (ultimo) ultimo.focus(); }
@@ -823,15 +950,6 @@
       case 'usar-sugerido': {
         const i = +ds.i; const s = Reglas.sugerencia(informe.necesidades[i].elemento, informe);
         if (s) { informe.necesidades[i].cantidad = s.tope; guardar(); cargarValores(); }
-        break;
-      }
-      case 'reabrir': {
-        const h = Almacen.leerHistorial()[+ds.i];
-        if (!h) return;
-        informe = normalizar(h);
-        toast('Generando el PDF otra vez…');
-        try { ultimoPdf = await generarPdf(informe); mostrar('listo'); }
-        catch (e) { toast('No se pudo generar el PDF: ' + e.message, 6000); }
         break;
       }
       default: break;
@@ -848,6 +966,15 @@
       const etiqueta = borrador.amplia ? `ampliación de ${borrador.amplia.de}` : comunas.join(', ');
       $('#btn-continuar').textContent = 'Continuar el borrador guardado' + (etiqueta ? ` (${etiqueta})` : '');
     }
+
+    const reg = Almacen.leerCredencial();
+    $('#credencial-estado').innerHTML = reg
+      ? `<div class="resumen-cred"><strong>${esc(reg.resumen.nombre)}</strong><br>${esc(reg.resumen.cargo)}<br>${esc(reg.resumen.institucion)}<br><small>Vence el ${esc(fmtFecha(reg.resumen.vence))} · credencial de ejercicio · protegida con PIN</small></div>
+         <div class="acciones-fila"><button type="button" class="secundario" data-accion="cargar-credencial">Cambiar credencial</button><button type="button" class="enlace" data-accion="quitar-credencial">Quitar</button></div>`
+      : `<p class="sin-cred">Sin credencial cargada: los informes se firman con la identidad y la firma ficticias de ejercicio.</p>
+         <div class="acciones-fila"><button type="button" class="primario" data-accion="cargar-credencial">Cargar credencial</button></div>
+         <p class="ayuda">La credencial es un archivo que emite la Dirección Regional con tu nombre, cargo, firma y timbre, sellado para que nadie lo altere. Llega a tu correo institucional: guárdalo en el teléfono y cárgalo aquí con un PIN. Para probar hay una credencial genérica de ejercicio: <a href="datos/credencial_ejercicio_demo.alfacred.json" download="credencial_ejercicio_demo.alfacred.json">descargar</a>.</p>`;
+
     const instalada = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
     const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     $('#instalacion').hidden = false;

@@ -1,6 +1,6 @@
 {
   "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino es un correo de PRUEBA indicado por el responsable del proyecto el 2026-10-05; la dirección real de la URAT no se publica en este repositorio público para no facilitar la suplantación de informes (riesgo R-16 de la arquitectura).",
-  "version_app": "demo-0.3.1",
+  "version_app": "demo-0.4.0",
   "modo": "ejercicio",
   "destinatario": {
     "nombre": "Correo de prueba del responsable del proyecto",
@@ -94,7 +94,8 @@
   },
   "imagenes": {
     "firma": "img/firma_ejercicio.png",
-    "timbre": "img/timbre_ejercicio.png"
+    "timbre": "img/timbre_ejercicio.png",
+    "logo": "img/logo_senapred.png"
   },
   "marca_agua": "EJERCICIO – SIN VALOR",
   "elaboradores": [
@@ -132,5 +133,18 @@
       "lon_min": -180,
       "lon_max": 180
     }
+  },
+  "credenciales": {
+    "emisor": "Dirección Regional de SENAPRED Magallanes y de la Antártica Chilena",
+    "kid": "5e363a402c75",
+    "clave_publica": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "EVE69Dmm30bKFY5IcAPxMLFhEeQakr84Dh0I6JKs0Bg",
+      "y": "OkotnquOgWPacj84tN_3_iibxHSPbW5bvpRUSUTPr8A"
+    },
+    "vigencia_meses": 12,
+    "pin_minimo": 4,
+    "nota": "Clave pública con la que la app comprueba el sello de cada credencial. La clave privada correspondiente la custodia la Dirección Regional fuera del repositorio. En esta versión todas las credenciales son de ejercicio: el PDF conserva la marca EJERCICIO y el número EJ."
   }
 }

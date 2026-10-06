@@ -4,3 +4,8 @@ desktop.ini
 .DS_Store
 *.log
 *.tmp
+# Nunca publicar claves privadas ni credenciales con firmas reales
+*privada*
+*.alfacred.json
+!datos/credencial_ejercicio_demo.alfacred.json
+credenciales/

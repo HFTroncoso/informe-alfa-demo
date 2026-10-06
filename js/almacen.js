@@ -5,7 +5,8 @@ const Almacen = (() => {
   const K = {
     borrador: 'alfaDemo.borrador',
     correlativo: 'alfaDemo.correlativoEJ',
-    historial: 'alfaDemo.historial'
+    historial: 'alfaDemo.historial',
+    credencial: 'alfaDemo.credencial'
   };
 
   function leer(clave, porDefecto) {
@@ -55,6 +56,11 @@ const Almacen = (() => {
       return escribir(K.historial, h.slice(0, 20));
     },
     leerHistorial() { return leer(K.historial, []); },
+
+    // Credencial del funcionario: un resumen legible y el archivo completo cifrado con su PIN
+    guardarCredencial(registro) { return escribir(K.credencial, registro); },
+    leerCredencial() { return leer(K.credencial, null); },
+    borrarCredencial() { try { localStorage.removeItem(K.credencial); } catch (e) { /* sin efecto */ } },
     borrarTodo() {
       Object.values(K).forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* sin efecto */ } });
     }

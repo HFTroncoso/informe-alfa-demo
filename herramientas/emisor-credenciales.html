@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emisor de credenciales – App Informe Alfa</title>
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { padding-bottom: 40px; }
+    main { max-width: 820px; }
+    .paso { background: #fff; border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px; margin-bottom: 16px; }
+    .paso h2 { color: var(--azul-oscuro); }
+    .estado { padding: 10px 12px; border-radius: 8px; background: #f3f4f6; font-size: 0.95rem; }
+    .estado.ok { background: var(--verde-suave); color: var(--verde); }
+    .estado.mal { background: var(--rojo-suave); color: var(--rojo); }
+    .previas { display: flex; gap: 16px; flex-wrap: wrap; }
+    .previa { border: 1px dashed var(--borde); border-radius: 8px; padding: 8px; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
+    .previa img { max-width: 260px; max-height: 160px; display: block; }
+    textarea.codigo { font-family: Consolas, monospace; font-size: 0.8rem; width: 100%; min-height: 90px; }
+    .fila3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    @media (max-width: 700px) { .fila3 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="cabecera">
+    <div class="cabecera-fila">
+      <span class="insignia">DIRECCIÓN REGIONAL</span>
+      <h1>Emisor de credenciales – App Informe Alfa</h1>
+    </div>
+  </header>
+  <main>
+    <p class="aviso">Esta herramienta corre completa en este computador: nada de lo que cargues aquí se envía a ningún servidor. La clave privada y las imágenes de firma solo viven en tus archivos. <strong>No guardes la clave privada dentro de la carpeta <code>app/</code> ni la envíes por correo.</strong></p>
+
+    <section class="paso">
+      <h2>1. Clave de la Dirección Regional</h2>
+      <p class="ayuda">La clave privada sella cada credencial. La app trae la clave pública correspondiente y con ella comprueba el sello sin conexión.</p>
+      <div class="acciones-fila">
+        <button type="button" class="primario" id="btn-cargar-clave">Cargar archivo de clave privada</button>
+        <button type="button" class="secundario" id="btn-generar-clave">Generar una clave nueva</button>
+      </div>
+      <input type="file" id="in-clave" accept=".json,application/json" hidden>
+      <p id="estado-clave" class="estado">Sin clave cargada.</p>
+      <div id="bloque-clave-nueva" hidden>
+        <p class="ayuda">Se descargó el archivo de la clave privada nueva. Guárdalo en un lugar seguro, fuera de <code>app/</code>. Para que la app acepte las credenciales selladas con esta clave, su clave pública debe reemplazar a la actual en <code>app/datos/config.json</code> (sección <code>credenciales</code>) y publicarse una versión nueva. Copia este texto y entrégaselo a quien mantiene la app:</p>
+        <textarea class="codigo" id="clave-publica-nueva" readonly></textarea>
+      </div>
+    </section>
+
+    <section class="paso">
+      <h2>2. Datos del funcionario</h2>
+      <div class="fila2">
+        <label class="campo">Nombre completo<input type="text" id="f-nombre" placeholder="Nombre y apellidos"></label>
+        <label class="campo">Correo institucional (opcional)<input type="email" id="f-correo" placeholder="nombre@municipalidad.cl"></label>
+      </div>
+      <p class="sub">Nivel de quien elabora</p>
+      <div id="f-niveles" class="lista-opciones compacta"></div>
+      <label class="campo" id="campo-f-provincia" hidden>Provincia<select id="f-provincia"></select></label>
+      <label class="campo" id="campo-f-comuna">Comuna<select id="f-comuna"></select></label>
+      <div id="campo-f-comunas" hidden>
+        <span class="etiqueta-fija">Comunas que puede informar (marca una o varias)</span>
+        <div id="f-comunas" class="lista-opciones compacta"></div>
+      </div>
+      <div class="fila2">
+        <label class="campo">Cargo<input type="text" id="f-cargo"></label>
+        <label class="campo">Institución<input type="text" id="f-institucion"></label>
+      </div>
+      <div class="fila2">
+        <label class="campo">Vence el<input type="date" id="f-vence"></label>
+        <div class="campo"><span class="etiqueta-fija">Modo</span><p class="valor-fijo">Ejercicio (en esta versión todas las credenciales son de ejercicio)</p></div>
+      </div>
+    </section>
+
+    <section class="paso">
+      <h2>3. Firma y timbre</h2>
+      <p class="ayuda">Fotos o escaneos en JPG o PNG. La herramienta quita el fondo blanco y recorta los bordes. Si la firma y el timbre vienen en una sola imagen, marca la casilla y carga solo esa.</p>
+      <label class="conmutador"><input type="checkbox" id="f-combinada"><span>Una sola imagen con firma y timbre juntos</span></label>
+      <label class="conmutador"><input type="checkbox" id="f-quitar-fondo" checked><span>Quitar el fondo blanco</span></label>
+      <div class="fila2">
+        <label class="campo">Imagen de la firma<input type="file" id="f-firma" accept="image/*"></label>
+        <label class="campo" id="campo-f-timbre">Imagen del timbre<input type="file" id="f-timbre" accept="image/*"></label>
+      </div>
+      <div class="previas">
+        <div class="previa" id="previa-firma" hidden><img alt="Vista previa de la firma"></div>
+        <div class="previa" id="previa-timbre" hidden><img alt="Vista previa del timbre"></div>
+      </div>
+    </section>
+
+    <section class="paso">
+      <h2>4. Emitir</h2>
+      <div class="acciones-fila">
+        <button type="button" class="primario" id="btn-emitir">Emitir y descargar la credencial</button>
+      </div>
+      <p id="estado-emision" class="estado" hidden></p>
+      <p class="ayuda">Envía el archivo descargado al correo institucional del funcionario. En la app, en el inicio, toca "Cargar credencial", elige el archivo y define un PIN. El archivo contiene la firma: no lo publiques ni lo reenvíes a terceros.</p>
+    </section>
+
+    <section class="paso">
+      <h2>5. Comprobar una credencial</h2>
+      <div class="acciones-fila">
+        <button type="button" class="secundario" id="btn-verificar">Cargar una credencial y comprobar su sello</button>
+      </div>
+      <input type="file" id="in-verificar" accept=".json,application/json" hidden>
+      <p id="estado-verificacion" class="estado" hidden></p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="../js/credencial.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const $ = s => document.querySelector(s);
+      const $$ = s => Array.from(document.querySelectorAll(s));
+      let CONFIG = null, clavePrivada = null, kid = null, firmaDataUrl = null, timbreDataUrl = null;
+
+      function toast(msg, ms) { const t = $('#toast'); t.textContent = msg; t.classList.add('visible'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('visible'), ms || 4000); }
+      function estado(sel, texto, clase) { const el = $(sel); el.hidden = false; el.textContent = texto; el.className = 'estado' + (clase ? ' ' + clase : ''); }
+      function descargar(nombre, texto) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
+        a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+      }
+      function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+      const provincias = () => [...new Set(CONFIG.comunas.map(c => c.provincia))];
+
+      async function iniciar() {
+        try { CONFIG = await (await fetch('../datos/config.json')).json(); }
+        catch (e) { estado('#estado-clave', 'No se pudo leer la configuración de la app. Abre esta herramienta desde la dirección publicada de la app o desde el servidor local, no como archivo suelto.', 'mal'); return; }
+        $('#f-niveles').innerHTML = CONFIG.elaboradores.map(e => `<label class="opcion"><input type="radio" name="f-nivel" value="${esc(e.id)}"><span><strong>${esc(e.nombre)}</strong><small>${esc(e.nivel)}</small></span></label>`).join('');
+        $('#f-provincia').innerHTML = '<option value="">Elige…</option>' + provincias().map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+        $('#f-comuna').innerHTML = '<option value="">Elige…</option>' + CONFIG.comunas.map(c => `<option value="${esc(c.comuna)}">${esc(c.comuna)} (${esc(c.provincia)})</option>`).join('');
+        const vence = new Date(); vence.setMonth(vence.getMonth() + (CONFIG.credenciales && CONFIG.credenciales.vigencia_meses || 12));
+        $('#f-vence').value = vence.toISOString().slice(0, 10);
+        document.addEventListener('change', alCambiar);
+        document.addEventListener('input', alCambiar);
+        $('#btn-cargar-clave').addEventListener('click', () => $('#in-clave').click());
+        $('#in-clave').addEventListener('change', cargarClave);
+        $('#btn-generar-clave').addEventListener('click', generarClave);
+        $('#f-firma').addEventListener('change', e => procesar(e.target.files[0], 'firma'));
+        $('#f-timbre').addEventListener('change', e => procesar(e.target.files[0], 'timbre'));
+        $('#btn-emitir').addEventListener('click', emitir);
+        $('#btn-verificar').addEventListener('click', () => $('#in-verificar').click());
+        $('#in-verificar').addEventListener('change', verificarArchivo);
+      }
+
+      function alCambiar(e) {
+        const el = e.target;
+        if (el.name === 'f-nivel') {
+          const nivel = el.value;
+          $('#campo-f-provincia').hidden = nivel !== 'provincial';
+          $('#campo-f-comuna').hidden = nivel !== 'comunal';
+          $('#campo-f-comunas').hidden = nivel === 'comunal';
+          if (nivel !== 'comunal') renderComunas();
+          sugerirCargo();
+        }
+        if (el.id === 'f-provincia') { renderComunas(); sugerirCargo(); }
+        if (el.id === 'f-comuna' || el.name === 'f-comunas') sugerirCargo();
+        if (el.id === 'f-combinada') { $('#campo-f-timbre').hidden = el.checked; $('#previa-timbre').hidden = el.checked || !timbreDataUrl; }
+      }
+      function renderComunas() {
+        const nivel = ($$('input[name="f-nivel"]:checked')[0] || {}).value;
+        const lista = nivel === 'provincial' ? CONFIG.comunas.filter(c => c.provincia === $('#f-provincia').value) : CONFIG.comunas;
+        $('#f-comunas').innerHTML = lista.map(c => `<label class="opcion"><input type="checkbox" name="f-comunas" value="${esc(c.comuna)}"><span><strong>${esc(c.comuna)}</strong><small>${esc(c.provincia)}</small></span></label>`).join('');
+      }
+      function comunasElegidas() {
+        const nivel = ($$('input[name="f-nivel"]:checked')[0] || {}).value;
+        if (nivel === 'comunal') return $('#f-comuna').value ? [$('#f-comuna').value] : [];
+        return $$('input[name="f-comunas"]:checked').map(x => x.value);
+      }
+      function sugerirCargo() {
+        const nivel = ($$('input[name="f-nivel"]:checked')[0] || {}).value;
+        const e = CONFIG.elaboradores.find(x => x.id === nivel);
+        if (!e) return;
+        const comunas = comunasElegidas();
+        const prov = $('#f-provincia').value || (comunas.length ? (CONFIG.comunas.find(c => c.comuna === comunas[0]) || {}).provincia : '') || 'la provincia';
+        if (!$('#f-cargo').dataset.editado) $('#f-cargo').value = e.cargo;
+        if (!$('#f-institucion').dataset.editado) $('#f-institucion').value = e.institucion.replace('{comuna}', comunas.length === 1 ? comunas[0] : 'varias comunas').replace('{provincia}', prov);
+      }
+      $('#f-cargo').addEventListener('input', e => { e.target.dataset.editado = '1'; });
+      $('#f-institucion').addEventListener('input', e => { e.target.dataset.editado = '1'; });
+
+      async function cargarClave(e) {
+        const archivo = e.target.files[0]; if (!archivo) return;
+        try {
+          const j = JSON.parse(await archivo.text());
+          const priv = j.clave_privada || j;
+          if (!priv.d || !priv.x || !priv.y) throw new Error('el archivo no contiene una clave privada');
+          clavePrivada = priv; kid = j.kid || await Credencial.kidDe(priv);
+          const coincide = CONFIG.credenciales && Credencial.mismaClave(priv, CONFIG.credenciales.clave_publica);
+          estado('#estado-clave', coincide ? `Clave cargada (identificador ${kid}). Coincide con la clave pública de la app: las credenciales serán aceptadas.` : `Clave cargada (identificador ${kid}), pero NO coincide con la clave pública de la app publicada: las credenciales que emitas no serán aceptadas hasta publicar una versión con esta clave.`, coincide ? 'ok' : 'mal');
+        } catch (err) { estado('#estado-clave', 'No se pudo leer la clave: ' + err.message, 'mal'); }
+        e.target.value = '';
+      }
+      async function generarClave() {
+        if (!confirm('Se generará una clave nueva. Las credenciales emitidas con la clave anterior dejarán de ser aceptadas cuando la app se publique con la clave nueva. ¿Continuar?')) return;
+        const par = await Credencial.generarParClaves();
+        clavePrivada = par.privada; kid = par.kid;
+        descargar(`clave_privada_direccion_regional_${par.kid}.json`, JSON.stringify({
+          _advertencia: 'CLAVE PRIVADA para sellar credenciales de la App Informe Alfa. Quien tenga este archivo puede emitir credenciales. No copiarlo a app/, no enviarlo por correo, no subirlo a repositorios.',
+          tipo: 'clave-privada-emisor-alfa', creada: new Date().toISOString(), titular: CONFIG.credenciales ? CONFIG.credenciales.emisor : 'Dirección Regional', kid: par.kid, clave_privada: par.privada, clave_publica: par.publica
+        }, null, 2));
+        $('#clave-publica-nueva').value = JSON.stringify({ kid: par.kid, clave_publica: { kty: par.publica.kty, crv: par.publica.crv, x: par.publica.x, y: par.publica.y } }, null, 2);
+        $('#bloque-clave-nueva').hidden = false;
+        estado('#estado-clave', `Clave nueva generada (identificador ${par.kid}). Todavía no coincide con la publicada en la app.`, 'mal');
+      }
+
+      // Imágenes: quitar fondo blanco, recortar bordes y limitar el tamaño
+      function procesar(archivo, tipo) {
+        if (!archivo) return;
+        const img = new Image();
+        img.onload = () => {
+          const maxAncho = 1000; const escala = Math.min(1, maxAncho / img.width);
+          const cv = document.createElement('canvas'); cv.width = Math.round(img.width * escala); cv.height = Math.round(img.height * escala);
+          const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+          const im = ctx.getImageData(0, 0, cv.width, cv.height); const px = im.data;
+          let minX = cv.width, minY = cv.height, maxX = 0, maxY = 0;
+          const quitar = $('#f-quitar-fondo').checked;
+          for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+            const i = (y * cv.width + x) * 4;
+            const lum = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114);
+            if (quitar) {
+              if (lum > 232) px[i + 3] = 0;
+              else if (lum > 200) px[i + 3] = Math.round(px[i + 3] * (232 - lum) / 32);
+            }
+            if (px[i + 3] > 20) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+          }
+          ctx.putImageData(im, 0, 0);
+          const margen = 6;
+          const rx = Math.max(0, minX - margen), ry = Math.max(0, minY - margen), rw = Math.min(cv.width, maxX + margen) - rx, rh = Math.min(cv.height, maxY + margen) - ry;
+          const salida = document.createElement('canvas');
+          if (rw > 0 && rh > 0) { salida.width = rw; salida.height = rh; salida.getContext('2d').drawImage(cv, rx, ry, rw, rh, 0, 0, rw, rh); }
+          else { salida.width = cv.width; salida.height = cv.height; salida.getContext('2d').drawImage(cv, 0, 0); }
+          const dataUrl = salida.toDataURL('image/png');
+          if (tipo === 'firma') firmaDataUrl = dataUrl; else timbreDataUrl = dataUrl;
+          const previa = $(tipo === 'firma' ? '#previa-firma' : '#previa-timbre'); previa.hidden = false; previa.querySelector('img').src = dataUrl;
+          URL.revokeObjectURL(img.src);
+        };
+        img.onerror = () => toast('No se pudo leer la imagen.');
+        img.src = URL.createObjectURL(archivo);
+      }
+
+      async function emitir() {
+        const faltan = [];
+        if (!clavePrivada) faltan.push('la clave privada');
+        const nombre = $('#f-nombre').value.trim(); if (!nombre) faltan.push('el nombre');
+        const nivel = ($$('input[name="f-nivel"]:checked')[0] || {}).value; if (!nivel) faltan.push('el nivel');
+        const comunas = comunasElegidas(); if (nivel && !comunas.length) faltan.push('la comuna o comunas');
+        if (nivel === 'provincial' && !$('#f-provincia').value) faltan.push('la provincia');
+        if (!$('#f-cargo').value.trim()) faltan.push('el cargo');
+        if (!$('#f-institucion').value.trim()) faltan.push('la institución');
+        if (!$('#f-vence').value) faltan.push('la fecha de vencimiento');
+        if (!firmaDataUrl) faltan.push('la imagen de la firma');
+        const combinada = $('#f-combinada').checked;
+        if (!combinada && !timbreDataUrl) faltan.push('la imagen del timbre (o marca "una sola imagen")');
+        if (faltan.length) { estado('#estado-emision', 'Falta: ' + faltan.join(', ') + '.', 'mal'); return; }
+        const datos = {
+          id: Credencial.uuid(), modo: 'ejercicio', nombre, cargo: $('#f-cargo').value.trim(), institucion: $('#f-institucion').value.trim(),
+          nivel, provincia: nivel === 'provincial' ? $('#f-provincia').value : (CONFIG.comunas.find(c => c.comuna === comunas[0]) || {}).provincia || '',
+          comunas, correo: $('#f-correo').value.trim(), emisor: CONFIG.credenciales.emisor,
+          emitida: new Date().toISOString().slice(0, 10), vence: $('#f-vence').value,
+          combinada, firma_png: firmaDataUrl, timbre_png: combinada ? null : timbreDataUrl
+        };
+        const sello = await Credencial.sellar(datos, clavePrivada, kid);
+        const cred = { version: 1, tipo: 'credencial-alfa', datos, sello };
+        const comprobacion = await Credencial.verificar(cred, CONFIG.credenciales.clave_publica);
+        const apellido = nombre.split(/\s+/).slice(-1)[0].normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
+        descargar(`credencial_${apellido}_${datos.emitida}.alfacred.json`, JSON.stringify(cred, null, 2));
+        estado('#estado-emision', `Credencial emitida para ${nombre} (${datos.cargo}), vence el ${datos.vence}. ${comprobacion.valida ? 'La app la aceptará.' : 'ATENCIÓN: ' + comprobacion.motivo}`, comprobacion.valida ? 'ok' : 'mal');
+      }
+
+      async function verificarArchivo(e) {
+        const archivo = e.target.files[0]; if (!archivo) return;
+        try {
+          const cred = JSON.parse(await archivo.text());
+          const r = await Credencial.verificar(cred, CONFIG.credenciales.clave_publica);
+          const d = cred.datos || {};
+          estado('#estado-verificacion', (r.valida ? 'VÁLIDA. ' : 'NO VÁLIDA. ') + r.motivo + (d.nombre ? ` Titular: ${d.nombre}, ${d.cargo || ''}, ${d.institucion || ''}; nivel ${d.nivel || ''}; vence ${d.vence || ''}.` : ''), r.valida ? 'ok' : 'mal');
+        } catch (err) { estado('#estado-verificacion', 'No se pudo leer el archivo: ' + err.message, 'mal'); }
+        e.target.value = '';
+      }
+
+      iniciar();
+    })();
+  </script>
+</body>
+</html>

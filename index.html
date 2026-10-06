@@ -43,6 +43,12 @@
         <button type="button" id="btn-descartar" class="enlace" hidden>Descartar el borrador</button>
       </div>
 
+      <section id="credencial" class="tarjeta">
+        <h2>Credencial de quien firma</h2>
+        <div id="credencial-estado"></div>
+        <input type="file" id="in-credencial" accept=".json,application/json" hidden>
+      </section>
+
       <section id="historial" class="historial" hidden>
         <h2>Informes de ejercicio generados en este teléfono</h2>
         <p class="ayuda">“Ampliar” abre una copia del informe para actualizar lo que cambió; al firmarla recibe el número con letra (EJ-1-A, EJ-1-B).</p>
@@ -76,6 +82,7 @@
     <section class="pantalla" data-pantalla="elaborador" hidden>
       <p class="pregunta">¿Quién elabora este informe?</p>
       <p class="ayuda">El Informe Alfa lo elaboran municipios, delegaciones provinciales y la Dirección Regional. Según el nivel cambian el responsable del informe y las comunas que puedes registrar.</p>
+      <p id="nota-credencial-nivel" class="aviso" hidden></p>
       <div id="lista-niveles" class="lista-opciones"></div>
       <label id="campo-provincia-deleg" class="campo" hidden>¿De qué provincia?
         <select id="in-provincia-deleg" data-ruta="elaborador.provincia"></select>
@@ -228,11 +235,30 @@
     <div id="dlg-contenido"></div>
   </dialog>
 
+  <dialog id="dlg-pin" class="dialogo" aria-labelledby="dlg-pin-titulo">
+    <button type="button" id="dlg-pin-cerrar" class="cerrar" aria-label="Cerrar">×</button>
+    <h2 id="dlg-pin-titulo">PIN</h2>
+    <p id="dlg-pin-texto"></p>
+    <label class="campo">PIN
+      <input type="password" id="dlg-pin-1" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8">
+    </label>
+    <label class="campo" id="dlg-pin-2-campo">Repite el PIN
+      <input type="password" id="dlg-pin-2" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8">
+    </label>
+    <p id="dlg-pin-error" class="error" hidden></p>
+    <div class="acciones-fila">
+      <button type="button" id="dlg-pin-cancelar" class="secundario">Cancelar</button>
+      <button type="button" id="dlg-pin-aceptar" class="primario">Aceptar</button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="lib/pdf-lib.min.js"></script>
+  <script src="lib/fontkit.umd.min.js"></script>
   <script src="js/almacen.js"></script>
   <script src="js/reglas.js"></script>
+  <script src="js/credencial.js"></script>
   <script src="js/pdf.js"></script>
   <script src="js/app.js"></script>
 </body>

@@ -256,3 +256,10 @@ button { font: inherit; cursor: pointer; }
 /* ---- Versión 0.3.1 ---- */
 .seleccion { position: sticky; bottom: 92px; background: var(--azul-oscuro); color: #fff; border-radius: var(--radio); padding: 12px 14px; margin-top: 12px; font-size: 1.05rem; box-shadow: 0 -2px 8px rgba(0,0,0,0.12); }
 .seleccion strong { color: var(--amarillo); }
+
+/* ---- Versión 0.4: credencial y PIN ---- */
+#credencial .resumen-cred { background: #eef2ff; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+#credencial .resumen-cred strong { color: var(--azul-oscuro); }
+#credencial .sin-cred { color: var(--texto-suave); }
+.dialogo .error { margin-top: 8px; }
+.cred-firmante { font-size: 0.9rem; color: var(--texto-suave); }
