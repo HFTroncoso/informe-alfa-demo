@@ -1,5 +1,11 @@
 # App Informe Alfa – demo del Sprint 1 (modo ejercicio)
 
+> **Para usar la app en un teléfono abre este enlace, no esta página:**
+> **https://hftroncoso.github.io/informe-alfa-demo/**
+> No hace falta cuenta de GitHub ni descargar nada. En Android, Chrome ofrece "Instalar la app";
+> en iPhone, abrir el enlace en Safari y usar Compartir → "Agregar a pantalla de inicio".
+> Esta página es el código fuente de la app, no la app.
+
 Demostración técnica de la Dirección Regional de SENAPRED Magallanes: una app web instalable (PWA)
 que guía el llenado del Informe Alfa con preguntas simples, bloquea los errores de cuadratura y
 genera el PDF con la disposición oficial en el propio teléfono, sin señal.
