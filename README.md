@@ -36,6 +36,7 @@ Sin paso de compilación y sin `node_modules`: se publica tal cual en cualquier 
 | demo-0.2 | 2026-10-05 | Fuentes múltiples; pantalla "Otras personas afectadas" con las 9 categorías que no nacen de las viviendas y dos reglas nuevas; varias necesidades; botón "Enviar por correo" (abre el correo con destinatario y asunto; el PDF se adjunta desde Descargas); ampliaciones EJ-N-A desde el historial |
 | demo-0.2.1 | 2026-10-05 | Seguridad: el destinatario pasa a un correo de prueba del responsable; la dirección real de la URAT no se publica en el repositorio público (R-16) |
 | demo-0.2.2 | 2026-10-05 | Corrección del service worker: la precarga pide cada archivo con la versión en la dirección y sin usar el caché HTTP, para no guardar copias antiguas al actualizar |
+| demo-0.2.3 | 2026-10-06 | "Compartir el PDF por correo" pasa a ser el botón principal: copia la dirección de destino y adjunta el PDF; el camino por enlace de correo queda como alternativa "sin adjunto" (prueba en teléfono, D-33) |
 
 ## Probar en el computador
 

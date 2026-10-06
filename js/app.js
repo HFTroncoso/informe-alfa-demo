@@ -597,17 +597,18 @@
     $('#listo-contenido').innerHTML = `
       <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> generado en este dispositivo${informe.identificacion.comuna ? ', comuna de ' + esc(informe.identificacion.comuna) : ''}.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
       <div class="acciones-fila">
-        <button type="button" class="primario" data-accion="correo">Enviar por correo</button>
-        <button type="button" class="secundario" data-accion="compartir">Compartir el PDF</button>
+        <button type="button" class="primario" data-accion="compartir">Compartir el PDF por correo</button>
       </div>
       <div class="acciones-fila">
         <button type="button" class="secundario" data-accion="descargar">Descargar el PDF</button>
         <button type="button" class="secundario" data-accion="ver">Ver el PDF</button>
       </div>
       <ol class="pasos-correo">
-        <li><strong>Enviar por correo</strong> descarga el PDF y abre tu aplicación de correo con el destinatario, el asunto y el texto ya escritos.</li>
-        <li>En el correo, toca <strong>adjuntar</strong> y elige desde Descargas el archivo <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede adjuntarlo sola.</li>
-        <li><strong>Compartir el PDF</strong> hace lo contrario: adjunta el archivo de inmediato, pero el destinatario hay que pegarlo.${puedeCompartir ? '' : ' Este navegador no ofrece ese menú.'}</li>
+        ${puedeCompartir
+          ? `<li><strong>Compartir el PDF por correo</strong> copia la dirección de destino y abre el menú de compartir con el PDF ya adjunto. Elige tu aplicación de correo.</li>
+             <li>En el correo, mantén presionado el campo <strong>Para</strong> y pega la dirección. El asunto y el texto ya van escritos, y la dirección aparece también en la primera línea del texto.</li>`
+          : `<li>Este navegador no ofrece el menú de compartir con archivos (es normal en un computador). Usa la alternativa siguiente.</li>`}
+        <li>Alternativa sin adjunto: <button type="button" class="enlace" data-accion="correo">abrir el correo con el destinatario ya escrito</button>. El PDF se descarga y debes adjuntarlo tú desde Descargas: <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede enviar el correo ni adjuntar el archivo por sí sola.</li>
       </ol>
       <h2>Destinatario</h2>
       <div class="correo-caja"><strong>${esc(d.nombre)}</strong><br><code>${esc(d.correo)}</code><br>
@@ -637,19 +638,27 @@
     ].join('\n');
     descargar();
     const url = `mailto:${d.correo}?subject=${encodeURIComponent(asunto())}&body=${encodeURIComponent(cuerpo)}`;
-    toast('PDF descargado. Se abre tu correo: adjunta el archivo desde Descargas.', 8000);
+    toast('PDF descargado. Se abre tu correo con el destinatario escrito: toca el clip y adjunta el archivo desde Descargas.', 9000);
     setTimeout(() => { window.location.href = url; }, 900);
   }
 
   async function compartir() {
     if (!ultimoPdf) { toast('Primero genera el PDF.'); return; }
+    const d = CONFIG.destinatario;
     const archivo = new File([ultimoPdf], nombreArchivo(), { type: 'application/pdf' });
-    const datos = { files: [archivo], title: asunto(), text: `${asunto()}. Documento de ejercicio, sin valor oficial. Destinatario: ${CONFIG.destinatario.correo}` };
+    const texto = `Para: ${d.correo}
+${asunto()}. Documento de ejercicio, sin valor oficial.`;
+    const datos = { files: [archivo], title: asunto(), text: texto };
     if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-      try { await navigator.share(datos); toast('Compartido.'); }
+      let copiado = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(d.correo); copiado = true; }
+      } catch (e) { /* sin acceso al portapapeles: la dirección va igual en el texto */ }
+      toast(copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en la primera línea del texto.', 8000);
+      try { await navigator.share(datos); }
       catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir: ' + e.message, 6000); }
     } else {
-      toast('Este navegador no permite compartir archivos. Usa “Enviar por correo” o “Descargar”.', 6000);
+      toast('Este navegador no permite compartir archivos. Usa la alternativa “abrir el correo” y adjunta el PDF desde Descargas.', 7000);
     }
   }
   function descargar() {
