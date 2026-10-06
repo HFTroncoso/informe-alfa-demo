@@ -1,0 +1,151 @@
+// Archivo generado desde config.json por herramientas/sincronizar_config.py. No editar a mano.
+window.ALFA_CONFIG = {
+  "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino es un correo de PRUEBA indicado por el responsable del proyecto el 2026-10-05; la dirección real de la URAT no se publica en este repositorio público para no facilitar la suplantación de informes (riesgo R-16 de la arquitectura).",
+  "version_app": "demo-0.4.1",
+  "modo": "ejercicio",
+  "destinatario": {
+    "nombre": "Correo de prueba del responsable del proyecto",
+    "correo": "htroncoso@senapred.gob.cl",
+    "saludo": "Estimado(a):",
+    "asunto_prefijo": "[EJERCICIO]",
+    "nota": "Correo de prueba. La dirección real de la URAT se configurará fuera del repositorio público en el piloto (R-16). El menú de compartir del teléfono no garantiza dejar escrito el destinatario (bitácora, E-01); la app muestra la dirección con un botón para copiarla."
+  },
+  "numero": {
+    "prefijo": "EJ",
+    "nota": "Correlativo de ejercicio, separado del correlativo real. Se guarda en el teléfono."
+  },
+  "region": {
+    "nombre": "Magallanes y de la Antártica Chilena",
+    "nombre_corto": "Magallanes",
+    "codigo": "12"
+  },
+  "comunas": [
+    {
+      "comuna": "Punta Arenas",
+      "provincia": "Magallanes",
+      "cut": "12101"
+    },
+    {
+      "comuna": "Río Verde",
+      "provincia": "Magallanes",
+      "cut": "12102"
+    },
+    {
+      "comuna": "Laguna Blanca",
+      "provincia": "Magallanes",
+      "cut": "12103"
+    },
+    {
+      "comuna": "San Gregorio",
+      "provincia": "Magallanes",
+      "cut": "12104"
+    },
+    {
+      "comuna": "Natales",
+      "provincia": "Última Esperanza",
+      "cut": "12201"
+    },
+    {
+      "comuna": "Torres del Paine",
+      "provincia": "Última Esperanza",
+      "cut": "12202"
+    },
+    {
+      "comuna": "Porvenir",
+      "provincia": "Tierra del Fuego",
+      "cut": "12301"
+    },
+    {
+      "comuna": "Primavera",
+      "provincia": "Tierra del Fuego",
+      "cut": "12302"
+    },
+    {
+      "comuna": "Timaukel",
+      "provincia": "Tierra del Fuego",
+      "cut": "12303"
+    },
+    {
+      "comuna": "Cabo de Hornos",
+      "provincia": "Antártica Chilena",
+      "cut": "12401"
+    },
+    {
+      "comuna": "Antártica",
+      "provincia": "Antártica Chilena",
+      "cut": "12402"
+    }
+  ],
+  "fuentes_frecuentes": [
+    "Bomberos",
+    "Carabineros",
+    "Armada o Capitanía de Puerto",
+    "CONAF",
+    "Salud (SAMU, hospital, CESFAM)",
+    "Equipo municipal de emergencia",
+    "Delegación Presidencial",
+    "Empresa de servicios (agua, luz, gas, telecomunicaciones)",
+    "Vecinos o junta de vecinos",
+    "Observación directa en terreno"
+  ],
+  "fuentes_nota": "La Guía 2026, sección 1, pide señalar la(s) institución(es) que proporcionan la información y el contacto de la persona que la entregó. Se pueden marcar varias.",
+  "responsable_ejercicio": {
+    "nombre": "Funcionario(a) de ejercicio",
+    "nota": "Identidad ficticia. El cargo y la institución salen del nivel elegido al inicio. En la app real estos datos vienen de la credencial."
+  },
+  "imagenes": {
+    "firma": "img/firma_ejercicio.png",
+    "timbre": "img/timbre_ejercicio.png",
+    "logo": "img/logo_senapred.png"
+  },
+  "marca_agua": "EJERCICIO – SIN VALOR",
+  "elaboradores": [
+    {
+      "id": "comunal",
+      "nombre": "Municipalidad",
+      "nivel": "Nivel comunal",
+      "descripcion": "Encargado(a) comunal de emergencia o equipo municipal de gestión del riesgo. Informa sobre su comuna.",
+      "cargo": "Encargado(a) comunal de emergencia (ejercicio)",
+      "institucion": "Municipalidad de {comuna} (ejercicio)"
+    },
+    {
+      "id": "provincial",
+      "nombre": "Delegación Presidencial Provincial",
+      "nivel": "Nivel provincial",
+      "descripcion": "Encargado(a) provincial de emergencia. Informa sobre una o varias comunas de su provincia.",
+      "cargo": "Encargado(a) provincial de emergencia (ejercicio)",
+      "institucion": "Delegación Presidencial Provincial de {provincia} (ejercicio)"
+    },
+    {
+      "id": "regional",
+      "nombre": "Delegación Presidencial Regional",
+      "nivel": "Nivel regional",
+      "descripcion": "Encargado(a) regional de emergencia de la Delegación Presidencial Regional. Informa sobre una o varias comunas de la región.",
+      "cargo": "Encargado(a) regional de emergencia (ejercicio)",
+      "institucion": "Delegación Presidencial Regional de Magallanes y de la Antártica Chilena (ejercicio)"
+    }
+  ],
+  "elaboradores_nota": "La Guía 2026 indica que el Informe Alfa lo elaboran municipios, delegaciones provinciales y regionales; SENAPRED es el destinatario, no el emisor (E-18). La arquitectura prevé que el nivel y la institución vengan de la credencial del funcionario; mientras no exista, la app los pregunta al inicio (D-34).",
+  "lugar": {
+    "nota": "El formato no tiene casilla para el lugar exacto ni para coordenadas; se imprimen en Observaciones (D-35). La ubicación del teléfono usa el GPS del dispositivo y funciona sin señal, aunque puede tardar.",
+    "limites": {
+      "lat_min": -90,
+      "lat_max": 90,
+      "lon_min": -180,
+      "lon_max": 180
+    }
+  },
+  "credenciales": {
+    "emisor": "Dirección Regional de SENAPRED Magallanes y de la Antártica Chilena",
+    "kid": "5e363a402c75",
+    "clave_publica": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "EVE69Dmm30bKFY5IcAPxMLFhEeQakr84Dh0I6JKs0Bg",
+      "y": "OkotnquOgWPacj84tN_3_iibxHSPbW5bvpRUSUTPr8A"
+    },
+    "vigencia_meses": 12,
+    "pin_minimo": 4,
+    "nota": "Clave pública con la que la app comprueba el sello de cada credencial. La clave privada correspondiente la custodia la Dirección Regional fuera del repositorio. En esta versión todas las credenciales son de ejercicio: el PDF conserva la marca EJERCICIO y el número EJ."
+  }
+};

@@ -105,6 +105,7 @@
   </main>
 
   <div id="toast" class="toast" role="status"></div>
+  <script src="../datos/config.js"></script>
   <script src="../js/credencial.js"></script>
   <script>
     (function () {
@@ -125,8 +126,18 @@
       const provincias = () => [...new Set(CONFIG.comunas.map(c => c.provincia))];
 
       async function iniciar() {
+        // Con doble clic (archivo local) el navegador no permite leer config.json: se usa config.js, generado
+        // desde config.json con herramientas/sincronizar_config.py. Por internet se lee config.json directo.
         try { CONFIG = await (await fetch('../datos/config.json')).json(); }
-        catch (e) { estado('#estado-clave', 'No se pudo leer la configuración de la app. Abre esta herramienta desde la dirección publicada de la app o desde el servidor local, no como archivo suelto.', 'mal'); return; }
+        catch (e) {
+          if (window.ALFA_CONFIG) {
+            CONFIG = window.ALFA_CONFIG;
+            estado('#estado-clave', 'Herramienta abierta como archivo local: configuración leída de datos/config.js (versión ' + (CONFIG.version_app || '') + '). Sin clave cargada.', '');
+          } else {
+            estado('#estado-clave', 'No se pudo leer la configuración de la app. Abre la herramienta desde la dirección publicada: https://hftroncoso.github.io/informe-alfa-demo/herramientas/emisor-credenciales.html', 'mal');
+            return;
+          }
+        }
         $('#f-niveles').innerHTML = CONFIG.elaboradores.map(e => `<label class="opcion"><input type="radio" name="f-nivel" value="${esc(e.id)}"><span><strong>${esc(e.nombre)}</strong><small>${esc(e.nivel)}</small></span></label>`).join('');
         $('#f-provincia').innerHTML = '<option value="">Elige…</option>' + provincias().map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
         $('#f-comuna').innerHTML = '<option value="">Elige…</option>' + CONFIG.comunas.map(c => `<option value="${esc(c.comuna)}">${esc(c.comuna)} (${esc(c.provincia)})</option>`).join('');
