@@ -1,6 +1,7 @@
-/* App Informe Alfa – demo (versión 0.4).
+/* App Informe Alfa – demo (versión 0.5).
    Flujo de pantallas y enlace entre el motor de reglas (reglas.js), las credenciales (credencial.js),
-   el generador de PDF (pdf.js) y el almacén local (almacen.js). Sin servidor: todo ocurre en el teléfono. */
+   el archivo de datos y el código QR (datos_alfa.js), el generador de PDF (pdf.js) y el almacén local
+   (almacen.js). Sin servidor: todo ocurre en el teléfono. */
 (function () {
   'use strict';
 
@@ -25,6 +26,7 @@
   let informe = null;
   let pantalla = 'inicio';
   let ultimoPdf = null;
+  let ultimoDatos = null;     // objeto del archivo de datos (.alfa.json) del último PDF generado
   let eventoInstalacion = null;
   let recursosPdf = null;     // fuentes, logo e imágenes ficticias, en memoria
   let credResumen = null;     // resumen de la credencial cargada (sin imágenes ni PIN)
@@ -93,6 +95,7 @@
       justificaciones: {},
       responsable: cr ? { nombre: cr.nombre, cargo: cr.cargo, institucion: cr.institucion, credencial: cr.id } : { nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' },
       firmante: null,
+      sello: null,
       elaboracion: null
     };
   }
@@ -133,6 +136,7 @@
     inf.justificaciones = inf.justificaciones || {};
     if (inf.amplia === undefined) inf.amplia = null;
     if (inf.firmante === undefined) inf.firmante = null;
+    if (inf.sello === undefined) inf.sello = null;
     inf.responsable = Object.assign({ nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' }, inf.responsable || {});
     actualizarProvincia(inf);
     actualizarResponsable(inf);
@@ -329,6 +333,7 @@
     $('#btn-instalar').addEventListener('click', instalar);
     $('#btn-gps').addEventListener('click', usarGPS);
     $('#in-credencial').addEventListener('change', e => { const f = e.target.files[0]; if (f) cargarCredencialArchivo(f); e.target.value = ''; });
+    $('#in-importar').addEventListener('change', e => { const f = e.target.files[0]; if (f) importarArchivo(f); e.target.value = ''; });
     window.addEventListener('online', estadoConexion);
     window.addEventListener('offline', estadoConexion);
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); eventoInstalacion = e; if (pantalla === 'inicio') renderInicio(); });
@@ -649,13 +654,16 @@
       if (!CONFIG.credenciales || !CONFIG.credenciales.clave_publica) { toast('Esta versión de la app no tiene clave pública para comprobar credenciales.', 6000); return; }
       const r = await Credencial.verificar(cred, CONFIG.credenciales.clave_publica);
       if (!r.valida) { toast('Credencial rechazada: ' + r.motivo, 8000); return; }
-      const pin = await pedirPin({ definir: true, titulo: 'Define un PIN para esta credencial', texto: `Credencial de ${cred.datos.nombre}, ${cred.datos.cargo}. El PIN protege tu firma en este teléfono y se pedirá cada vez que firmes.` });
+      const d = Credencial.datosDe(cred);
+      const pin = await pedirPin({ definir: true, titulo: 'Define un PIN para esta credencial', texto: `Credencial de ${d.nombre}, ${d.cargo}. El PIN protege tu firma en este teléfono y se pedirá cada vez que firmes.` });
       if (!pin) { toast('Carga cancelada.'); return; }
       const paquete = await Credencial.cifrar(JSON.stringify(cred), pin);
       const resumen = Credencial.resumen(cred);
       Almacen.guardarCredencial({ resumen, paquete, cargada: new Date().toISOString() });
       credResumen = resumen;
-      toast('Credencial cargada. Desde ahora los informes nuevos se firman con ella.', 6000);
+      toast(resumen.firmaDigital
+        ? 'Credencial cargada. Desde ahora los informes nuevos se firman con ella y llevan tu firma digital.'
+        : 'Credencial cargada. Es de una versión anterior, sin clave de firma digital: los informes se firman con ella, pero la URAT no podrá comprobar la autoría. Pide una credencial nueva a la Dirección Regional.', 8000);
       renderInicio();
     } catch (e) {
       toast('No se pudo leer la credencial: ' + e.message, 7000);
@@ -676,6 +684,20 @@
   }
 
   // ---------- revisión ----------
+  // En una ampliación: lista de lo que cambió respecto del informe que se amplía
+  function seccionCambios() {
+    if (!informe.amplia || !informe.amplia.anterior) return '';
+    const d = Reglas.diferencias(informe.amplia.anterior, informe);
+    if (!d.lista.length) {
+      return `<section class="rev-seccion cambios"><h3>Cambios respecto de ${esc(informe.amplia.de)}</h3>
+        <p class="aviso">Todavía no hay cambios en los datos. Una ampliación debe actualizar lo que cambió: revisa las secciones y corrige antes de firmar.</p></section>`;
+    }
+    const corto = s => (s.length > 140 ? s.slice(0, 140) + '…' : s);
+    return `<section class="rev-seccion cambios"><h3>Cambios respecto de ${esc(informe.amplia.de)} (${d.lista.length})</h3>
+      <ul class="lista-cambios">${d.lista.map(x => `<li><strong>${esc(x.campo)}</strong><span class="antes">${esc(corto(x.antes))}</span> → <span class="ahora">${esc(corto(x.ahora))}</span></li>`).join('')}</ul>
+      <p class="ayuda">En el PDF, los valores que cambiaron en las secciones 4 y 5 van subrayados y la lista de cambios se imprime en Observaciones.</p></section>`;
+  }
+
   function renderRevision() {
     actualizarProvincia(informe); actualizarResponsable(informe);
     const t = Reglas.totales(informe);
@@ -693,6 +715,7 @@
       : `<p class="aviso">Número previsto: <strong>${esc(numeroPrevisto())}</strong>. Revisa cada sección. Al firmar, la app vuelve a comprobar todas las reglas, asigna el número y genera el PDF en este dispositivo. Si hay mucho texto, la hoja se alarga hacia abajo.</p>`;
     $('#revision-contenido').innerHTML = `
       ${avisoNumero}
+      ${seccionCambios()}
       ${hallazgos.length ? `<p class="etiqueta roja">Hay ${hallazgos.length} punto(s) por resolver antes de firmar</p>` : '<p class="etiqueta verde">Todas las reglas cuadran</p>'}
       <section class="rev-seccion"><h3>Quién elabora ${editar('elaborador')}</h3>
         <p>${elab ? esc(elab.nombre) + ' · ' + esc(elab.nivel) : '<span class="vacio">sin indicar</span>'}</p></section>
@@ -736,16 +759,19 @@
     if (!window.PDFLib) throw new Error('la biblioteca de PDF no está cargada');
     const rec = await recursosParaPdf();
     let firmaBytes = rec.firmaPng, timbreBytes = rec.timbrePng, combinada = false;
-    if (cred && cred.datos && cred.datos.firma_png) {
-      firmaBytes = Credencial.dataUrlABytes(cred.datos.firma_png);
-      timbreBytes = cred.datos.timbre_png ? Credencial.dataUrlABytes(cred.datos.timbre_png) : null;
-      combinada = !!cred.datos.combinada;
+    const d = Credencial.datosDe(cred);
+    if (d && d.firma_png) {
+      firmaBytes = Credencial.dataUrlABytes(d.firma_png);
+      timbreBytes = d.timbre_png ? Credencial.dataUrlABytes(d.timbre_png) : null;
+      combinada = !!d.combinada;
     }
+    const cambios = inf.amplia && inf.amplia.anterior ? Reglas.diferencias(inf.amplia.anterior, inf).rutas : null;
     return AlfaPDF.generar(inf, {
       PDFLib: window.PDFLib, fontkit: window.fontkit || null, fuentes: rec.fuentes, logoPng: rec.logoPng,
       config: CONFIG, datos: DATOS, plantilla: PLANTILLA,
       totales: Reglas.totales(inf), secciones: Reglas.textosSecciones(inf, CONFIG),
-      firmaPng: firmaBytes, timbrePng: timbreBytes, firmaCombinada: combinada
+      firmaPng: firmaBytes, timbrePng: timbreBytes, firmaCombinada: combinada,
+      qrcode: window.qrcode || null, qrTexto: DatosAlfa.textoQR(CONFIG, inf), cambios
     });
   }
 
@@ -758,8 +784,9 @@
       const r = await abrirCredencial();
       if (!r || r.cancelado) { toast('Firma cancelada: no se generó el informe.'); return; }
       cred = r.cred;
-      informe.responsable = { nombre: cred.datos.nombre, cargo: cred.datos.cargo, institucion: cred.datos.institucion, credencial: cred.datos.id };
-      informe.firmante = { id: cred.datos.id, kid: cred.sello.kid, nombre: cred.datos.nombre, institucion: cred.datos.institucion };
+      const d = Credencial.datosDe(cred);
+      informe.responsable = { nombre: d.nombre, cargo: d.cargo, institucion: d.institucion, credencial: d.id };
+      informe.firmante = { id: d.id, kid: cred.sello.kid, nombre: d.nombre, institucion: d.institucion, version: cred.publico ? 2 : 1, publico: cred.publico || null, sello_publico: cred.sello_publico || null };
     } else {
       informe.firmante = null;
     }
@@ -768,16 +795,28 @@
     try {
       informe.elaboracion = { fecha: hoyISO(), hora: ahoraHHMM(), iso: new Date().toISOString() };
       if (!informe.numero) informe.numero = asignarNumero();
+      await sellarInforme(informe, cred);
       ultimoPdf = await generarPdf(informe, cred);
+      ultimoDatos = DatosAlfa.construir(informe, Reglas.totales(informe), CONFIG);
       Almacen.guardarHistorial(informe);
       Almacen.borrarBorrador();
       mostrar('listo');
     } catch (e) {
       console.error(e);
-      informe.elaboracion = null;
+      informe.elaboracion = null; informe.sello = null;
       toast('No se pudo generar el PDF: ' + e.message, 7000);
       btn.disabled = false; btn.textContent = 'Firmar y generar el PDF';
     }
+  }
+
+  // Huella del contenido y, si la credencial trae clave de firma, firma digital del funcionario.
+  // Se calcula con el número, la fecha de elaboración y el firmante ya fijados; el propio sello queda fuera de la huella.
+  async function sellarInforme(inf, cred) {
+    inf.sello = null;
+    const h = await DatosAlfa.huella(inf);
+    const priv = cred && cred.privado && cred.privado.clave_firma_privada;
+    const firma = priv ? await Credencial.firmarHuella(h, priv) : null;
+    inf.sello = { huella: h, firma, alg: firma ? 'ES256' : null };
   }
 
   function asunto() {
@@ -790,26 +829,37 @@
     return `Informe_Alfa_${informe.numero}_${limpio}_${informe.elaboracion.fecha}.pdf`;
   }
   function blobPdf() { return new Blob([ultimoPdf], { type: 'application/pdf' }); }
+  function qrSvg() {
+    if (!window.qrcode) return '';
+    try {
+      const q = qrcode(0, 'L');
+      q.addData(DatosAlfa.textoQR(CONFIG, informe));
+      q.make();
+      return q.createSvgTag({ cellSize: 3, margin: 2, scalable: true });
+    } catch (e) { return ''; }
+  }
 
   function renderListo() {
     const d = CONFIG.destinatario;
     const puedeCompartir = !!(navigator.share && navigator.canShare);
     $('#listo-contenido').innerHTML = `
       <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> · <strong>${esc(tipoTexto(informe))}</strong>${Reglas.comunasTexto(informe) ? ' · ' + esc(Reglas.comunasTexto(informe)) : ''}, generado en este dispositivo.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
-      <p class="cred-firmante">${informe.firmante ? 'Firmado con la credencial de ' + esc(informe.firmante.nombre) + ' (' + esc(informe.firmante.institucion || '') + ').' : 'Firmado con la identidad ficticia de ejercicio.'}</p>
+      <p class="cred-firmante">${informe.firmante ? 'Firmado con la credencial de ' + esc(informe.firmante.nombre) + ' (' + esc(informe.firmante.institucion || '') + ')' + (informe.sello && informe.sello.firma ? ', con firma digital.' : ', sin firma digital (credencial antigua).') : 'Firmado con la identidad ficticia de ejercicio, sin firma digital.'}</p>
+      <div class="qr-caja">${qrSvg()}<div><strong>Código de verificación</strong><p class="ayuda">El mismo código va impreso en el PDF. La URAT lo escanea, o abre el verificador con el archivo de datos que acompaña al PDF, y comprueba que el informe es auténtico y no fue alterado.</p></div></div>
       <div class="acciones-fila">
         <button type="button" class="primario" data-accion="compartir">Compartir el PDF por correo</button>
       </div>
       <div class="acciones-fila">
         <button type="button" class="secundario" data-accion="descargar">Descargar el PDF</button>
         <button type="button" class="secundario" data-accion="ver">Ver el PDF</button>
+        <button type="button" class="secundario" data-accion="descargar-datos">Descargar los datos (.alfa.json)</button>
       </div>
       <ol class="pasos-correo">
         ${puedeCompartir
-          ? `<li><strong>Compartir el PDF por correo</strong> copia la dirección de destino y abre el menú de compartir con el PDF ya adjunto. Elige tu aplicación de correo.</li>
+          ? `<li><strong>Compartir el PDF por correo</strong> copia la dirección de destino y abre el menú de compartir con el PDF y su archivo de datos ya adjuntos. Elige tu aplicación de correo.</li>
              <li>En el correo, mantén presionado el campo <strong>Para</strong> y pega la dirección. El asunto y el texto ya van escritos, y la dirección aparece también en el texto del correo.</li>`
           : `<li>Este navegador no ofrece el menú de compartir con archivos (es normal en un computador). Usa la alternativa siguiente.</li>`}
-        <li>Alternativa sin adjunto: <button type="button" class="enlace" data-accion="correo">abrir el correo con el destinatario ya escrito</button>. El PDF se descarga y debes adjuntarlo tú desde Descargas: <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede enviar el correo ni adjuntar el archivo por sí sola.</li>
+        <li>Alternativa sin adjunto: <button type="button" class="enlace" data-accion="correo">abrir el correo con el destinatario ya escrito</button>. El PDF se descarga y debes adjuntarlo tú desde Descargas, junto con el archivo de datos si también lo descargas: <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede enviar el correo ni adjuntar el archivo por sí sola.</li>
       </ol>
       <h2>Destinatario</h2>
       <div class="correo-caja"><strong>${esc(d.nombre)}</strong><br><code>${esc(d.correo)}</code><br>
@@ -847,12 +897,15 @@
     if (!ultimoPdf) { toast('Primero genera el PDF.'); return; }
     const d = CONFIG.destinatario;
     const archivo = new File([ultimoPdf], nombreArchivo(), { type: 'application/pdf' });
-    const texto = `${asunto()}\nDestinatario: ${d.correo}\nDocumento de ejercicio, sin valor oficial.`;
-    const datos = { files: [archivo], title: asunto(), text: texto };
-    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+    const archivoDatos = ultimoDatos ? new File([textoDatos()], DatosAlfa.nombreArchivoDatos(informe), { type: 'application/json' }) : null;
+    const puedeAmbos = !!(archivoDatos && navigator.canShare && navigator.canShare({ files: [archivo, archivoDatos] }));
+    const archivos = puedeAmbos ? [archivo, archivoDatos] : [archivo];
+    const texto = `${asunto()}\nDestinatario: ${d.correo}\nDocumento de ejercicio, sin valor oficial.${puedeAmbos ? ' Adjuntos: el PDF del informe y su archivo de datos para el verificador de la URAT.' : ''}`;
+    const datos = { files: archivos, title: asunto(), text: texto };
+    if (navigator.canShare && navigator.canShare({ files: archivos })) {
       let copiado = false;
       try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(d.correo); copiado = true; } } catch (e) { /* la dirección va igual en el texto */ }
-      toast(copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en el texto del correo.', 8000);
+      toast((copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en el texto del correo.') + (puedeAmbos ? '' : ' Este teléfono solo comparte el PDF: descarga aparte el archivo de datos.'), 8000);
       try { await navigator.share(datos); }
       catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir: ' + e.message, 6000); }
     } else {
@@ -864,6 +917,15 @@
     const url = URL.createObjectURL(blobPdf());
     const a = document.createElement('a');
     a.href = url; a.download = nombreArchivo();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+  function textoDatos() { return JSON.stringify(ultimoDatos, null, 1); }
+  function descargarDatos() {
+    if (!ultimoDatos) { toast('Primero genera el PDF.'); return; }
+    const url = URL.createObjectURL(new Blob([textoDatos()], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = DatosAlfa.nombreArchivoDatos(informe);
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
@@ -889,10 +951,14 @@
     if (!h) return;
     if (Almacen.leerBorrador() && !confirm('Hay un borrador guardado que se reemplazará. ¿Continuar con la ampliación?')) return;
     const copia = normalizar(JSON.parse(JSON.stringify(h)));
-    copia.amplia = { de: h.numero, base: h.amplia && h.amplia.base ? h.amplia.base : h.numero, fecha: h.elaboracion && h.elaboracion.fecha, hora: h.elaboracion && h.elaboracion.hora };
+    const anterior = JSON.parse(JSON.stringify(h));       // estado completo del informe que se amplía, para mostrar e imprimir los cambios
+    if (anterior.amplia) delete anterior.amplia.anterior;  // solo un nivel hacia atrás
+    copia.amplia = { de: h.numero, base: h.amplia && h.amplia.base ? h.amplia.base : h.numero, fecha: h.elaboracion && h.elaboracion.fecha, hora: h.elaboracion && h.elaboracion.hora, anterior };
     copia.numero = null;
     copia.elaboracion = null;
     copia.firmante = null;
+    copia.sello = null;
+    delete copia.importado;
     copia.creado = new Date().toISOString();
     informe = copia;
     guardar();
@@ -916,8 +982,43 @@
       }
     }
     toast('Generando el PDF otra vez…');
-    try { ultimoPdf = await generarPdf(informe, cred); mostrar('listo'); }
-    catch (e) { toast('No se pudo generar el PDF: ' + e.message, 6000); }
+    try {
+      if (!informe.sello) {   // informes guardados por versiones anteriores a la 0.5
+        if (cred && cred.publico && informe.firmante && informe.firmante.id === cred.publico.id) {
+          informe.firmante.publico = cred.publico; informe.firmante.sello_publico = cred.sello_publico; informe.firmante.version = 2;
+        }
+        await sellarInforme(informe, cred);
+      }
+      ultimoPdf = await generarPdf(informe, cred);
+      ultimoDatos = DatosAlfa.construir(informe, Reglas.totales(informe), CONFIG);
+      mostrar('listo');
+    } catch (e) { toast('No se pudo generar el PDF: ' + e.message, 6000); }
+  }
+
+  // Importa el archivo de datos (.alfa.json) de un informe generado en otro teléfono
+  async function importarArchivo(archivo) {
+    try {
+      const obj = JSON.parse(await archivo.text());
+      const v = DatosAlfa.validar(obj);
+      if (!v.ok) { toast('No se pudo importar: ' + v.motivo, 7000); return; }
+      const h = await DatosAlfa.huella(obj.informe);
+      if (h !== obj.huella) { toast('No se pudo importar: el archivo fue modificado después de generarse (la huella no coincide).', 8000); return; }
+      const inf = normalizar(obj.informe);
+      if (!inf.elaboracion || !inf.numero) { toast('El archivo no corresponde a un informe firmado.', 6000); return; }
+      inf.importado = { fecha: new Date().toISOString(), app: obj.app || '' };
+      const hist = Almacen.leerHistorial();
+      const idx = hist.findIndex(x => x.numero === inf.numero);
+      if (idx >= 0) {
+        if (!confirm(`Ya existe el informe ${inf.numero} en este teléfono. ¿Reemplazarlo por el importado?`)) return;
+        hist.splice(idx, 1);
+      }
+      hist.unshift(inf);
+      Almacen.escribirHistorial(hist);
+      renderInicio();
+      toast(`Informe ${inf.numero} importado. Puedes ampliarlo o compartirlo desde la lista.`, 6000);
+    } catch (e) {
+      toast('No se pudo leer el archivo: ' + e.message, 7000);
+    }
   }
 
   async function accionDinamica(accion, ds) {
@@ -932,6 +1033,8 @@
       case 'inicio': mostrar('inicio'); break;
       case 'ampliar': ampliar(+ds.i); break;
       case 'reabrir': await reabrir(+ds.i); break;
+      case 'descargar-datos': descargarDatos(); break;
+      case 'importar': $('#in-importar').click(); break;
       case 'cargar-credencial': $('#in-credencial').click(); break;
       case 'quitar-credencial':
         if (confirm('¿Quitar la credencial de este teléfono? Los informes nuevos volverán a firmarse con la identidad ficticia de ejercicio.')) {
@@ -987,7 +1090,7 @@
     $('#historial').hidden = hist.length === 0;
     $('#lista-historial').innerHTML = hist.map((h, i) => {
       const comunas = (h.identificacion.comunas || (h.identificacion.comuna ? [h.identificacion.comuna] : [])).join(', ');
-      return `<li><span><strong>${esc(h.numero)}</strong> · ${esc(comunas)} · ${esc(fmtFecha(h.elaboracion && h.elaboracion.fecha))} ${esc(h.elaboracion && h.elaboracion.hora || '')}</span>
+      return `<li><span><strong>${esc(h.numero)}</strong> · ${esc(comunas)} · ${esc(fmtFecha(h.elaboracion && h.elaboracion.fecha))} ${esc(h.elaboracion && h.elaboracion.hora || '')}${h.importado ? '<small class="etiqueta-importado">importado</small>' : ''}</span>
        <span class="acciones-historial">
          <button type="button" class="secundario" data-accion="ampliar" data-i="${i}">Ampliar</button>
          <button type="button" class="secundario" data-accion="reabrir" data-i="${i}">Compartir</button>

@@ -1,9 +1,10 @@
-/* Generador del PDF del Informe Alfa (demo, versión 0.4).
+/* Generador del PDF del Informe Alfa (demo, versión 0.5).
    La parte superior (secciones 1 a 5) se dibuja desde datos/plantilla_alfa.json tal cual.
    Las secciones 6 a 10 se dibujan con altura variable: tantas líneas como texto haya, y la hoja
    se alarga lo necesario. Usa la tipografía Carlito (métrica de Calibri) cuando se le entregan
-   las fuentes y fontkit; si no, las fuentes estándar. Funciona en el navegador (window.AlfaPDF)
-   y en Node para pruebas (module.exports). */
+   las fuentes y fontkit; si no, las fuentes estándar. Desde la 0.5 agrega el código QR de verificación
+   en el margen inferior, la huella del contenido en los metadatos y el subrayado de las casillas que
+   cambiaron en una ampliación. Funciona en el navegador (window.AlfaPDF) y en Node (module.exports). */
 (function (raiz) {
   'use strict';
 
@@ -60,7 +61,9 @@
     doc.setAuthor('App Informe Alfa (demo)');
     doc.setCreator('App Informe Alfa – demo Sprint 1');
     doc.setProducer('pdf-lib');
-    doc.setKeywords(['ejercicio', 'sin valor', 'informe alfa', 'demo']);
+    // La huella del contenido va en los metadatos: el verificador la lee del PDF y la compara con el archivo de datos
+    const huella = informe.sello && informe.sello.huella ? informe.sello.huella : null;
+    doc.setKeywords(['ejercicio', 'sin valor', 'informe alfa', 'demo', 'alfa-numero:' + (informe.numero || ''), huella ? 'alfa-huella:' + huella : ''].filter(Boolean));
 
     // Tipografía: Carlito incrustada (subconjunto) o fuentes estándar
     let fR, fB, fO, limpiar;
@@ -156,6 +159,7 @@
       if (ancho && w > ancho) { size = Math.max(4, size * ancho / w); w = f.widthOfTextAtSize(s, size); }
       const x0 = op.centro ? x - w / 2 : x;
       pagina.drawText(s, { x: x0, y: yPdf, size, font: f, color: op.color || azul });
+      if (op.subrayar) pagina.drawRectangle({ x: x0 - 0.5, y: yPdf - 1.4, width: w + 1, height: 0.6, color: op.color || azul });
     }
     function campo(nombre, valor, op) {
       const c = P.campos[nombre];
@@ -187,16 +191,18 @@
       'DAMNIFICADAS LABORALES': T.damnificadas_laborales, DESAPARECIDAS: T.desaparecidas, EVACUADAS: T.evacuadas,
       EXTRAVIADAS: T.extraviadas, FALLECIDAS: T.fallecidas, LESIONADAS: T.lesionadas
     };
+    // En una ampliación, las casillas cuyo valor cambió respecto del informe anterior van subrayadas
+    const cambios = new Set(rec.cambios || []);
     for (const nombre of Object.keys(filas)) {
       const f = filas[nombre];
       const y = P.campos.personas.filas[nombre];
       if (!f || !f.total || y == null) continue;
-      for (const k of ['adH', 'adM', 'nnaH', 'nnaM', 'total']) texto(String(f[k]), P.campos.personas.columnas[k], y + extra, P.campos.personas.size, null, { centro: true, font: k === 'total' ? fB : fR });
+      for (const k of ['adH', 'adM', 'nnaH', 'nnaM', 'total']) texto(String(f[k]), P.campos.personas.columnas[k], y + extra, P.campos.personas.size, null, { centro: true, font: k === 'total' ? fB : fR, subrayar: cambios.has(`personas.${nombre}.${k}`) });
     }
     for (const cond of D.condiciones_vivienda) {
       const v = T.viviendas[cond.id];
       const b = P.campos.viviendas[cond.nivel];
-      if (v > 0 && b) texto(String(v), b.cx, b.cy - 3 + extra, 8, null, { centro: true, font: fB });
+      if (v > 0 && b) texto(String(v), b.cx, b.cy - 3 + extra, 8, null, { centro: true, font: fB, subrayar: cambios.has(`viviendas.${cond.nivel}`) });
     }
 
     // ---- 5. Secciones 6 a 10, con altura variable ----
@@ -259,9 +265,31 @@
     });
     const A = P.campos.aviso_superior;
     texto(`INFORME DE EJERCICIO – SIN VALOR OFICIAL – N° ${informe.numero || ''}`, A.cx, A.cy + extra, A.size, null, { centro: true, font: fB, color: rojo });
-    const firmante = informe.firmante ? ` Firmado con la credencial de ${informe.firmante.nombre} (${informe.firmante.id ? informe.firmante.id.slice(0, 8) : ''}).` : ' Firma y timbre ficticios.';
-    const textoPie = `Documento de ejercicio generado en el teléfono con la app Informe Alfa (demo, versión ${C.version_app}) el ${fmtFecha(E.fecha)} a las ${E.hora || ''}.${firmante} No respalda solicitudes de recursos.`;
-    pagina.drawText(limpiar(textoPie), { x: 52, y: Y(bordeInfTop + 12), size: 6, font: fO, color: gris });
+    const conFirmaDigital = !!(informe.sello && informe.sello.firma);
+    const firmante = informe.firmante
+      ? ` ${conFirmaDigital ? 'Firmado digitalmente' : 'Firmado'} con la credencial de ${informe.firmante.nombre} (${informe.firmante.id ? informe.firmante.id.slice(0, 8) : ''}).`
+      : ' Firma y timbre ficticios.';
+    const huellaCorta = huella ? ` Huella del contenido: ${huella.slice(0, 16)}…` : '';
+    const textoPie = `Documento de ejercicio generado en el teléfono con la app Informe Alfa (demo, versión ${C.version_app}) el ${fmtFecha(E.fecha)} a las ${E.hora || ''}.${firmante} No respalda solicitudes de recursos.${huellaCorta}`;
+    partirLineas(textoPie, fO, 6, 640, limpiar).slice(0, 3).forEach((l, i) => pagina.drawText(l, { x: 52, y: Y(bordeInfTop + 12 + i * 7.2), size: 6, font: fO, color: gris }));
+
+    // ---- 7. Código QR de verificación: margen inferior derecho, fuera del formato oficial ----
+    if (rec.qrcode && rec.qrTexto) {
+      const TAM_QR = 54;
+      const qr = rec.qrcode(0, 'L');
+      qr.addData(rec.qrTexto);
+      qr.make();
+      const nMod = qr.getModuleCount();
+      const celda = TAM_QR / nMod;
+      const x0 = 872.6 - TAM_QR, topQR = bordeInfTop + GROSOR + 3.5;
+      for (let r = 0; r < nMod; r++) for (let c = 0; c < nMod; c++) {
+        if (qr.isDark(r, c)) pagina.drawRectangle({ x: x0 + c * celda, y: Y(topQR + (r + 1) * celda), width: celda + 0.05, height: celda + 0.05, color: negro });
+      }
+      ['Verificación del informe:', 'escanea el código o abre el verificador', 'de la app con el archivo de datos adjunto.'].forEach((l, i) => {
+        const w = fR.widthOfTextAtSize(l, 5);
+        pagina.drawText(l, { x: x0 - 6 - w, y: Y(topQR + 9 + i * 6.5), size: 5, font: fR, color: gris });
+      });
+    }
 
     return await doc.save();
   }

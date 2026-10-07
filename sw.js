@@ -1,17 +1,20 @@
 /* Service worker de la demo: precarga todos los archivos para que la app abra sin señal.
    Para publicar una versión nueva, cambiar VERSION. */
-const VERSION = 'alfa-demo-v0.4.1';
+const VERSION = 'alfa-demo-v0.5.0';
 const ARCHIVOS = [
   './',
   './index.html',
+  './verificar.html',
   './manifest.json',
   './css/estilos.css',
   './js/almacen.js',
   './js/reglas.js',
   './js/credencial.js',
+  './js/datos_alfa.js',
   './js/pdf.js',
   './js/app.js',
   './lib/pdf-lib.min.js',
+  './lib/qrcode.min.js',
   './lib/fontkit.umd.min.js',
   './lib/Carlito-Regular.ttf',
   './lib/Carlito-Bold.ttf',

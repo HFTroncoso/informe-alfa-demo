@@ -3,7 +3,10 @@
    un funcionario, sellado con la clave privada de la Dirección Regional (ECDSA P-256, SHA-256).
    La app comprueba el sello sin conexión con la clave pública que trae en su configuración y guarda
    la credencial cifrada con un PIN (PBKDF2 + AES-GCM). Este archivo lo usan la app, la herramienta
-   emisora y las pruebas en Node. */
+   emisora, el verificador y las pruebas en Node.
+   Versión 1: { datos, sello }. Versión 2 (desde la 0.5): { publico, privado, sello, sello_publico },
+   donde "publico" incluye la clave pública de firma del funcionario y viaja con cada Alfa, y "privado"
+   lleva las imágenes y la clave privada de firma, que solo vive cifrada en el teléfono. */
 const Credencial = (() => {
   'use strict';
   const cripto = globalThis.crypto;
@@ -71,26 +74,70 @@ const Credencial = (() => {
     const firma = await subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, clave, enc.encode(canonico(datos)));
     return { alg: 'ES256', kid, firma: aB64u(new Uint8Array(firma)) };
   }
+  // Vista unificada de los datos de una credencial, sea versión 1 (todo en "datos") o 2 ("publico" + "privado")
+  function datosDe(credencial) {
+    if (!credencial) return null;
+    if (credencial.datos) return credencial.datos;
+    if (credencial.publico) return Object.assign({}, credencial.publico, credencial.privado || {});
+    return null;
+  }
   async function verificar(credencial, jwkPublica) {
     try {
-      if (!credencial || credencial.tipo !== 'credencial-alfa' || !credencial.datos || !credencial.sello) return { valida: false, motivo: 'El archivo no es una credencial de la App Informe Alfa.' };
-      if (credencial.sello.alg !== 'ES256') return { valida: false, motivo: 'Tipo de sello desconocido.' };
+      if (!credencial || credencial.tipo !== 'credencial-alfa' || !credencial.sello) return { valida: false, motivo: 'El archivo no es una credencial de la App Informe Alfa.' };
+      const v2 = !!credencial.publico;
+      if (!v2 && !credencial.datos) return { valida: false, motivo: 'El archivo no es una credencial de la App Informe Alfa.' };
+      if (v2 && (!credencial.privado || !credencial.sello_publico)) return { valida: false, motivo: 'La credencial está incompleta: le falta la parte privada o el sello de la parte pública.' };
+      if (credencial.sello.alg !== 'ES256' || (v2 && credencial.sello_publico.alg !== 'ES256')) return { valida: false, motivo: 'Tipo de sello desconocido.' };
       const clave = await importarPublica(jwkPublica);
-      const ok = await subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, clave, deB64u(credencial.sello.firma), enc.encode(canonico(credencial.datos)));
+      const comprobar = (sello, objeto) => subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, clave, deB64u(sello.firma), enc.encode(canonico(objeto)));
+      const ok = v2
+        ? (await comprobar(credencial.sello, { publico: credencial.publico, privado: credencial.privado })) && (await comprobar(credencial.sello_publico, credencial.publico))
+        : await comprobar(credencial.sello, credencial.datos);
       if (!ok) return { valida: false, motivo: 'El sello no corresponde a la Dirección Regional o la credencial fue alterada.' };
-      if (vencida(credencial)) return { valida: false, motivo: `La credencial venció el ${credencial.datos.vence}.` };
-      return { valida: true, motivo: 'Sello correcto y credencial vigente.' };
+      if (vencida(credencial)) return { valida: false, motivo: `La credencial venció el ${datosDe(credencial).vence}.` };
+      return { valida: true, motivo: 'Sello correcto y credencial vigente.', version: v2 ? 2 : 1 };
     } catch (e) {
       return { valida: false, motivo: 'No se pudo comprobar el sello: ' + e.message };
     }
   }
+  // Comprueba solo la parte pública de una credencial versión 2 (es lo que viaja con cada Alfa), a una fecha dada
+  async function verificarPublico(publico, selloPublico, jwkPublica, fechaISO) {
+    try {
+      if (!publico || !selloPublico || selloPublico.alg !== 'ES256') return { valida: false, motivo: 'Faltan los datos públicos de la credencial o su sello.' };
+      const clave = await importarPublica(jwkPublica);
+      const ok = await subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, clave, deB64u(selloPublico.firma), enc.encode(canonico(publico)));
+      if (!ok) return { valida: false, motivo: 'El sello de la credencial no corresponde a la Dirección Regional o sus datos fueron alterados.' };
+      const fecha = fechaISO || new Date().toISOString().slice(0, 10);
+      if (publico.vence && publico.vence < fecha) return { valida: false, motivo: `La credencial venció el ${publico.vence}, antes de la fecha del informe (${fecha}).` };
+      if (publico.emitida && publico.emitida > fecha) return { valida: false, motivo: `La credencial fue emitida el ${publico.emitida}, después de la fecha del informe (${fecha}).` };
+      return { valida: true, motivo: 'Credencial auténtica y vigente a la fecha del informe.' };
+    } catch (e) {
+      return { valida: false, motivo: 'No se pudo comprobar la credencial: ' + e.message };
+    }
+  }
   function vencida(credencial, hoyISO) {
     const hoy = hoyISO || new Date().toISOString().slice(0, 10);
-    return !!(credencial.datos && credencial.datos.vence && credencial.datos.vence < hoy);
+    const d = datosDe(credencial);
+    return !!(d && d.vence && d.vence < hoy);
   }
   function resumen(credencial) {
-    const d = credencial.datos;
-    return { id: d.id, nombre: d.nombre, cargo: d.cargo, institucion: d.institucion, nivel: d.nivel, provincia: d.provincia || '', comunas: d.comunas || [], correo: d.correo || '', vence: d.vence, emitida: d.emitida, modo: d.modo, kid: credencial.sello.kid, combinada: !!d.combinada, tieneTimbre: !!d.timbre_png };
+    const d = datosDe(credencial);
+    return { version: credencial.publico ? 2 : 1, id: d.id, nombre: d.nombre, cargo: d.cargo, institucion: d.institucion, nivel: d.nivel, provincia: d.provincia || '', comunas: d.comunas || [], correo: d.correo || '', vence: d.vence, emitida: d.emitida, modo: d.modo, kid: credencial.sello.kid, combinada: !!d.combinada, tieneTimbre: !!d.timbre_png, firmaDigital: !!(d.clave_firma && d.clave_firma_privada) };
+  }
+
+  // ---------- firma digital del funcionario sobre la huella de un informe ----------
+  async function firmarHuella(huella, jwkPrivada) {
+    const clave = await importarPrivada(jwkPrivada);
+    const firma = await subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, clave, enc.encode(String(huella)));
+    return aB64u(new Uint8Array(firma));
+  }
+  async function verificarHuella(huella, firmaB64u, jwkPublica) {
+    try {
+      const clave = await importarPublica(jwkPublica);
+      return await subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, clave, deB64u(firmaB64u), enc.encode(String(huella)));
+    } catch (e) {
+      return false;
+    }
   }
 
   // ---------- cifrado con PIN ----------
@@ -111,7 +158,7 @@ const Credencial = (() => {
     return dec.decode(plano);
   }
 
-  return { canonico, aB64u, deB64u, aHex, sha256, dataUrlABytes, uuid, generarParClaves, kidDe, importarPublica, importarPrivada, mismaClave, sellar, verificar, vencida, resumen, cifrar, descifrar };
+  return { canonico, aB64u, deB64u, aHex, sha256, dataUrlABytes, uuid, generarParClaves, kidDe, importarPublica, importarPrivada, mismaClave, sellar, verificar, verificarPublico, datosDe, vencida, resumen, firmarHuella, verificarHuella, cifrar, descifrar };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = Credencial;

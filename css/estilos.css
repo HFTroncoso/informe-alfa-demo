@@ -263,3 +263,15 @@ button { font: inherit; cursor: pointer; }
 #credencial .sin-cred { color: var(--texto-suave); }
 .dialogo .error { margin-top: 8px; }
 .cred-firmante { font-size: 0.9rem; color: var(--texto-suave); }
+
+/* ---- Versión 0.5: código QR, archivo de datos, cambios en ampliaciones, importación ---- */
+.qr-caja { display: flex; gap: 14px; align-items: flex-start; background: #fff; border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px; margin: 12px 0; }
+.qr-caja svg { width: 132px; height: 132px; flex: none; }
+.qr-caja p { margin: 4px 0 0; }
+.lista-cambios { list-style: none; padding: 0; margin: 0 0 8px; }
+.lista-cambios li { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; padding: 6px 0; border-bottom: 1px dashed var(--borde); font-size: 0.92rem; }
+.lista-cambios li strong { flex: 1 1 100%; color: var(--azul-oscuro); }
+.lista-cambios .antes { color: var(--texto-suave); text-decoration: line-through; }
+.lista-cambios .ahora { color: var(--verde); font-weight: 700; }
+.rev-seccion.cambios { border-left: 4px solid var(--amarillo); }
+.etiqueta-importado { background: #eef2ff; color: var(--azul-oscuro); border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 700; margin-left: 6px; }

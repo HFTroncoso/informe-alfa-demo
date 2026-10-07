@@ -112,13 +112,7 @@ const Reglas = (() => {
   }
 
   // ---------- textos de las secciones 6 a 9 (los usan la revisión y el PDF) ----------
-  function textosSecciones(informe, config) {
-    const t = totales(informe);
-    const dec = informe.decisiones || {};
-    const decisiones = [];
-    if (texto(dec.realizadas)) decisiones.push(`Acciones realizadas: ${texto(dec.realizadas)}`);
-    if (texto(dec.pendientes)) decisiones.push(`Acciones por realizar o requeridas: ${texto(dec.pendientes)}`);
-
+  function textoRecursos(informe) {
     const rec = informe.recursos || {};
     const recursos = [];
     if (rec.sinRecursos) recursos.push('Sin recursos desplegados al momento de este informe.');
@@ -136,7 +130,9 @@ const Reglas = (() => {
       if (texto(rec.otro.medios)) partes.push(texto(rec.otro.medios));
       recursos.push(`${texto(rec.otro.nombre)}: ${partes.join('; ') || 'presente'}`);
     }
-
+    return recursos;
+  }
+  function textoNecesidades(informe) {
     const necesidades = [];
     if (informe.hayNecesidad === true) {
       (informe.necesidades || []).filter(x => x.elemento).forEach((x, i) => {
@@ -148,10 +144,77 @@ const Reglas = (() => {
     } else if (informe.hayNecesidad === false) {
       necesidades.push('Sin necesidades que no puedan cubrirse con recursos locales al momento de este informe.');
     }
+    return necesidades;
+  }
+
+  // ---------- diferencias entre un informe y la ampliación que lo actualiza ----------
+  const CELDAS = [['adH', 'hombres adultos'], ['adM', 'mujeres adultas'], ['nnaH', 'niños y adolescentes (H)'], ['nnaM', 'niñas y adolescentes (M)']];
+  const FILAS_PDF = { afectadas: 'AFECTADAS', aisladas: 'AISLADAS', albergadas: 'ALBERGADAS', damnificadas: 'DAMNIFICADAS', damnificadas_laborales: 'DAMNIFICADAS LABORALES', desaparecidas: 'DESAPARECIDAS', evacuadas: 'EVACUADAS', extraviadas: 'EXTRAVIADAS', fallecidas: 'FALLECIDAS', lesionadas: 'LESIONADAS' };
+  const TEXTUALES = new Set(['Fuente', 'Contacto', 'Lugar', 'Acciones realizadas', 'Acciones por realizar', 'Recursos involucrados', 'Necesidades']);
+  // Devuelve { lista: [{ campo, antes, ahora, seccion, textual }], rutas: Set de casillas del PDF que cambiaron }
+  function diferencias(anterior, actual) {
+    const L = []; const rutas = new Set();
+    if (!anterior || !actual) return { lista: L, rutas };
+    const dif = (campo, antes, ahora, seccion) => {
+      const a = texto(antes), b = texto(ahora);
+      if (a !== b) L.push({ campo, antes: a || '(vacío)', ahora: b || '(vacío)', seccion, textual: TEXTUALES.has(campo) });
+    };
+    const idA = anterior.identificacion || {}, idB = actual.identificacion || {};
+    dif('Comunas', comunasTexto(anterior), comunasTexto(actual), 1);
+    dif('Fuente', fuentesTexto(anterior), fuentesTexto(actual), 1);
+    dif('Contacto', idA.contacto, idB.contacto, 1);
+    dif('Lugar', lugarTexto(anterior), lugarTexto(actual), 1);
+    dif('Fecha de inicio', fmtFecha((anterior.ocurrencia || {}).fecha), fmtFecha((actual.ocurrencia || {}).fecha), 2);
+    dif('Hora de inicio', (anterior.ocurrencia || {}).hora, (actual.ocurrencia || {}).hora, 2);
+    const tipo = inf => { const e = inf.evento || {}; return e.tipo === 'OTRO' ? ('Otro: ' + texto(e.otro)) : (e.tipo || ''); };
+    dif('Tipo de evento', tipo(anterior), tipo(actual), 3);
+    for (const c of D.condiciones_vivienda) {
+      const va = (anterior.viviendas || {})[c.id] || {}, vb = (actual.viviendas || {})[c.id] || {};
+      const nombreCond = c.nivel_largo || c.titulo;   // "Daño menor", como en la sección 5 del formato
+      dif(`${nombreCond}: viviendas`, n(va.viviendas), n(vb.viviendas), 5);
+      for (const [k, nombre] of CELDAS) dif(`${nombreCond}: ocupantes, ${nombre}`, n(va[k]), n(vb[k]), 4);
+      if (c.pregunta_albergue) for (const [k, nombre] of CELDAS) dif(`${nombreCond}: en albergue, ${nombre}`, va.hayAlbergue ? n((va.albergue || {})[k]) : 0, vb.hayAlbergue ? n((vb.albergue || {})[k]) : 0, 4);
+    }
+    for (const c of (D.categorias_personas || [])) {
+      const oa = (anterior.otras || {})[c.id] || {}, ob = (actual.otras || {})[c.id] || {};
+      for (const [k, nombre] of CELDAS) dif(`${c.etiqueta}: ${nombre}`, oa.hay ? n(oa[k]) : 0, ob.hay ? n(ob[k]) : 0, 4);
+      if (c.requiere_denuncia) dif(`${c.etiqueta}: denuncia`, oa.hay && oa.denuncia ? 'sí' : 'no', ob.hay && ob.denuncia ? 'sí' : 'no', 4);
+    }
+    dif('Acciones realizadas', (anterior.decisiones || {}).realizadas, (actual.decisiones || {}).realizadas, 6);
+    dif('Acciones por realizar', (anterior.decisiones || {}).pendientes, (actual.decisiones || {}).pendientes, 6);
+    dif('Recursos involucrados', textoRecursos(anterior).join(' | '), textoRecursos(actual).join(' | '), 7);
+    dif('Necesidades', textoNecesidades(anterior).join(' | '), textoNecesidades(actual).join(' | '), 8);
+    dif('Responsable', (anterior.responsable || {}).nombre, (actual.responsable || {}).nombre, 10);
+    // Casillas del PDF (secciones 4 y 5) cuyo valor cambió: se subrayan al dibujar
+    const ta = totales(anterior), tb = totales(actual);
+    for (const k of CATEGORIAS) for (const col of ['adH', 'adM', 'nnaH', 'nnaM', 'total']) if (ta[k][col] !== tb[k][col]) rutas.add(`personas.${FILAS_PDF[k]}.${col}`);
+    for (const c of D.condiciones_vivienda) if (ta.viviendas[c.id] !== tb.viviendas[c.id]) rutas.add(`viviendas.${c.nivel}`);
+    return { lista: L, rutas };
+  }
+  const MAX_CAMBIOS_PDF = 15;
+  function cambiosTexto(informe) {
+    if (!informe.amplia || !informe.amplia.anterior) return null;
+    const d = diferencias(informe.amplia.anterior, informe);
+    if (!d.lista.length) return `Sin cambios en los datos respecto del informe ${informe.amplia.de}.`;
+    const partes = d.lista.slice(0, MAX_CAMBIOS_PDF).map(x => x.textual ? `${x.campo}: actualizado` : `${x.campo}: de ${x.antes} a ${x.ahora}`);
+    const resto = d.lista.length - MAX_CAMBIOS_PDF;
+    return `Cambios respecto del informe ${informe.amplia.de}: ${partes.join('; ')}${resto > 0 ? `; y ${resto} cambio(s) más (ver el archivo de datos)` : ''}. Los valores subrayados en las secciones 4 y 5 cambiaron.`;
+  }
+
+  function textosSecciones(informe, config) {
+    const t = totales(informe);
+    const dec = informe.decisiones || {};
+    const decisiones = [];
+    if (texto(dec.realizadas)) decisiones.push(`Acciones realizadas: ${texto(dec.realizadas)}`);
+    if (texto(dec.pendientes)) decisiones.push(`Acciones por realizar o requeridas: ${texto(dec.pendientes)}`);
+    const recursos = textoRecursos(informe);
+    const necesidades = textoNecesidades(informe);
 
     const observaciones = [];
     if (informe.amplia && informe.amplia.de) {
       observaciones.push(`Ampliación del Informe Alfa ${informe.amplia.de} del ${fmtFecha(informe.amplia.fecha)} ${informe.amplia.hora || ''}: contiene el estado completo y actualizado del evento.`);
+      const cambios = cambiosTexto(informe);
+      if (cambios) observaciones.push(cambios);
     }
     const lugar = lugarTexto(informe);
     if (lugar) observaciones.push(lugar);
@@ -335,7 +398,7 @@ const Reglas = (() => {
     return H;
   }
 
-  return { cargar, totales, evaluar, sugerencia, elemento, categoria, organismo, plantilla, horasDesdeInicio, fmtFecha, lista, fuentesTexto, comunasTexto, coordenadas, lugarTexto, textosSecciones, CATEGORIAS };
+  return { cargar, totales, evaluar, sugerencia, elemento, categoria, organismo, plantilla, horasDesdeInicio, fmtFecha, lista, fuentesTexto, comunasTexto, coordenadas, lugarTexto, textosSecciones, diferencias, cambiosTexto, CATEGORIAS };
 })();
 
 if (typeof module !== 'undefined') module.exports = Reglas;

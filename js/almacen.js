@@ -56,6 +56,7 @@ const Almacen = (() => {
       return escribir(K.historial, h.slice(0, 20));
     },
     leerHistorial() { return leer(K.historial, []); },
+    escribirHistorial(lista) { return escribir(K.historial, (lista || []).slice(0, 20)); },
 
     // Credencial del funcionario: un resumen legible y el archivo completo cifrado con su PIN
     guardarCredencial(registro) { return escribir(K.credencial, registro); },

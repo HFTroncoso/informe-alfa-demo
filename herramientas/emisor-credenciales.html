@@ -99,7 +99,7 @@
         <button type="button" class="primario" id="btn-emitir">Emitir y descargar la credencial</button>
       </div>
       <p id="estado-emision" class="estado" hidden></p>
-      <p class="ayuda">Envía el archivo descargado al correo institucional del funcionario. En la app, en el inicio, toca "Cargar credencial", elige el archivo y define un PIN. El archivo contiene la firma: no lo publiques ni lo reenvíes a terceros.</p>
+      <p class="ayuda">Envía el archivo descargado al correo institucional del funcionario. En la app, en el inicio, toca "Cargar credencial", elige el archivo y define un PIN. El archivo contiene la imagen de la firma y la clave con la que el teléfono firma digitalmente cada informe: no lo publiques ni lo reenvíes a terceros.</p>
     </section>
 
     <section class="paso">
@@ -304,15 +304,22 @@
           + '¿Emitir de todas formas?')) {
           estado('#estado-emision', 'Emisión cancelada. Carga la clave de la Dirección Regional en el paso 1 y vuelve a emitir.', 'mal'); return;
         }
-        const datos = {
+        // Clave de firma propia del funcionario (versión 2 de la credencial): la pública queda sellada en la
+        // parte pública, que viaja con cada Alfa; la privada va en la parte privada, que solo vive cifrada
+        // con el PIN en el teléfono. Con ella el teléfono firma digitalmente cada informe.
+        const parFirma = await Credencial.generarParClaves();
+        const publico = {
           id: Credencial.uuid(), modo: 'ejercicio', nombre, cargo: $('#f-cargo').value.trim(), institucion: $('#f-institucion').value.trim(),
           nivel, provincia: nivel === 'provincial' ? $('#f-provincia').value : (CONFIG.comunas.find(c => c.comuna === comunas[0]) || {}).provincia || '',
           comunas, correo: $('#f-correo').value.trim(), emisor: CONFIG.credenciales.emisor,
           emitida: new Date().toISOString().slice(0, 10), vence: $('#f-vence').value,
-          combinada, firma_png: firmaDataUrl, timbre_png: combinada ? null : timbreDataUrl
+          clave_firma: { kty: parFirma.publica.kty, crv: parFirma.publica.crv, x: parFirma.publica.x, y: parFirma.publica.y }
         };
-        const sello = await Credencial.sellar(datos, clavePrivada, kid);
-        const cred = { version: 1, tipo: 'credencial-alfa', datos, sello };
+        const privado = { combinada, firma_png: firmaDataUrl, timbre_png: combinada ? null : timbreDataUrl, clave_firma_privada: parFirma.privada };
+        const sello = await Credencial.sellar({ publico, privado }, clavePrivada, kid);
+        const sello_publico = await Credencial.sellar(publico, clavePrivada, kid);
+        const cred = { version: 2, tipo: 'credencial-alfa', publico, privado, sello, sello_publico };
+        const datos = publico;
         const comprobacion = await Credencial.verificar(cred, CONFIG.credenciales.clave_publica);
         const apellido = nombre.split(/\s+/).slice(-1)[0].normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
         descargar(`credencial_${apellido}_${datos.emitida}.alfacred.json`, JSON.stringify(cred, null, 2));
@@ -328,8 +335,9 @@
         try {
           const cred = JSON.parse(await archivo.text());
           const r = await Credencial.verificar(cred, CONFIG.credenciales.clave_publica);
-          const d = cred.datos || {};
-          estado('#estado-verificacion', (r.valida ? 'VÁLIDA. ' : 'NO VÁLIDA. ') + r.motivo + (d.nombre ? ` Titular: ${d.nombre}, ${d.cargo || ''}, ${d.institucion || ''}; nivel ${d.nivel || ''}; vence ${d.vence || ''}.` : ''), r.valida ? 'ok' : 'mal');
+          const d = Credencial.datosDe(cred) || {};
+          const version = cred.publico ? 'versión 2, con clave de firma digital' : 'versión 1, sin clave de firma digital: conviene reemitirla';
+          estado('#estado-verificacion', (r.valida ? 'VÁLIDA. ' : 'NO VÁLIDA. ') + r.motivo + (d.nombre ? ` Titular: ${d.nombre}, ${d.cargo || ''}, ${d.institucion || ''}; nivel ${d.nivel || ''}; vence ${d.vence || ''}. Credencial ${version}.` : ''), r.valida ? 'ok' : 'mal');
         } catch (err) { estado('#estado-verificacion', 'No se pudo leer el archivo: ' + err.message, 'mal'); }
         e.target.value = '';
       }

@@ -1,7 +1,7 @@
 // Archivo generado desde config.json por herramientas/sincronizar_config.py. No editar a mano.
 window.ALFA_CONFIG = {
   "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino es un correo de PRUEBA indicado por el responsable del proyecto el 2026-10-05; la dirección real de la URAT no se publica en este repositorio público para no facilitar la suplantación de informes (riesgo R-16 de la arquitectura).",
-  "version_app": "demo-0.4.1",
+  "version_app": "demo-0.5.0",
   "modo": "ejercicio",
   "destinatario": {
     "nombre": "Correo de prueba del responsable del proyecto",
@@ -147,5 +147,9 @@ window.ALFA_CONFIG = {
     "vigencia_meses": 12,
     "pin_minimo": 4,
     "nota": "Clave pública con la que la app comprueba el sello de cada credencial. La clave privada correspondiente la custodia la Dirección Regional fuera del repositorio. En esta versión todas las credenciales son de ejercicio: el PDF conserva la marca EJERCICIO y el número EJ."
+  },
+  "verificador": {
+    "url": "https://hftroncoso.github.io/informe-alfa-demo/verificar.html",
+    "nota": "Dirección del verificador (modo URAT) que lleva el código QR de cada PDF. El código agrega, tras el símbolo #, el número del informe, la huella SHA-256 del contenido, la firma digital del funcionario y el identificador de su credencial; el verificador los contrasta con el archivo de datos que llega junto al PDF."
   }
 };

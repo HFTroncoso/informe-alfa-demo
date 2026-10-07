@@ -50,9 +50,16 @@
       </section>
 
       <section id="historial" class="historial" hidden>
-        <h2>Informes de ejercicio generados en este teléfono</h2>
-        <p class="ayuda">“Ampliar” abre una copia del informe para actualizar lo que cambió; al firmarla recibe el número con letra (EJ-1-A, EJ-1-B).</p>
+        <h2>Informes de ejercicio en este teléfono</h2>
+        <p class="ayuda">“Ampliar” abre una copia del informe para actualizar lo que cambió; al firmarla recibe el número con letra (EJ-1-A, EJ-1-B) y muestra los cambios respecto del anterior.</p>
         <ul id="lista-historial"></ul>
+      </section>
+
+      <section id="importar" class="tarjeta suave">
+        <h2>Informe recibido de otro teléfono</h2>
+        <p class="ayuda">Cada informe se comparte con su archivo de datos (termina en <code>.alfa.json</code>). Si otro funcionario te lo envió, cárgalo aquí: queda en este teléfono para ampliarlo o volver a compartirlo.</p>
+        <div class="acciones-fila"><button type="button" class="secundario" data-accion="importar">Importar un informe desde archivo</button></div>
+        <input type="file" id="in-importar" accept=".json,application/json" hidden>
       </section>
 
       <section id="instalacion" class="tarjeta suave" hidden>
@@ -69,13 +76,13 @@
         <ol>
           <li>Responde preguntas simples: quién elabora, dónde y cuándo, qué pasó, viviendas y personas, otras personas afectadas, decisiones, recursos y necesidades.</li>
           <li>Si algo no cuadra, la app detiene el avance, explica por qué y muestra cómo resolverlo, con un caso parecido.</li>
-          <li>Al firmar, el PDF con la disposición del Informe Alfa se genera en el propio teléfono, sin señal. La hoja se alarga si hay mucho texto.</li>
-          <li>Compártelo por correo con el PDF adjunto: la dirección de destino queda copiada para pegarla.</li>
+          <li>Al firmar, el PDF con la disposición del Informe Alfa se genera en el propio teléfono, sin señal. La hoja se alarga si hay mucho texto. Lleva un código QR y viaja con un archivo de datos: con ellos la URAT comprueba que el informe es auténtico y no fue alterado.</li>
+          <li>Compártelo por correo con el PDF y el archivo de datos adjuntos: la dirección de destino queda copiada para pegarla.</li>
         </ol>
         <p class="ayuda">Los campos de texto se pueden dictar con el micrófono del teclado del teléfono.</p>
       </details>
 
-      <p class="pie-version">Versión <span id="version-app"></span> · Sprint 1 (prueba técnica) · Dirección Regional de SENAPRED Magallanes · Iniciativa piloto</p>
+      <p class="pie-version">Versión <span id="version-app"></span> · Sprint 3 (PDF, firma y numeración) · Dirección Regional de SENAPRED Magallanes · Iniciativa piloto</p>
     </section>
 
     <!-- 1. QUIÉN ELABORA -->
@@ -256,9 +263,11 @@
 
   <script src="lib/pdf-lib.min.js"></script>
   <script src="lib/fontkit.umd.min.js"></script>
+  <script src="lib/qrcode.min.js"></script>
   <script src="js/almacen.js"></script>
   <script src="js/reglas.js"></script>
   <script src="js/credencial.js"></script>
+  <script src="js/datos_alfa.js"></script>
   <script src="js/pdf.js"></script>
   <script src="js/app.js"></script>
 </body>
