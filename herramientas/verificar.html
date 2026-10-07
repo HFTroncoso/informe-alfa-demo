@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Verificador de Informes Alfa – modo URAT (ejercicio)</title>
-  <meta name="description" content="Comprueba la autoría y la integridad de un Informe Alfa generado con la App Informe Alfa, a partir de su archivo de datos, su código QR y su PDF. Funciona sin servidor.">
+  <meta name="description" content="Comprueba la autoría y la integridad de un Informe Alfa generado con la App Informe Alfa, a partir de su PDF (que lleva los datos incorporados), su archivo de datos y su código QR. Funciona sin servidor.">
   <link rel="stylesheet" href="../css/estilos.css">
   <style>
     body { padding-bottom: 40px; }
@@ -40,15 +40,18 @@
     </div>
   </header>
   <main>
-    <p class="aviso">Comprueba un Informe Alfa recibido por correo. Carga el <strong>archivo de datos</strong> (termina en <code>.alfa.json</code>) que llega junto al PDF y, si quieres, el PDF. Todo se comprueba en este computador; nada se envía a ningún servidor. En esta versión todos los informes son de <strong>ejercicio</strong>.</p>
+    <p class="aviso">Comprueba un Informe Alfa recibido por correo. Basta con cargar el <strong>PDF</strong>: lleva incorporados los datos del informe. También se puede cargar el archivo de datos aparte (<code>.alfa.json</code>). Todo se comprueba en este dispositivo; nada se envía a ningún servidor. En esta versión todos los informes son de <strong>ejercicio</strong>.</p>
 
     <section class="paso">
-      <h2>1. Archivo de datos del informe</h2>
+      <h2>1. Informe recibido</h2>
       <div class="acciones-fila">
-        <button type="button" class="primario" id="btn-datos">Cargar el archivo de datos (.alfa.json)</button>
+        <button type="button" class="primario" id="btn-pdf">Cargar el PDF del informe</button>
+        <button type="button" class="secundario" id="btn-datos">Cargar el archivo de datos (.alfa.json)</button>
       </div>
+      <input type="file" id="in-pdf" accept=".pdf,application/pdf" hidden>
       <input type="file" id="in-datos" accept=".json,application/json" hidden>
-      <p id="estado-datos" class="estado">Sin archivo cargado.</p>
+      <p id="estado-pdf" class="estado">Sin PDF cargado.</p>
+      <p id="estado-datos" class="estado" hidden></p>
       <div id="veredicto" class="veredicto" hidden></div>
       <div id="resultados"></div>
       <div id="resumen" class="resumen" hidden></div>
@@ -56,22 +59,12 @@
 
     <section class="paso">
       <h2>2. Código QR del PDF</h2>
-      <p class="ayuda">Si abriste esta página escaneando el código del PDF, sus datos ya están cargados. Si lo escaneaste con otra aplicación, pega aquí el texto que leyó y pulsa "Usar este código".</p>
+      <p class="ayuda">Si abriste esta página escaneando el código del PDF, sus datos ya están cargados: carga el PDF arriba para completar la comprobación. Si lo escaneaste con otra aplicación, pega aquí el texto que leyó y pulsa "Usar este código".</p>
       <textarea class="codigo" id="qr-texto" rows="3" placeholder="https://…/herramientas/verificar.html#1~EJ-7~…"></textarea>
       <div class="acciones-fila">
         <button type="button" class="secundario" id="btn-qr">Usar este código</button>
       </div>
       <p id="estado-qr" class="estado" hidden></p>
-    </section>
-
-    <section class="paso">
-      <h2>3. PDF recibido (opcional)</h2>
-      <p class="ayuda">El PDF lleva la huella de su contenido en los metadatos. Al cargarlo se comprueba que corresponde al archivo de datos.</p>
-      <div class="acciones-fila">
-        <button type="button" class="secundario" id="btn-pdf">Cargar el PDF</button>
-      </div>
-      <input type="file" id="in-pdf" accept=".pdf,application/pdf" hidden>
-      <p id="estado-pdf" class="estado" hidden></p>
     </section>
 
     <p class="ayuda">Qué se comprueba: que los datos no fueron modificados (huella), que la credencial del firmante es auténtica y estaba vigente (sello de la Dirección Regional), que la firma digital del funcionario corresponde al contenido, y que el PDF y el código QR corresponden a esos datos. La comprobación contra la nómina de habilitados de la URAT se incorpora en una versión posterior. Versión <span id="version"></span>.</p>
@@ -86,7 +79,7 @@
     (function () {
       'use strict';
       const $ = s => document.querySelector(s);
-      let CONFIG = null, archivoDatos = null, nombreDatos = '', qr = null, huellaPdf = null, numeroPdf = null;
+      let CONFIG = null, archivoDatos = null, origenDatos = '', qr = null, huellaPdf = null, numeroPdf = null, datosDesdePdf = false;
 
       function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
       function estado(sel, texto, clase) { const el = $(sel); el.hidden = false; el.textContent = texto; el.className = 'estado' + (clase ? ' ' + clase : ''); }
@@ -97,14 +90,14 @@
         try { CONFIG = await (await fetch('../datos/config.json')).json(); }
         catch (e) {
           if (window.ALFA_CONFIG) CONFIG = window.ALFA_CONFIG;
-          else { estado('#estado-datos', 'No se pudo leer la configuración de la app (clave pública de la Dirección Regional). Abre el verificador desde la dirección publicada de la app.', 'mal'); return; }
+          else { estado('#estado-pdf', 'No se pudo leer la configuración de la app (clave pública de la Dirección Regional). Abre el verificador desde la dirección publicada de la app.', 'mal'); return; }
         }
         $('#version').textContent = CONFIG.version_app || '';
+        $('#btn-pdf').addEventListener('click', () => $('#in-pdf').click());
+        $('#in-pdf').addEventListener('change', async e => { const f = e.target.files[0]; if (f) await cargarPdf(f); e.target.value = ''; });
         $('#btn-datos').addEventListener('click', () => $('#in-datos').click());
         $('#in-datos').addEventListener('change', async e => { const f = e.target.files[0]; if (f) await cargarDatos(f); e.target.value = ''; });
         $('#btn-qr').addEventListener('click', () => leerQR($('#qr-texto').value));
-        $('#btn-pdf').addEventListener('click', () => $('#in-pdf').click());
-        $('#in-pdf').addEventListener('change', async e => { const f = e.target.files[0]; if (f) await cargarPdf(f); e.target.value = ''; });
         const desdeEnlace = () => { if (location.hash.length > 1) { $('#qr-texto').value = location.href; leerQR(location.href); } };
         window.addEventListener('hashchange', desdeEnlace);   // un segundo código escaneado con la página ya abierta
         desdeEnlace();
@@ -113,14 +106,35 @@
       function leerQR(texto) {
         qr = DatosAlfa.leerQR(texto);
         if (!qr) { estado('#estado-qr', 'El texto no corresponde a un código de verificación de la App Informe Alfa.', 'mal'); return; }
-        estado('#estado-qr', `Código leído: informe ${qr.numero || '?'}, huella ${qr.huella.slice(0, 12)}…, ${qr.firma ? 'con firma digital del funcionario' : 'sin firma digital'}${qr.firmanteId ? ', credencial ' + qr.firmanteId : ''}.${archivoDatos ? '' : ' Ahora carga el archivo de datos para completar la comprobación.'}`, 'ok');
+        estado('#estado-qr', `Código leído: informe ${qr.numero || '?'}, huella ${qr.huella.slice(0, 12)}…, ${qr.firma ? 'con firma digital del funcionario' : 'sin firma digital'}${qr.firmanteId ? ', credencial ' + qr.firmanteId : ''}.${archivoDatos ? '' : ' Ahora carga el PDF del informe para completar la comprobación.'}`, 'ok');
         if (archivoDatos) comprobar();
       }
 
+      // El PDF trae la huella en los metadatos y, desde la 0.5.2, el archivo de datos incorporado
+      async function cargarPdf(f) {
+        try {
+          const ex = await DatosAlfa.extraerDePdf(PDFLib, new Uint8Array(await f.arrayBuffer()));
+          huellaPdf = ex.huella; numeroPdf = ex.numero;
+          if (!huellaPdf) { estado('#estado-pdf', `El PDF ${f.name} no trae la huella de la App Informe Alfa: puede ser de una versión anterior a la 0.5 o no haber sido generado por la app.`, 'mal'); return; }
+          if (ex.archivo) {
+            archivoDatos = ex.archivo; datosDesdePdf = true; origenDatos = `${f.name} (datos incorporados en el PDF)`;
+            estado('#estado-pdf', `PDF ${f.name} (${Math.round(f.size / 1024)} KB): informe ${numeroPdf || '?'}, con los datos incorporados. Huella ${huellaPdf.slice(0, 12)}…`, 'ok');
+            $('#estado-datos').hidden = true;
+            await comprobar();
+          } else {
+            estado('#estado-pdf', `PDF ${f.name}: informe ${numeroPdf || '?'}, huella ${huellaPdf.slice(0, 12)}…. No trae los datos incorporados (versión anterior a la 0.5.2): carga también el archivo .alfa.json.`, archivoDatos ? '' : 'mal');
+            if (archivoDatos) await comprobar();
+          }
+        } catch (e) {
+          huellaPdf = null;
+          estado('#estado-pdf', 'No se pudo leer el PDF: ' + e.message, 'mal');
+        }
+      }
+
       async function cargarDatos(f) {
-        try { archivoDatos = JSON.parse(await f.text()); nombreDatos = f.name; }
-        catch (e) { archivoDatos = null; estado('#estado-datos', 'No se pudo leer el archivo: ' + e.message, 'mal'); return; }
-        estado('#estado-datos', `Archivo ${f.name} (${Math.round(f.size / 1024)} KB) cargado.`, '');
+        try { archivoDatos = JSON.parse(await f.text()); datosDesdePdf = false; origenDatos = f.name; }
+        catch (e) { estado('#estado-datos', 'No se pudo leer el archivo: ' + e.message, 'mal'); return; }
+        estado('#estado-datos', `Archivo de datos ${f.name} (${Math.round(f.size / 1024)} KB) cargado.`, '');
         await comprobar();
       }
 
@@ -129,7 +143,9 @@
         const r = await DatosAlfa.comprobar(archivoDatos, clave, { qr });
         if (huellaPdf && r.resumen) {
           const ok = huellaPdf === archivoDatos.huella;
-          r.resultados.push({ clave: 'pdf', ok, titulo: 'PDF recibido', detalle: ok ? 'La huella que trae el PDF coincide con la del archivo de datos: son el mismo informe.' : `La huella del PDF (informe ${numeroPdf || '?'}) NO coincide con la del archivo de datos: son informes distintos o alguno fue alterado.` });
+          r.resultados.push({ clave: 'pdf', ok, titulo: 'PDF recibido', detalle: ok
+            ? (datosDesdePdf ? 'La huella de los metadatos del PDF coincide con la de los datos que lleva incorporados.' : 'La huella que trae el PDF coincide con la del archivo de datos: son el mismo informe.')
+            : `La huella del PDF (informe ${numeroPdf || '?'}) NO coincide con la de los datos: son informes distintos o alguno fue alterado.` });
         }
         render(r);
       }
@@ -167,26 +183,8 @@
             ${fila('Viviendas dañadas', s.viviendas_danadas)}
             ${fila('Necesidades registradas', s.necesidades)}
             ${fila('Generado con', s.app ? `App Informe Alfa ${s.app}` : '')}
-            ${fila('Archivo', nombreDatos)}
+            ${fila('Origen de los datos', origenDatos)}
           </dl>`;
-      }
-
-      async function cargarPdf(f) {
-        try {
-          const bytes = new Uint8Array(await f.arrayBuffer());
-          const doc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false });
-          const kw = doc.getKeywords() || '';
-          const m = /alfa-huella:([A-Za-z0-9_-]+)/.exec(kw);
-          const num = /alfa-numero:(\S+)/.exec(kw);
-          if (!m) { huellaPdf = null; estado('#estado-pdf', 'El PDF no trae la huella de la App Informe Alfa: puede ser de una versión anterior a la 0.5 o no haber sido generado por la app.', 'mal'); return; }
-          huellaPdf = m[1]; numeroPdf = num ? num[1] : null;
-          const coincide = archivoDatos ? huellaPdf === archivoDatos.huella : null;
-          estado('#estado-pdf', `PDF ${f.name}: informe ${numeroPdf || '?'}, huella ${huellaPdf.slice(0, 12)}….${coincide === null ? ' Carga el archivo de datos para compararlos.' : coincide ? ' Coincide con el archivo de datos.' : ' NO coincide con el archivo de datos.'}`, coincide === null ? '' : coincide ? 'ok' : 'mal');
-          if (archivoDatos) await comprobar();
-        } catch (e) {
-          huellaPdf = null;
-          estado('#estado-pdf', 'No se pudo leer el PDF: ' + e.message, 'mal');
-        }
       }
 
       iniciar();

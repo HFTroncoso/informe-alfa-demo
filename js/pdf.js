@@ -285,9 +285,18 @@
       for (let r = 0; r < nMod; r++) for (let c = 0; c < nMod; c++) {
         if (qr.isDark(r, c)) pagina.drawRectangle({ x: x0 + c * celda, y: Y(topQR + (r + 1) * celda), width: celda + 0.05, height: celda + 0.05, color: negro });
       }
-      ['Verificación del informe:', 'escanea el código o abre el verificador', 'de la app con el archivo de datos adjunto.'].forEach((l, i) => {
+      ['Verificación del informe:', 'escanea el código o abre el verificador', 'de la app y carga este mismo PDF.'].forEach((l, i) => {
         const w = fR.widthOfTextAtSize(l, 5);
         pagina.drawText(l, { x: x0 - 6 - w, y: Y(topQR + 9 + i * 6.5), size: 5, font: fR, color: gris });
+      });
+    }
+
+    // ---- 8. Archivo de datos incorporado al PDF (adjunto estándar): el verificador y la importación lo leen desde aquí ----
+    if (rec.datosAdjunto && rec.datosAdjunto.bytes) {
+      await doc.attach(rec.datosAdjunto.bytes, rec.datosAdjunto.nombre || 'informe.alfa.json', {
+        mimeType: 'application/json',
+        description: 'Datos del Informe Alfa para el verificador de la URAT: contenido, huella y firma digital',
+        creationDate: new Date(), modificationDate: new Date()
       });
     }
 

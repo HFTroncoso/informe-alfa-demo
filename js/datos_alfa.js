@@ -88,6 +88,47 @@
     };
   }
 
+  function serializar(archivo) { return JSON.stringify(archivo, null, 1); }
+
+  // Lee el archivo de datos incorporado en un PDF generado por la app (adjunto estándar de PDF), más la huella
+  // y el número que van en los metadatos. Devuelve { huella, numero, archivo (objeto o null), nombre, adjuntos }.
+  async function extraerDePdf(PDFLib, bytes) {
+    const doc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false });
+    const kw = doc.getKeywords() || '';
+    const mh = /alfa-huella:([A-Za-z0-9_-]+)/.exec(kw), mn = /alfa-numero:(\S+)/.exec(kw);
+    const res = { huella: mh ? mh[1] : null, numero: mn ? mn[1] : null, archivo: null, nombre: null, adjuntos: [] };
+    const { PDFName, PDFDict, PDFArray, PDFRawStream, decodePDFRawStream } = PDFLib;
+    try {
+      const names = doc.catalog.lookup(PDFName.of('Names'), PDFDict);
+      const ef = names && names.lookup(PDFName.of('EmbeddedFiles'), PDFDict);
+      const recorrer = nodo => {
+        if (!nodo) return;
+        const kids = nodo.lookup(PDFName.of('Kids'));
+        if (kids instanceof PDFArray) { for (let i = 0; i < kids.size(); i++) recorrer(kids.lookup(i, PDFDict)); return; }
+        const lista = nodo.lookup(PDFName.of('Names'));
+        if (!(lista instanceof PDFArray)) return;
+        for (let i = 0; i + 1 < lista.size(); i += 2) {
+          const clave = lista.lookup(i);
+          const spec = lista.lookup(i + 1, PDFDict);
+          const efd = spec.lookup(PDFName.of('EF'), PDFDict);
+          const stream = efd && (efd.lookup(PDFName.of('F')) || efd.lookup(PDFName.of('UF')));
+          if (!(stream instanceof PDFRawStream)) continue;
+          res.adjuntos.push({ nombre: clave && clave.decodeText ? clave.decodeText() : String(clave), bytes: decodePDFRawStream(stream).decode() });
+        }
+      };
+      recorrer(ef);
+    } catch (e) { /* PDF sin adjuntos legibles */ }
+    const dec = new TextDecoder();
+    for (const a of res.adjuntos) {
+      if (!/\.alfa\.json$/i.test(a.nombre)) continue;
+      try {
+        const obj = JSON.parse(dec.decode(a.bytes));
+        if (obj && obj.tipo === TIPO) { res.archivo = obj; res.nombre = a.nombre; break; }
+      } catch (e) { /* no es el archivo de datos; se sigue con el siguiente */ }
+    }
+    return res;
+  }
+
   // ---------- código QR: enlace al verificador con número, huella, firma e identificador del firmante ----------
   function textoQR(config, informe) {
     const base = (config && config.verificador && config.verificador.url) || 'herramientas/verificar.html';
@@ -185,7 +226,7 @@
     return { resultados: R, valido: !R.some(r => r.ok === false), resumen: resumenDe(archivo) };
   }
 
-  const api = { TIPO, VERSION_ARCHIVO, huella, construir, tablas, textoQR, leerQR, validar, comprobar, resumenDe, nombreArchivoPdf, nombreArchivoDatos, comunasDe };
+  const api = { TIPO, VERSION_ARCHIVO, huella, construir, serializar, extraerDePdf, tablas, textoQR, leerQR, validar, comprobar, resumenDe, nombreArchivoPdf, nombreArchivoDatos, comunasDe };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.DatosAlfa = api;
 })(typeof self !== 'undefined' ? self : this);

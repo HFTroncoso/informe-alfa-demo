@@ -755,7 +755,8 @@
     recursosPdf = { firmaPng: firma, timbrePng: timbre, logoPng: logo, fuentes: { regular, negrita } };
     return recursosPdf;
   }
-  async function generarPdf(inf, cred) {
+  // datos: el objeto del archivo de datos ya construido; va incorporado al PDF como adjunto
+  async function generarPdf(inf, cred, datos) {
     if (!window.PDFLib) throw new Error('la biblioteca de PDF no está cargada');
     const rec = await recursosParaPdf();
     let firmaBytes = rec.firmaPng, timbreBytes = rec.timbrePng, combinada = false;
@@ -771,7 +772,8 @@
       config: CONFIG, datos: DATOS, plantilla: PLANTILLA,
       totales: Reglas.totales(inf), secciones: Reglas.textosSecciones(inf, CONFIG),
       firmaPng: firmaBytes, timbrePng: timbreBytes, firmaCombinada: combinada,
-      qrcode: window.qrcode || null, qrTexto: DatosAlfa.textoQR(CONFIG, inf), cambios
+      qrcode: window.qrcode || null, qrTexto: DatosAlfa.textoQR(CONFIG, inf), cambios,
+      datosAdjunto: datos ? { bytes: new TextEncoder().encode(DatosAlfa.serializar(datos)), nombre: DatosAlfa.nombreArchivoDatos(inf) } : null
     });
   }
 
@@ -796,8 +798,8 @@
       informe.elaboracion = { fecha: hoyISO(), hora: ahoraHHMM(), iso: new Date().toISOString() };
       if (!informe.numero) informe.numero = asignarNumero();
       await sellarInforme(informe, cred);
-      ultimoPdf = await generarPdf(informe, cred);
       ultimoDatos = DatosAlfa.construir(informe, Reglas.totales(informe), CONFIG);
+      ultimoPdf = await generarPdf(informe, cred, ultimoDatos);
       Almacen.guardarHistorial(informe);
       Almacen.borrarBorrador();
       mostrar('listo');
@@ -845,21 +847,22 @@
     $('#listo-contenido').innerHTML = `
       <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> · <strong>${esc(tipoTexto(informe))}</strong>${Reglas.comunasTexto(informe) ? ' · ' + esc(Reglas.comunasTexto(informe)) : ''}, generado en este dispositivo.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
       <p class="cred-firmante">${informe.firmante ? 'Firmado con la credencial de ' + esc(informe.firmante.nombre) + ' (' + esc(informe.firmante.institucion || '') + ')' + (informe.sello && informe.sello.firma ? ', con firma digital.' : ', sin firma digital (credencial antigua).') : 'Firmado con la identidad ficticia de ejercicio, sin firma digital.'}</p>
-      <div class="qr-caja">${qrSvg()}<div><strong>Código de verificación</strong><p class="ayuda">El mismo código va impreso en el PDF. La URAT lo escanea, o abre el verificador con el archivo de datos que acompaña al PDF, y comprueba que el informe es auténtico y no fue alterado.</p></div></div>
+      <div class="qr-caja">${qrSvg()}<div><strong>Código de verificación</strong><p class="ayuda">El mismo código va impreso en el PDF, que lleva incorporados los datos del informe. La URAT escanea el código o abre el verificador, carga el PDF y comprueba que el informe es auténtico y no fue alterado.</p></div></div>
       <div class="acciones-fila">
         <button type="button" class="primario" data-accion="compartir">Compartir el PDF por correo</button>
       </div>
       <div class="acciones-fila">
         <button type="button" class="secundario" data-accion="descargar">Descargar el PDF</button>
         <button type="button" class="secundario" data-accion="ver">Ver el PDF</button>
-        <button type="button" class="secundario" data-accion="descargar-datos">Descargar los datos (.alfa.json)</button>
+        <button type="button" class="secundario" data-accion="descargar-datos">Descargar los datos aparte (.alfa.json)</button>
       </div>
+      <p class="ayuda"><strong>“Ver el PDF” es solo para mirarlo.</strong> No uses el botón de compartir del visor: envía un enlace temporal que no funciona fuera de este teléfono. Para enviar el informe usa “Compartir el PDF por correo” o “Descargar el PDF”.</p>
       <ol class="pasos-correo">
         ${puedeCompartir
-          ? `<li><strong>Compartir el PDF por correo</strong> copia la dirección de destino y abre el menú de compartir con el PDF y su archivo de datos ya adjuntos. Elige tu aplicación de correo.</li>
+          ? `<li><strong>Compartir el PDF por correo</strong> copia la dirección de destino y abre el menú de compartir con el PDF ya adjunto. Elige tu aplicación de correo. El PDF lleva adentro los datos para el verificador; el archivo .alfa.json aparte es opcional.</li>
              <li>En el correo, mantén presionado el campo <strong>Para</strong> y pega la dirección. El asunto y el texto ya van escritos, y la dirección aparece también en el texto del correo.</li>`
           : `<li>Este navegador no ofrece el menú de compartir con archivos (es normal en un computador). Usa la alternativa siguiente.</li>`}
-        <li>Alternativa sin adjunto: <button type="button" class="enlace" data-accion="correo">abrir el correo con el destinatario ya escrito</button>. El PDF se descarga y debes adjuntarlo tú desde Descargas, junto con el archivo de datos si también lo descargas: <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede enviar el correo ni adjuntar el archivo por sí sola.</li>
+        <li>Alternativa sin adjunto: <button type="button" class="enlace" data-accion="correo">abrir el correo con el destinatario ya escrito</button>. El PDF se descarga y debes adjuntarlo tú desde Descargas: <code>${esc(nombreArchivo())}</code>. Sin servidor, ninguna app web puede enviar el correo ni adjuntar el archivo por sí sola.</li>
       </ol>
       <h2>Destinatario</h2>
       <div class="correo-caja"><strong>${esc(d.nombre)}</strong><br><code>${esc(d.correo)}</code><br>
@@ -896,16 +899,15 @@
   async function compartir() {
     if (!ultimoPdf) { toast('Primero genera el PDF.'); return; }
     const d = CONFIG.destinatario;
+    // Se comparte solo el PDF: lleva incorporado el archivo de datos. Compartir además el .alfa.json fallaba en
+    // Chrome para Android, que no admite archivos .json en el menú de compartir aunque antes diga que sí (E-22).
     const archivo = new File([ultimoPdf], nombreArchivo(), { type: 'application/pdf' });
-    const archivoDatos = ultimoDatos ? new File([textoDatos()], DatosAlfa.nombreArchivoDatos(informe), { type: 'application/json' }) : null;
-    const puedeAmbos = !!(archivoDatos && navigator.canShare && navigator.canShare({ files: [archivo, archivoDatos] }));
-    const archivos = puedeAmbos ? [archivo, archivoDatos] : [archivo];
-    const texto = `${asunto()}\nDestinatario: ${d.correo}\nDocumento de ejercicio, sin valor oficial.${puedeAmbos ? ' Adjuntos: el PDF del informe y su archivo de datos para el verificador de la URAT.' : ''}`;
-    const datos = { files: archivos, title: asunto(), text: texto };
-    if (navigator.canShare && navigator.canShare({ files: archivos })) {
+    const texto = `${asunto()}\nDestinatario: ${d.correo}\nDocumento de ejercicio, sin valor oficial. El PDF lleva incorporados los datos para el verificador de la URAT.`;
+    const datos = { files: [archivo], title: asunto(), text: texto };
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
       let copiado = false;
       try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(d.correo); copiado = true; } } catch (e) { /* la dirección va igual en el texto */ }
-      toast((copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en el texto del correo.') + (puedeAmbos ? '' : ' Este teléfono solo comparte el PDF: descarga aparte el archivo de datos.'), 8000);
+      toast(copiado ? 'Dirección copiada: pégala en el campo Para del correo.' : 'Pega en el campo Para la dirección que va en el texto del correo.', 8000);
       try { await navigator.share(datos); }
       catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir: ' + e.message, 6000); }
     } else {
@@ -989,16 +991,24 @@
         }
         await sellarInforme(informe, cred);
       }
-      ultimoPdf = await generarPdf(informe, cred);
       ultimoDatos = DatosAlfa.construir(informe, Reglas.totales(informe), CONFIG);
+      ultimoPdf = await generarPdf(informe, cred, ultimoDatos);
       mostrar('listo');
     } catch (e) { toast('No se pudo generar el PDF: ' + e.message, 6000); }
   }
 
-  // Importa el archivo de datos (.alfa.json) de un informe generado en otro teléfono
+  // Importa un informe generado en otro teléfono: desde su PDF (lleva los datos incorporados) o desde su archivo .alfa.json
   async function importarArchivo(archivo) {
     try {
-      const obj = JSON.parse(await archivo.text());
+      let obj;
+      if (/\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf') {
+        if (!window.PDFLib) throw new Error('la biblioteca de PDF no está cargada');
+        const ex = await DatosAlfa.extraerDePdf(window.PDFLib, new Uint8Array(await archivo.arrayBuffer()));
+        if (!ex.archivo) { toast('Este PDF no trae los datos del informe incorporados (puede ser de una versión anterior a la 0.5.2). Importa el archivo .alfa.json.', 8000); return; }
+        obj = ex.archivo;
+      } else {
+        obj = JSON.parse(await archivo.text());
+      }
       const v = DatosAlfa.validar(obj);
       if (!v.ok) { toast('No se pudo importar: ' + v.motivo, 7000); return; }
       const h = await DatosAlfa.huella(obj.informe);
