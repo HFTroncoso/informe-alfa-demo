@@ -90,7 +90,7 @@
 
   // ---------- código QR: enlace al verificador con número, huella, firma e identificador del firmante ----------
   function textoQR(config, informe) {
-    const base = (config && config.verificador && config.verificador.url) || 'verificar.html';
+    const base = (config && config.verificador && config.verificador.url) || 'herramientas/verificar.html';
     const s = informe.sello || {};
     const partes = [VERSION_QR, informe.numero || '', s.huella || '', s.firma || '-', informe.firmante && informe.firmante.id ? String(informe.firmante.id).slice(0, 8) : '-'];
     return base + '#' + partes.join(SEP);

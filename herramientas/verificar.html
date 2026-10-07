@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verificador de Informes Alfa – modo URAT (ejercicio)</title>
+  <meta name="description" content="Comprueba la autoría y la integridad de un Informe Alfa generado con la App Informe Alfa, a partir de su archivo de datos, su código QR y su PDF. Funciona sin servidor.">
+  <link rel="stylesheet" href="../css/estilos.css">
+  <style>
+    body { padding-bottom: 40px; }
+    main { max-width: 820px; }
+    .paso { background: #fff; border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px; margin-bottom: 16px; }
+    .paso h2 { color: var(--azul-oscuro); }
+    .estado { padding: 10px 12px; border-radius: 8px; background: #f3f4f6; font-size: 0.95rem; }
+    .estado.ok { background: var(--verde-suave); color: var(--verde); }
+    .estado.mal { background: var(--rojo-suave); color: var(--rojo); }
+    .veredicto { font-size: 1.15rem; font-weight: 800; padding: 14px; border-radius: 10px; margin: 12px 0; }
+    .veredicto.ok { background: var(--verde-suave); color: var(--verde); }
+    .veredicto.mal { background: var(--rojo-suave); color: var(--rojo); }
+    .veredicto.neutro { background: #f3f4f6; color: var(--texto); }
+    .resultado { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; background: #f3f4f6; font-size: 0.95rem; }
+    .resultado.ok { background: var(--verde-suave); }
+    .resultado.mal { background: var(--rojo-suave); }
+    .resultado .icono { flex: none; width: 24px; text-align: center; font-size: 1.3rem; line-height: 1.1; font-weight: 800; }
+    .resultado.ok .icono { color: var(--verde); }
+    .resultado.mal .icono { color: var(--rojo); }
+    .resultado .icono.neutro { color: var(--texto-suave); }
+    .banda-ejercicio { background: var(--amarillo); color: #1f2937; font-weight: 800; text-align: center; padding: 8px; border-radius: 8px; letter-spacing: 0.05em; margin: 12px 0 8px; }
+    .resumen dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 0.95rem; }
+    .resumen dt { color: var(--texto-suave); }
+    .resumen dd { margin: 0; }
+    textarea.codigo { font-family: Consolas, monospace; font-size: 0.8rem; width: 100%; min-height: 70px; border: 1px solid var(--borde); border-radius: 8px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <header class="cabecera">
+    <div class="cabecera-fila">
+      <span class="insignia">MODO URAT</span>
+      <h1>Verificador de Informes Alfa</h1>
+    </div>
+  </header>
+  <main>
+    <p class="aviso">Comprueba un Informe Alfa recibido por correo. Carga el <strong>archivo de datos</strong> (termina en <code>.alfa.json</code>) que llega junto al PDF y, si quieres, el PDF. Todo se comprueba en este computador; nada se envía a ningún servidor. En esta versión todos los informes son de <strong>ejercicio</strong>.</p>
+
+    <section class="paso">
+      <h2>1. Archivo de datos del informe</h2>
+      <div class="acciones-fila">
+        <button type="button" class="primario" id="btn-datos">Cargar el archivo de datos (.alfa.json)</button>
+      </div>
+      <input type="file" id="in-datos" accept=".json,application/json" hidden>
+      <p id="estado-datos" class="estado">Sin archivo cargado.</p>
+      <div id="veredicto" class="veredicto" hidden></div>
+      <div id="resultados"></div>
+      <div id="resumen" class="resumen" hidden></div>
+    </section>
+
+    <section class="paso">
+      <h2>2. Código QR del PDF</h2>
+      <p class="ayuda">Si abriste esta página escaneando el código del PDF, sus datos ya están cargados. Si lo escaneaste con otra aplicación, pega aquí el texto que leyó y pulsa "Usar este código".</p>
+      <textarea class="codigo" id="qr-texto" rows="3" placeholder="https://…/herramientas/verificar.html#1~EJ-7~…"></textarea>
+      <div class="acciones-fila">
+        <button type="button" class="secundario" id="btn-qr">Usar este código</button>
+      </div>
+      <p id="estado-qr" class="estado" hidden></p>
+    </section>
+
+    <section class="paso">
+      <h2>3. PDF recibido (opcional)</h2>
+      <p class="ayuda">El PDF lleva la huella de su contenido en los metadatos. Al cargarlo se comprueba que corresponde al archivo de datos.</p>
+      <div class="acciones-fila">
+        <button type="button" class="secundario" id="btn-pdf">Cargar el PDF</button>
+      </div>
+      <input type="file" id="in-pdf" accept=".pdf,application/pdf" hidden>
+      <p id="estado-pdf" class="estado" hidden></p>
+    </section>
+
+    <p class="ayuda">Qué se comprueba: que los datos no fueron modificados (huella), que la credencial del firmante es auténtica y estaba vigente (sello de la Dirección Regional), que la firma digital del funcionario corresponde al contenido, y que el PDF y el código QR corresponden a esos datos. La comprobación contra la nómina de habilitados de la URAT se incorpora en una versión posterior. Versión <span id="version"></span>.</p>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="../lib/pdf-lib.min.js"></script>
+  <script src="../datos/config.js"></script>
+  <script src="../js/credencial.js"></script>
+  <script src="../js/datos_alfa.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const $ = s => document.querySelector(s);
+      let CONFIG = null, archivoDatos = null, nombreDatos = '', qr = null, huellaPdf = null, numeroPdf = null;
+
+      function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+      function estado(sel, texto, clase) { const el = $(sel); el.hidden = false; el.textContent = texto; el.className = 'estado' + (clase ? ' ' + clase : ''); }
+      function fmtFecha(iso) { if (!iso) return ''; const p = String(iso).split('-'); return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : iso; }
+
+      async function iniciar() {
+        // Por internet se lee config.json; abierto como archivo local, el navegador lo bloquea y se usa config.js
+        try { CONFIG = await (await fetch('../datos/config.json')).json(); }
+        catch (e) {
+          if (window.ALFA_CONFIG) CONFIG = window.ALFA_CONFIG;
+          else { estado('#estado-datos', 'No se pudo leer la configuración de la app (clave pública de la Dirección Regional). Abre el verificador desde la dirección publicada de la app.', 'mal'); return; }
+        }
+        $('#version').textContent = CONFIG.version_app || '';
+        $('#btn-datos').addEventListener('click', () => $('#in-datos').click());
+        $('#in-datos').addEventListener('change', async e => { const f = e.target.files[0]; if (f) await cargarDatos(f); e.target.value = ''; });
+        $('#btn-qr').addEventListener('click', () => leerQR($('#qr-texto').value));
+        $('#btn-pdf').addEventListener('click', () => $('#in-pdf').click());
+        $('#in-pdf').addEventListener('change', async e => { const f = e.target.files[0]; if (f) await cargarPdf(f); e.target.value = ''; });
+        const desdeEnlace = () => { if (location.hash.length > 1) { $('#qr-texto').value = location.href; leerQR(location.href); } };
+        window.addEventListener('hashchange', desdeEnlace);   // un segundo código escaneado con la página ya abierta
+        desdeEnlace();
+      }
+
+      function leerQR(texto) {
+        qr = DatosAlfa.leerQR(texto);
+        if (!qr) { estado('#estado-qr', 'El texto no corresponde a un código de verificación de la App Informe Alfa.', 'mal'); return; }
+        estado('#estado-qr', `Código leído: informe ${qr.numero || '?'}, huella ${qr.huella.slice(0, 12)}…, ${qr.firma ? 'con firma digital del funcionario' : 'sin firma digital'}${qr.firmanteId ? ', credencial ' + qr.firmanteId : ''}.${archivoDatos ? '' : ' Ahora carga el archivo de datos para completar la comprobación.'}`, 'ok');
+        if (archivoDatos) comprobar();
+      }
+
+      async function cargarDatos(f) {
+        try { archivoDatos = JSON.parse(await f.text()); nombreDatos = f.name; }
+        catch (e) { archivoDatos = null; estado('#estado-datos', 'No se pudo leer el archivo: ' + e.message, 'mal'); return; }
+        estado('#estado-datos', `Archivo ${f.name} (${Math.round(f.size / 1024)} KB) cargado.`, '');
+        await comprobar();
+      }
+
+      async function comprobar() {
+        const clave = CONFIG.credenciales && CONFIG.credenciales.clave_publica;
+        const r = await DatosAlfa.comprobar(archivoDatos, clave, { qr });
+        if (huellaPdf && r.resumen) {
+          const ok = huellaPdf === archivoDatos.huella;
+          r.resultados.push({ clave: 'pdf', ok, titulo: 'PDF recibido', detalle: ok ? 'La huella que trae el PDF coincide con la del archivo de datos: son el mismo informe.' : `La huella del PDF (informe ${numeroPdf || '?'}) NO coincide con la del archivo de datos: son informes distintos o alguno fue alterado.` });
+        }
+        render(r);
+      }
+
+      function render(r) {
+        const fallos = r.resultados.filter(x => x.ok === false).length;
+        const firmaOk = r.resultados.some(x => x.clave === 'firma' && x.ok === true);
+        const v = $('#veredicto'); v.hidden = false;
+        v.className = 'veredicto ' + (fallos ? 'mal' : (firmaOk ? 'ok' : 'neutro'));
+        v.textContent = fallos
+          ? `NO VERIFICADO: ${fallos} comprobación(es) fallida(s).`
+          : (firmaOk ? 'VERIFICADO: contenido íntegro, firmado digitalmente por un funcionario con credencial auténtica.' : 'CONTENIDO ÍNTEGRO, sin autoría comprobable (el informe no lleva firma digital).');
+        $('#resultados').innerHTML = r.resultados.map(x => {
+          const clase = x.ok === true ? 'ok' : x.ok === false ? 'mal' : '';
+          const icono = x.ok === true ? '✓' : x.ok === false ? '✗' : '•';
+          return `<div class="resultado ${clase}"><span class="icono ${x.ok == null ? 'neutro' : ''}">${icono}</span><div><strong>${esc(x.titulo)}</strong><br>${esc(x.detalle)}</div></div>`;
+        }).join('');
+        const s = r.resumen;
+        const caja = $('#resumen');
+        if (!s) { caja.hidden = true; return; }
+        caja.hidden = false;
+        const fila = (k, val) => (val == null || val === '' ? '' : `<dt>${esc(k)}</dt><dd>${esc(val)}</dd>`);
+        caja.innerHTML = `
+          <div class="banda-ejercicio">${s.modo === 'ejercicio' ? 'INFORME DE EJERCICIO – SIN VALOR OFICIAL' : esc(s.modo)}</div>
+          <dl>
+            ${fila('Número', s.numero)}
+            ${fila('Ampliación de', s.ampliacion_de)}
+            ${fila('Comuna(s)', s.comunas)}
+            ${fila('Provincia', s.provincia)}
+            ${fila('Tipo de evento', s.tipo_evento)}
+            ${fila('Inicio del evento', s.fecha_inicio ? `${fmtFecha(s.fecha_inicio)} ${s.hora_inicio || ''}` : '')}
+            ${fila('Elaborado el', s.fecha_elaboracion ? `${fmtFecha(s.fecha_elaboracion)} ${s.hora_elaboracion || ''}` : '')}
+            ${fila('Responsable', [s.responsable, s.cargo, s.institucion].filter(Boolean).join(' · '))}
+            ${fila('Afectadas / damnificadas / albergadas', [s.afectadas, s.damnificadas, s.albergadas].map(x => x == null ? '–' : x).join(' / '))}
+            ${fila('Viviendas dañadas', s.viviendas_danadas)}
+            ${fila('Necesidades registradas', s.necesidades)}
+            ${fila('Generado con', s.app ? `App Informe Alfa ${s.app}` : '')}
+            ${fila('Archivo', nombreDatos)}
+          </dl>`;
+      }
+
+      async function cargarPdf(f) {
+        try {
+          const bytes = new Uint8Array(await f.arrayBuffer());
+          const doc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false });
+          const kw = doc.getKeywords() || '';
+          const m = /alfa-huella:([A-Za-z0-9_-]+)/.exec(kw);
+          const num = /alfa-numero:(\S+)/.exec(kw);
+          if (!m) { huellaPdf = null; estado('#estado-pdf', 'El PDF no trae la huella de la App Informe Alfa: puede ser de una versión anterior a la 0.5 o no haber sido generado por la app.', 'mal'); return; }
+          huellaPdf = m[1]; numeroPdf = num ? num[1] : null;
+          const coincide = archivoDatos ? huellaPdf === archivoDatos.huella : null;
+          estado('#estado-pdf', `PDF ${f.name}: informe ${numeroPdf || '?'}, huella ${huellaPdf.slice(0, 12)}….${coincide === null ? ' Carga el archivo de datos para compararlos.' : coincide ? ' Coincide con el archivo de datos.' : ' NO coincide con el archivo de datos.'}`, coincide === null ? '' : coincide ? 'ok' : 'mal');
+          if (archivoDatos) await comprobar();
+        } catch (e) {
+          huellaPdf = null;
+          estado('#estado-pdf', 'No se pudo leer el PDF: ' + e.message, 'mal');
+        }
+      }
+
+      iniciar();
+    })();
+  </script>
+</body>
+</html>
