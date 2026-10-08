@@ -1,6 +1,6 @@
 {
   "_comentario": "Catálogo de elementos, condiciones de vivienda, categorías de personas, tipos de evento y reglas de validación de la demo. VERSIÓN PROVISORIA redactada en el Sprint 1 a partir de ARQUITECTURA.md, la Guía de Aplicación 2026 y el IT-LOG-01 v4. Debe ser revisada en Cowork y validada con la URAT (riesgo R-12) antes del piloto. Si cambia el instructivo, se edita este archivo, no el código.",
-  "version": "demo-0.3 provisoria",
+  "version": "demo-0.5.5: criterios revisados por la Dirección Regional el 2026-10-08 (D-54); validación con la URAT pendiente (R-12)",
   "condiciones_vivienda": [
     {
       "id": "menor",
@@ -243,7 +243,7 @@
       "base": "viviendas_no_habitables",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1",
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)",
       "caso_parecido": "Temporal con 4 viviendas anegadas que no pueden volver a ocuparse y 2 con daño menor. Se registran 4 viviendas con daño mayor y 2 con daño menor, y se piden 4 viviendas de emergencia, no 6: las de daño menor se reparan."
     },
     {
@@ -254,7 +254,7 @@
       "base": "personas",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "colchon",
@@ -264,7 +264,7 @@
       "base": "personas",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "sabanas",
@@ -274,7 +274,7 @@
       "base": "personas",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "frazada",
@@ -284,7 +284,7 @@
       "base": "personas",
       "factor": 2,
       "nivel_tope": "justificacion",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_higiene_hombre",
@@ -294,7 +294,7 @@
       "base": "personas_hombres",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_higiene_mujer",
@@ -304,7 +304,7 @@
       "base": "personas_mujeres",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_higiene_infantil",
@@ -314,7 +314,7 @@
       "base": "personas_nna",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_aseo",
@@ -324,7 +324,7 @@
       "base": "viviendas_danadas",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_cocina",
@@ -334,7 +334,7 @@
       "base": "viviendas_danadas",
       "factor": 1,
       "nivel_tope": "bloqueo",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_alimentacion_44",
@@ -345,7 +345,7 @@
       "factor": 0.25,
       "nivel_tope": "justificacion",
       "regla_72h": true,
-      "fuente": "IT-LOG-01 v4, tabla 1 y punto 4.1 a)"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE) y punto 4.1 a)"
     },
     {
       "id": "kit_alimentacion_47",
@@ -356,7 +356,7 @@
       "factor": 0.25,
       "nivel_tope": "justificacion",
       "regla_72h": true,
-      "fuente": "IT-LOG-01 v4, tabla 1 y punto 4.1 a)"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE) y punto 4.1 a)"
     },
     {
       "id": "estanque",
@@ -366,7 +366,7 @@
       "base": "viviendas_danadas",
       "factor": 1,
       "nivel_tope": "justificacion",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "film_plastico",
@@ -376,7 +376,7 @@
       "base": "viviendas_danadas",
       "factor": 0.1,
       "nivel_tope": "justificacion",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_techo",
@@ -386,7 +386,7 @@
       "base": "viviendas_danadas",
       "factor": 10,
       "nivel_tope": "justificacion",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "saco_defensa",
@@ -396,7 +396,7 @@
       "base": "viviendas_danadas",
       "factor": 30,
       "nivel_tope": "justificacion",
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "racion_12h",
@@ -404,7 +404,7 @@
       "unidad": "raciones",
       "criterio": "1 por persona cada 12 horas",
       "base": null,
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "agua",
@@ -420,7 +420,7 @@
       "unidad": "kilos",
       "criterio": "70 a 80 kg para 4 días por vivienda",
       "base": null,
-      "fuente": "IT-LOG-01 v4, tabla 1"
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "otro",
@@ -432,7 +432,6 @@
     }
   ],
   "parametros": {
-    "umbral_personas_por_vivienda": 10,
     "horas_minimas_kit_alimentacion": 72,
     "largo_minimo_para_que": 12,
     "largo_minimo_decision": 10
@@ -512,48 +511,6 @@
         }
       ],
       "caso_parecido": "Corte de agua potable: 120 personas afectadas y ninguna vivienda dañada. Las viviendas quedan en cero y las 120 personas se registran como afectadas en \"Otras personas afectadas\"."
-    },
-    {
-      "id": "SIN_OCUPANTES",
-      "nombre": "Viviendas con daño mayor o destruidas sin ocupantes",
-      "nivel": "justificacion",
-      "fuente": "Guía 2026, secciones 4 y 5",
-      "pantalla": "viviendas",
-      "titulo": "Viviendas no habitables sin personas",
-      "que_no_cuadra": "Registraste {viviendas} vivienda(s) que \"{condicion}\" pero 0 personas viviendo en ellas.",
-      "por_que": "Según la Guía, el daño mayor y la destrucción se asocian al concepto de damnificado: lo normal es que esas viviendas tuvieran ocupantes. Puede ser correcto si estaban deshabitadas, eran de veraneo o bodegas, pero hay que decirlo.",
-      "como_resolver": [
-        {
-          "texto": "Agregar las personas que vivían en esas viviendas",
-          "pantalla": "viviendas"
-        },
-        {
-          "texto": "Si de verdad estaban deshabitadas, escribir el motivo; quedará impreso en Observaciones",
-          "accion": "justificar"
-        }
-      ],
-      "caso_parecido": "Incendio de 2 cabañas de veraneo sin moradores en invierno. Se registran 2 viviendas destruidas, 0 personas, y en Observaciones: \"Cabañas de temporada deshabitadas al momento del incendio\"."
-    },
-    {
-      "id": "PROMEDIO_INUSUAL",
-      "nombre": "Promedio de personas por vivienda fuera de lo habitual",
-      "nivel": "justificacion",
-      "fuente": "Criterio propuesto por la Dirección Regional, por validar con la URAT (R-12)",
-      "pantalla": "viviendas",
-      "titulo": "Demasiadas personas por vivienda",
-      "que_no_cuadra": "En la condición \"{condicion}\" registraste {ocupantes} personas en {viviendas} vivienda(s): un promedio de {promedio} por vivienda, cuando lo habitual es menos de {umbral}.",
-      "por_que": "Un promedio tan alto suele indicar que se sumaron personas de otras viviendas o se escribió un cero de más. Puede ser correcto en un hogar colectivo, una residencia o un campamento, pero hay que explicarlo.",
-      "como_resolver": [
-        {
-          "texto": "Revisar el número de viviendas o de personas",
-          "pantalla": "viviendas"
-        },
-        {
-          "texto": "Si el número es correcto (residencia, hogar colectivo, campamento), escribir el motivo; quedará impreso en Observaciones",
-          "accion": "justificar"
-        }
-      ],
-      "caso_parecido": "Incendio en una residencia de trabajadores: 1 vivienda destruida con 24 personas. Es correcto; en Observaciones se escribió \"Residencia colectiva de trabajadores de temporada\"."
     },
     {
       "id": "CATEGORIA_VACIA",
@@ -647,7 +604,7 @@
       "id": "TOPE_ELEMENTO",
       "nombre": "Cantidad pedida mayor que el criterio del IT-LOG-01",
       "nivel": "segun_elemento",
-      "fuente": "IT-LOG-01 v4, tabla 1",
+      "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)",
       "pantalla": "necesidad",
       "titulo": "La cantidad no cuadra con la afectación",
       "que_no_cuadra": "Pediste {cantidad} {unidad} de \"{elemento}\". El criterio es {criterio} y en el informe hay {base_valor} {base_nombre}: el máximo que cuadra es {tope}.",

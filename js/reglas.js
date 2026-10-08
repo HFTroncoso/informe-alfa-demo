@@ -219,6 +219,10 @@ const Reglas = (() => {
       const cambios = cambiosTexto(informe);
       if (cambios) observaciones.push(cambios);
     }
+    // El correlativo se reinicia cada año y no lleva el año; si el informe continúa un evento del año anterior, se aclara (D-53)
+    // Antes de firmar no hay fecha de elaboración: se usa el año de hoy, que es el que tendrá el informe
+    const anioCorr = informe.anio, anioFecha = informe.elaboracion && informe.elaboracion.fecha ? parseInt(String(informe.elaboracion.fecha).slice(0, 4), 10) : new Date().getFullYear();
+    if (anioCorr && anioFecha && anioCorr !== anioFecha) observaciones.push(`Correlativo del año ${anioCorr}: el evento comenzó ese año y este informe lo continúa.`);
     const lugar = lugarTexto(informe);
     if (lugar) observaciones.push(lugar);
     const J = informe.justificaciones || {};
@@ -328,10 +332,9 @@ const Reglas = (() => {
             }
           }
         }
-        if (viv > 0 && occ === 0 && c.ocupantes_cuentan_como === 'damnificadas') hallazgo(regla('SIN_OCUPANTES'), { viviendas: viv, condicion: cond }, { sufijo: c.id });
-        if (viv > 0 && occ / viv > P.umbral_personas_por_vivienda) {
-          hallazgo(regla('PROMEDIO_INUSUAL'), { viviendas: viv, ocupantes: occ, condicion: cond, promedio: (occ / viv).toFixed(1).replace('.', ','), umbral: P.umbral_personas_por_vivienda }, { sufijo: c.id });
-        }
+        // Sin regla para viviendas sin ocupantes ni para el promedio de personas por vivienda (D-54, 2026-10-08):
+        // hay viviendas dañadas o destruidas sin habitantes (abandonadas, dueños ausentes) y viviendas colectivas o
+        // con varias familias. Las dos reglas anteriores se retiraron por indicación de la Dirección Regional.
       }
     }
 

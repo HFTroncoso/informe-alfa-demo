@@ -1,7 +1,7 @@
 {
-  "name": "Informe Alfa – Demo de ejercicio",
-  "short_name": "Alfa EJ",
-  "description": "Demo del Sprint 1: guía el llenado del Informe Alfa en modo ejercicio, bloquea errores de cuadratura y genera el PDF en el teléfono. Sin valor oficial.",
+  "name": "Informe Alfa App",
+  "short_name": "Informe Alfa App",
+  "description": "App Informe Alfa de la Dirección Regional de SENAPRED Magallanes: guía el llenado del Informe Alfa, bloquea errores de cuadratura, genera el PDF firmado en el teléfono y lo comparte. En modo ejercicio hasta el piloto.",
   "lang": "es-CL",
   "start_url": "./index.html",
   "scope": "./",

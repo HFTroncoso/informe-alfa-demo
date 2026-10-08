@@ -42,8 +42,10 @@
     const cut = c => { const x = ((config && config.comunas) || []).find(k => k.comuna === c); return x ? x.cut : null; };
     const num = v => (v === '' || v == null) ? null : (Number.isFinite(Number(String(v).replace(',', '.'))) ? Number(String(v).replace(',', '.')) : null);
     const base = informe.amplia && informe.amplia.base ? informe.amplia.base : informe.numero;
+    const E0 = informe.elaboracion || {};
+    const anioCorr = informe.anio || (E0.fecha ? parseInt(String(E0.fecha).slice(0, 4), 10) : null);   // el correlativo se reinicia cada año (D-53)
     const evento = {
-      id_evento: base, region: id.region || '', provincia: id.provincia || '',
+      id_evento: base, anio_correlativo: anioCorr, region: id.region || '', provincia: id.provincia || '',
       comunas: comunas.map(c => ({ comuna: c, cut: cut(c) })),
       tipo_evento: ev.tipo || '', tipo_evento_otro: ev.otro || '',
       fecha_inicio: oc.fecha || '', hora_inicio: oc.hora || '',
@@ -51,7 +53,7 @@
     };
     const R = informe.responsable || {}, E = informe.elaboracion || {};
     const inf = {
-      numero: informe.numero, id_evento: base,
+      numero: informe.numero, id_evento: base, anio_correlativo: anioCorr,
       letra: informe.amplia && informe.numero ? String(informe.numero).slice(String(base).length + 1) : '',
       amplia_de: informe.amplia ? informe.amplia.de : null,
       modo: informe.modo || 'ejercicio', nivel_elaborador: (informe.elaborador && informe.elaborador.nivel) || '',
@@ -158,7 +160,8 @@
     const id = inf.identificacion || {}, oc = inf.ocurrencia || {}, ev = inf.evento || {}, R = inf.responsable || {}, E = inf.elaboracion || {};
     const total = k => (t[k] && t[k].total != null) ? t[k].total : null;
     return {
-      numero: inf.numero, modo: inf.modo || archivo.modo || '', comunas: comunasDe(inf).join(', '), provincia: id.provincia || '', region: id.region || '',
+      numero: inf.numero, anio_correlativo: inf.anio || (E.fecha ? parseInt(String(E.fecha).slice(0, 4), 10) : null),
+      modo: inf.modo || archivo.modo || '', comunas: comunasDe(inf).join(', '), provincia: id.provincia || '', region: id.region || '',
       tipo_evento: ev.tipo === 'OTRO' ? ('Otro: ' + texto(ev.otro)) : (ev.tipo || ''),
       fecha_inicio: oc.fecha || '', hora_inicio: oc.hora || '',
       fecha_elaboracion: E.fecha || '', hora_elaboracion: E.hora || '',

@@ -79,6 +79,7 @@
       version: CONFIG.version_app,
       modo: 'ejercicio',
       numero: null,
+      anio: null,
       amplia: null,
       creado: new Date().toISOString(),
       elaborador: cr ? { nivel: cr.nivel, provincia: cr.provincia || '' } : { nivel: '', provincia: '' },
@@ -137,6 +138,7 @@
     if (inf.amplia === undefined) inf.amplia = null;
     if (inf.firmante === undefined) inf.firmante = null;
     if (inf.sello === undefined) inf.sello = null;
+    if (inf.anio === undefined) inf.anio = null;
     inf.responsable = Object.assign({ nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' }, inf.responsable || {});
     actualizarProvincia(inf);
     actualizarResponsable(inf);
@@ -161,8 +163,8 @@
   function guardar() { if (informe && !informe.elaboracion) Almacen.guardarBorrador(informe); }
 
   // ---------- numeración ----------
-  function siguienteLetra(base) {
-    const usadas = Almacen.leerHistorial().filter(h => h.numero && h.numero.startsWith(base + '-')).map(h => h.numero.slice(base.length + 1));
+  function siguienteLetra(base, anio) {
+    const usadas = Almacen.leerHistorial().filter(h => h.numero && h.numero.startsWith(base + '-') && (!anio || anioDe(h) === anio)).map(h => h.numero.slice(base.length + 1));
     let i = 0;
     while (i < LETRAS.length - 1 && usadas.includes(LETRAS[i])) i++;
     return LETRAS[i];
@@ -172,12 +174,22 @@
   // evento o de la misma comuna pueden haberse emitido desde la planilla o desde otro teléfono.
   const PREFIJO = () => CONFIG.numero.prefijo;
   const digitosDe = numero => { const m = /-(\d+)(?:-[A-Z])?$/.exec(String(numero || '')); return m ? parseInt(m[1], 10) : null; };
+  // El correlativo se reinicia cada año y no lleva el año (D-53): cada informe guarda el año de su correlativo.
+  // Un informe nuevo toma el año de hoy; una ampliación hereda el del informe base aunque su fecha sea del año siguiente.
+  const anioActual = () => new Date().getFullYear();
+  const anioDe = inf => (inf && inf.anio) || (inf && inf.elaboracion && inf.elaboracion.fecha ? parseInt(String(inf.elaboracion.fecha).slice(0, 4), 10) : null);
+  function anioElegido() {
+    if (informe.amplia && informe.amplia.externa) { const a = parseInt(informe.numeroManual && informe.numeroManual.anio, 10); return Number.isInteger(a) ? a : anioActual(); }
+    if (informe.amplia && informe.anio) return informe.anio;
+    return anioActual();
+  }
   function propuestaNumero() {
+    const anio = anioElegido();
     if (informe.amplia && informe.amplia.base) {
-      return { n: digitosDe(informe.amplia.base), letra: siguienteLetra(informe.amplia.base), baseFija: !informe.amplia.externa };
+      return { n: digitosDe(informe.amplia.base), letra: siguienteLetra(informe.amplia.base, anio), baseFija: !informe.amplia.externa, anio };
     }
-    const n = digitosDe(Almacen.numeroPrevisto(PREFIJO()));
-    return { n, letra: informe.amplia ? siguienteLetra(`${PREFIJO()}-${n}`) : null, baseFija: false };
+    const n = digitosDe(Almacen.numeroPrevisto(PREFIJO(), anio));
+    return { n, letra: informe.amplia ? siguienteLetra(`${PREFIJO()}-${n}`, anio) : null, baseFija: false, anio };
   }
   function numeroPropuestoTexto(p) { return `${PREFIJO()}-${p.n}${informe.amplia ? '-' + (p.letra || 'A') : ''}`; }
   function numeroElegido() {
@@ -192,7 +204,9 @@
     const e = numeroElegido();
     if (!e.numero) { toast('Escribe el número del informe: un entero mayor que cero.', 5000); return null; }
     if (informe.amplia && !/^[A-Z]$/.test(e.letra)) { toast('Elige la letra de la ampliación.', 5000); return null; }
-    if (Almacen.leerHistorial().some(h => h.numero === e.numero)) { toast(`Ya existe el informe ${e.numero} en este teléfono. Usa otro número o letra.`, 7000); return null; }
+    const anio = anioElegido();
+    if (informe.amplia && informe.amplia.externa && !(anio >= 2000 && anio <= 2100)) { toast('Escribe el año del informe que amplías, con cuatro cifras.', 5000); return null; }
+    if (Almacen.leerHistorial().some(h => h.numero === e.numero && anioDe(h) === anio)) { toast(`Ya existe el informe ${e.numero} del año ${anio} en este teléfono. Usa otro número o letra.`, 7000); return null; }
     const propuesto = numeroPropuestoTexto(propuestaNumero());
     if (e.numero !== propuesto && !(informe.amplia && informe.amplia.externa)) {
       if (!confirm(`El número propuesto era ${propuesto} y vas a usar ${e.numero}.\n\nHazlo solo si ese número corresponde a la numeración real de tu institución, por ejemplo porque otros Alfas se emitieron desde la planilla o desde otro teléfono.\n\n¿Continuar con ${e.numero}?`)) return null;
@@ -431,11 +445,12 @@
     }
     if (el.id === 'in-amplia-externa') {
       if (el.checked) {
-        informe.amplia = { de: '', base: '', fecha: null, hora: null, anterior: null, externa: true };
-        informe.numeroManual = { n: informe.numeroManual ? informe.numeroManual.n : null, letra: 'A' };
+        informe.amplia = { de: '', base: '', fecha: null, hora: null, anterior: null, externa: true, anio: anioActual() };
+        informe.numeroManual = { n: informe.numeroManual ? informe.numeroManual.n : null, letra: 'A', anio: anioActual() };
+        informe.anio = anioActual();
       } else {
-        informe.amplia = null;
-        if (informe.numeroManual) informe.numeroManual.letra = null;
+        informe.amplia = null; informe.anio = null;
+        if (informe.numeroManual) { informe.numeroManual.letra = null; delete informe.numeroManual.anio; }
       }
       guardar(); renderRevision(); cargarValores();
       return;
@@ -454,6 +469,11 @@
       informe.amplia.base = Number.isInteger(n) && n > 0 ? `${PREFIJO()}-${n}` : '';
       informe.amplia.de = informe.amplia.base;
     }
+    if (ruta === 'numeroManual.anio' && informe.amplia && informe.amplia.externa) {  // y el año del correlativo también
+      const a = parseInt(v, 10);
+      informe.amplia.anio = Number.isInteger(a) ? a : null; informe.anio = informe.amplia.anio;
+    }
+    if ((ruta === 'numeroManual.n' || ruta === 'numeroManual.anio') && pantalla === 'revision') refrescarObservaciones();
     if (ruta === 'evento.otro') actualizarSeleccionEvento();
     if (ruta === 'lugar.lat' || ruta === 'lugar.lon') { informe.lugar.origen = 'manual'; informe.lugar.precision = null; $('#gps-estado').textContent = 'Coordenadas escritas a mano.'; }
     if (ruta.endsWith('.hayAlbergue')) { const bloque = $(`[data-albergue="${ruta.split('.')[1]}"]`); if (bloque) bloque.hidden = !v; }
@@ -761,6 +781,14 @@
       <p class="ayuda">En el PDF, los valores que cambiaron en las secciones 4 y 5 van subrayados y la lista de cambios se imprime en Observaciones.</p></section>`;
   }
 
+  // Vuelve a dibujar solo la sección 9 de la revisión, cuando cambian datos que se reflejan en Observaciones
+  function refrescarObservaciones() {
+    const sec = $$('#revision-contenido .rev-seccion').find(s => { const h = s.querySelector('h3'); return h && h.textContent.startsWith('9. Observaciones'); });
+    if (!sec) return;
+    const S = Reglas.textosSecciones(informe, CONFIG);
+    sec.innerHTML = '<h3>9. Observaciones</h3>' + (S.observaciones.length ? S.observaciones.map(x => `<p>${esc(x)}</p>`).join('') : '<p class="vacio">sin indicar</p>');
+  }
+
   // Número del informe: propuesto por el teléfono y editable (número y, en ampliaciones, letra)
   function seccionNumero() {
     const p = propuestaNumero();
@@ -768,6 +796,8 @@
     if (informe.amplia && !informe.numeroManual.letra) informe.numeroManual.letra = p.letra || 'A';
     const esAmpliacion = !!informe.amplia;
     const desdeHistorial = esAmpliacion && !informe.amplia.externa;
+    const externa = esAmpliacion && !!informe.amplia.externa;
+    if (externa && !informe.numeroManual.anio) informe.numeroManual.anio = anioActual();
     const letras = LETRAS.split('').map(l => `<option value="${l}">${l}</option>`).join('');
     return `<section class="rev-seccion numero"><h3>Número del informe</h3>
       ${desdeHistorial ? `<p>Ampliación de <strong>${esc(informe.amplia.de)}</strong>${informe.amplia.fecha ? ' (del ' + esc(fmtFecha(informe.amplia.fecha)) + ' ' + esc(informe.amplia.hora || '') + ')' : ''}. El número base es el del informe que amplías; elige la letra.</p>` : ''}
@@ -776,9 +806,11 @@
         <input type="number" min="1" step="1" inputmode="numeric" data-ruta="numeroManual.n" ${desdeHistorial ? 'disabled' : ''} aria-label="Número del informe">
         ${esAmpliacion ? `<span class="prefijo">-</span><select data-ruta="numeroManual.letra" aria-label="Letra de la ampliación">${letras}</select>` : ''}
       </div>
-      <p class="ayuda">Propuesto por este teléfono: <strong>${esc(numeroPropuestoTexto(p))}</strong>. Cámbialo solo si ese número ya se usó en un Alfa emitido desde la planilla o desde otro teléfono. Al firmar, la app comprueba que no exista en este teléfono y ajusta su contador.</p>
+      <p class="ayuda">Propuesto por este teléfono: <strong>${esc(numeroPropuestoTexto(p))}</strong>, correlativo del año ${esc(p.anio)}. Cámbialo solo si ese número ya se usó en un Alfa emitido desde la planilla o desde otro teléfono. Al firmar, la app comprueba que no exista en este teléfono para ese año y ajusta su contador. El correlativo se reinicia cada año y no lleva el año: el informe se identifica por su fecha.</p>
       ${desdeHistorial ? '' : `<label class="conmutador"><input type="checkbox" id="in-amplia-externa" ${esAmpliacion ? 'checked' : ''}><span>Es ampliación de un informe anterior que no está en este teléfono (por ejemplo, hecho en la planilla)</span></label>
-      ${esAmpliacion ? '<p class="ayuda">Escribe arriba el número del informe que amplías y elige la letra que corresponde. El PDF dirá que es una ampliación de ese informe.</p>' : ''}`}
+      ${esAmpliacion ? `<p class="ayuda">Escribe arriba el número del informe que amplías y elige la letra que corresponde. El PDF dirá que es una ampliación de ese informe.</p>
+      <label class="campo campo-anio">Año del informe que amplías<input type="number" min="2000" max="2100" step="1" inputmode="numeric" data-ruta="numeroManual.anio"></label>
+      <p class="ayuda">Si el evento empezó el año pasado, pon ese año: la ampliación conserva el correlativo del año en que empezó.</p>` : ''}`}
       <p class="ayuda">Al firmar, la app vuelve a comprobar todas las reglas y genera el PDF en este dispositivo. Si hay mucho texto, la hoja se alarga hacia abajo.</p></section>`;
   }
 
@@ -885,8 +917,9 @@
     try {
       informe.elaboracion = { fecha: hoyISO(), hora: ahoraHHMM(), iso: new Date().toISOString() };
       informe.numero = numeroDefinitivo;
-      if (informe.amplia && informe.amplia.externa) { informe.amplia.base = `${PREFIJO()}-${numeroElegido().n}`; informe.amplia.de = informe.amplia.base; }
-      Almacen.ajustarCorrelativo(numeroElegido().n);
+      informe.anio = anioElegido();
+      if (informe.amplia && informe.amplia.externa) { informe.amplia.base = `${PREFIJO()}-${numeroElegido().n}`; informe.amplia.de = informe.amplia.base; informe.amplia.anio = informe.anio; }
+      Almacen.ajustarCorrelativo(numeroElegido().n, informe.anio);
       delete informe.numeroManual;   // es un dato de la pantalla, no del informe
       await sellarInforme(informe, cred);
       ultimoDatos = DatosAlfa.construir(informe, Reglas.totales(informe), CONFIG);
@@ -897,6 +930,7 @@
     } catch (e) {
       console.error(e);
       informe.elaboracion = null; informe.sello = null; informe.numero = null; informe.numeroManual = manual;
+      if (!(informe.amplia && !informe.amplia.externa)) informe.anio = null;
       toast('No se pudo generar el PDF: ' + e.message, 7000);
       btn.disabled = false; btn.textContent = 'Firmar y generar el PDF';
     }
@@ -1048,6 +1082,7 @@
     if (anterior.amplia) delete anterior.amplia.anterior;  // solo un nivel hacia atrás
     copia.amplia = { de: h.numero, base: h.amplia && h.amplia.base ? h.amplia.base : h.numero, fecha: h.elaboracion && h.elaboracion.fecha, hora: h.elaboracion && h.elaboracion.hora, anterior };
     copia.numero = null;
+    copia.anio = anioDe(h);   // la ampliación conserva el correlativo del año en que empezó el evento
     copia.elaboracion = null;
     copia.firmante = null;
     copia.sello = null;
@@ -1107,6 +1142,7 @@
       if (h !== obj.huella) { toast('No se pudo importar: el archivo fue modificado después de generarse (la huella no coincide).', 8000); return; }
       const inf = normalizar(obj.informe);
       if (!inf.elaboracion || !inf.numero) { toast('El archivo no corresponde a un informe firmado.', 6000); return; }
+      if (!inf.anio) inf.anio = anioDe(inf);   // informes de versiones anteriores a la 0.5.5
       inf.importado = { fecha: new Date().toISOString(), app: obj.app || '' };
       const hist = Almacen.leerHistorial();
       const idx = hist.findIndex(x => x.numero === inf.numero);

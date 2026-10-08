@@ -172,6 +172,7 @@
           <div class="banda-ejercicio">${s.modo === 'ejercicio' ? 'INFORME DE EJERCICIO – SIN VALOR OFICIAL' : esc(s.modo)}</div>
           <dl>
             ${fila('Número', s.numero)}
+            ${fila('Correlativo del año', s.anio_correlativo)}
             ${fila('Ampliación de', s.ampliacion_de)}
             ${fila('Comuna(s)', s.comunas)}
             ${fila('Provincia', s.provincia)}

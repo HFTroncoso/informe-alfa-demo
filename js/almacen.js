@@ -4,7 +4,8 @@ const Almacen = (() => {
   'use strict';
   const K = {
     borrador: 'alfaDemo.borrador',
-    correlativo: 'alfaDemo.correlativoEJ',
+    correlativo: 'alfaDemo.correlativoEJ',      // versiones anteriores a la 0.5.5: un solo contador
+    correlativos: 'alfaDemo.correlativos',     // desde la 0.5.5: un contador por año
     historial: 'alfaDemo.historial',
     credencial: 'alfaDemo.credencial'
   };
@@ -28,6 +29,17 @@ const Almacen = (() => {
     }
   }
 
+  const anioHoy = () => new Date().getFullYear();
+  function contadores() {
+    const mapa = leer(K.correlativos, null);
+    if (mapa && typeof mapa === 'object') return mapa;
+    const antiguo = leer(K.correlativo, 0) | 0;   // el contador único de las versiones anteriores vale para el año en curso
+    const nuevo = {};
+    if (antiguo > 0) nuevo[String(anioHoy())] = antiguo;
+    return nuevo;
+  }
+  function contador(anio) { return contadores()[String(anio || anioHoy())] | 0; }
+
   return {
     disponible() {
       try {
@@ -44,10 +56,13 @@ const Almacen = (() => {
 
     // El número se asigna recién al firmar, para que un borrador abandonado no consuma correlativo.
     // El funcionario puede corregir el número propuesto; el contador salta al mayor usado (D-52).
-    numeroPrevisto(prefijo) { return `${prefijo}-${(leer(K.correlativo, 0) | 0) + 1}`; },
-    ajustarCorrelativo(n) {
-      const actual = leer(K.correlativo, 0) | 0;
-      if (Number.isInteger(n) && n > actual) escribir(K.correlativo, n);
+    // Hay un contador por año, porque el correlativo se reinicia cada año (D-53).
+    numeroPrevisto(prefijo, anio) { return `${prefijo}-${contador(anio) + 1}`; },
+    ajustarCorrelativo(n, anio) {
+      const mapa = contadores();
+      const clave = String(anio || anioHoy());
+      const actual = mapa[clave] | 0;
+      if (Number.isInteger(n) && n > actual) { mapa[clave] = n; escribir(K.correlativos, mapa); }
       return Math.max(actual, n | 0);
     },
 
