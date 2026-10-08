@@ -211,8 +211,11 @@ const Reglas = (() => {
     const necesidades = textoNecesidades(informe);
 
     const observaciones = [];
-    if (informe.amplia && informe.amplia.de) {
-      observaciones.push(`Ampliación del Informe Alfa ${informe.amplia.de} del ${fmtFecha(informe.amplia.fecha)} ${informe.amplia.hora || ''}: contiene el estado completo y actualizado del evento.`);
+    if (informe.amplia && (informe.amplia.de || informe.amplia.externa)) {
+      const a = informe.amplia;
+      observaciones.push(a.externa || !a.fecha
+        ? `Ampliación del Informe Alfa ${a.de || '(número por confirmar al firmar)'}, emitido fuera de esta app: contiene el estado completo y actualizado del evento.`
+        : `Ampliación del Informe Alfa ${a.de} del ${fmtFecha(a.fecha)} ${a.hora || ''}: contiene el estado completo y actualizado del evento.`);
       const cambios = cambiosTexto(informe);
       if (cambios) observaciones.push(cambios);
     }

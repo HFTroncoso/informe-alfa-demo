@@ -1,6 +1,6 @@
 {
   "_comentario": "Configuración de la demo (Sprint 1). Esta copia es de ejercicio: no contiene datos de personas. La dirección de destino es un correo de PRUEBA indicado por el responsable del proyecto el 2026-10-05; la dirección real de la URAT no se publica en este repositorio público para no facilitar la suplantación de informes (riesgo R-16 de la arquitectura).",
-  "version_app": "demo-0.5.3",
+  "version_app": "demo-0.5.4",
   "modo": "ejercicio",
   "destinatario": {
     "nombre": "Correo de prueba del responsable del proyecto",

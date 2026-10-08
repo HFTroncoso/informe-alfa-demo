@@ -43,11 +43,12 @@ const Almacen = (() => {
     borrarBorrador() { try { localStorage.removeItem(K.borrador); } catch (e) { /* sin efecto */ } },
 
     // El número se asigna recién al firmar, para que un borrador abandonado no consuma correlativo.
+    // El funcionario puede corregir el número propuesto; el contador salta al mayor usado (D-52).
     numeroPrevisto(prefijo) { return `${prefijo}-${(leer(K.correlativo, 0) | 0) + 1}`; },
-    asignarNumero(prefijo) {
-      const n = (leer(K.correlativo, 0) | 0) + 1;
-      escribir(K.correlativo, n);
-      return `${prefijo}-${n}`;
+    ajustarCorrelativo(n) {
+      const actual = leer(K.correlativo, 0) | 0;
+      if (Number.isInteger(n) && n > actual) escribir(K.correlativo, n);
+      return Math.max(actual, n | 0);
     },
 
     guardarHistorial(informe) {

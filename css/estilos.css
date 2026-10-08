@@ -276,6 +276,15 @@ button { font: inherit; cursor: pointer; }
 .rev-seccion.cambios { border-left: 4px solid var(--amarillo); }
 .etiqueta-importado { background: #eef2ff; color: var(--azul-oscuro); border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 700; margin-left: 6px; }
 
+/* ---- Versión 0.5.4: número del informe editable en la revisión ---- */
+.rev-seccion.numero { border-left: 4px solid var(--azul); }
+.fila-numero { display: flex; align-items: center; gap: 6px; margin: 6px 0 8px; }
+.fila-numero .prefijo { font-weight: 700; font-size: 1.15rem; color: var(--azul-oscuro); }
+.fila-numero input, .fila-numero select { font: inherit; font-size: 1.2rem; font-weight: 700; min-height: 48px; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 10px; background: #fff; color: var(--texto); }
+.fila-numero input { width: 120px; text-align: center; }
+.fila-numero input:disabled { background: #e5e7eb; color: var(--texto-suave); }
+.rev-seccion.numero .conmutador { margin-top: 10px; }
+
 /* ---- Versión 0.5.3: portada al abrir la app (línea estética del Geoportal del Riesgo) ---- */
 .portada {
   position: fixed; inset: 0; z-index: 100; overflow: hidden; cursor: pointer;

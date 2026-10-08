@@ -167,13 +167,37 @@
     while (i < LETRAS.length - 1 && usadas.includes(LETRAS[i])) i++;
     return LETRAS[i];
   }
-  function numeroPrevisto() {
-    if (informe.amplia) return `${informe.amplia.base}-${siguienteLetra(informe.amplia.base)}`;
-    return Almacen.numeroPrevisto(CONFIG.numero.prefijo);
+  // Propuesta de número: el siguiente del contador de este teléfono o, en una ampliación, el número base con la
+  // siguiente letra libre. El funcionario puede corregirlo antes de firmar (D-52), porque otros Alfas del mismo
+  // evento o de la misma comuna pueden haberse emitido desde la planilla o desde otro teléfono.
+  const PREFIJO = () => CONFIG.numero.prefijo;
+  const digitosDe = numero => { const m = /-(\d+)(?:-[A-Z])?$/.exec(String(numero || '')); return m ? parseInt(m[1], 10) : null; };
+  function propuestaNumero() {
+    if (informe.amplia && informe.amplia.base) {
+      return { n: digitosDe(informe.amplia.base), letra: siguienteLetra(informe.amplia.base), baseFija: !informe.amplia.externa };
+    }
+    const n = digitosDe(Almacen.numeroPrevisto(PREFIJO()));
+    return { n, letra: informe.amplia ? siguienteLetra(`${PREFIJO()}-${n}`) : null, baseFija: false };
   }
-  function asignarNumero() {
-    if (informe.amplia) return `${informe.amplia.base}-${siguienteLetra(informe.amplia.base)}`;
-    return Almacen.asignarNumero(CONFIG.numero.prefijo);
+  function numeroPropuestoTexto(p) { return `${PREFIJO()}-${p.n}${informe.amplia ? '-' + (p.letra || 'A') : ''}`; }
+  function numeroElegido() {
+    const m = informe.numeroManual || {};
+    const n = parseInt(m.n, 10);
+    const letra = informe.amplia ? String(m.letra || '').toUpperCase() : '';
+    const numero = Number.isInteger(n) && n > 0 ? `${PREFIJO()}-${n}${informe.amplia ? '-' + letra : ''}` : null;
+    return { n, letra, numero };
+  }
+  // Comprueba el número elegido antes de firmar; devuelve el número definitivo o null si no se puede seguir
+  function validarNumero() {
+    const e = numeroElegido();
+    if (!e.numero) { toast('Escribe el número del informe: un entero mayor que cero.', 5000); return null; }
+    if (informe.amplia && !/^[A-Z]$/.test(e.letra)) { toast('Elige la letra de la ampliación.', 5000); return null; }
+    if (Almacen.leerHistorial().some(h => h.numero === e.numero)) { toast(`Ya existe el informe ${e.numero} en este teléfono. Usa otro número o letra.`, 7000); return null; }
+    const propuesto = numeroPropuestoTexto(propuestaNumero());
+    if (e.numero !== propuesto && !(informe.amplia && informe.amplia.externa)) {
+      if (!confirm(`El número propuesto era ${propuesto} y vas a usar ${e.numero}.\n\nHazlo solo si ese número corresponde a la numeración real de tu institución, por ejemplo porque otros Alfas se emitieron desde la planilla o desde otro teléfono.\n\n¿Continuar con ${e.numero}?`)) return null;
+    }
+    return e.numero;
   }
 
   // ---------- arranque ----------
@@ -405,6 +429,17 @@
       $('#in-provincia').textContent = informe.identificacion.provincia || '—';
       return;
     }
+    if (el.id === 'in-amplia-externa') {
+      if (el.checked) {
+        informe.amplia = { de: '', base: '', fecha: null, hora: null, anterior: null, externa: true };
+        informe.numeroManual = { n: informe.numeroManual ? informe.numeroManual.n : null, letra: 'A' };
+      } else {
+        informe.amplia = null;
+        if (informe.numeroManual) informe.numeroManual.letra = null;
+      }
+      guardar(); renderRevision(); cargarValores();
+      return;
+    }
     const ruta = el.dataset ? el.dataset.ruta : null;
     if (!ruta) return;
     let v;
@@ -414,6 +449,11 @@
     asignar(informe, ruta, v);
 
     if (ruta === 'elaborador.provincia') { informe.identificacion.comunas = []; actualizarProvincia(informe); actualizarResponsable(informe); }
+    if (ruta === 'numeroManual.n' && informe.amplia && informe.amplia.externa) {   // el número base de una ampliación externa sigue a lo escrito
+      const n = parseInt(v, 10);
+      informe.amplia.base = Number.isInteger(n) && n > 0 ? `${PREFIJO()}-${n}` : '';
+      informe.amplia.de = informe.amplia.base;
+    }
     if (ruta === 'evento.otro') actualizarSeleccionEvento();
     if (ruta === 'lugar.lat' || ruta === 'lugar.lon') { informe.lugar.origen = 'manual'; informe.lugar.precision = null; $('#gps-estado').textContent = 'Coordenadas escritas a mano.'; }
     if (ruta.endsWith('.hayAlbergue')) { const bloque = $(`[data-albergue="${ruta.split('.')[1]}"]`); if (bloque) bloque.hidden = !v; }
@@ -721,6 +761,27 @@
       <p class="ayuda">En el PDF, los valores que cambiaron en las secciones 4 y 5 van subrayados y la lista de cambios se imprime en Observaciones.</p></section>`;
   }
 
+  // Número del informe: propuesto por el teléfono y editable (número y, en ampliaciones, letra)
+  function seccionNumero() {
+    const p = propuestaNumero();
+    if (!informe.numeroManual || informe.numeroManual.n == null) informe.numeroManual = { n: p.n, letra: p.letra };
+    if (informe.amplia && !informe.numeroManual.letra) informe.numeroManual.letra = p.letra || 'A';
+    const esAmpliacion = !!informe.amplia;
+    const desdeHistorial = esAmpliacion && !informe.amplia.externa;
+    const letras = LETRAS.split('').map(l => `<option value="${l}">${l}</option>`).join('');
+    return `<section class="rev-seccion numero"><h3>Número del informe</h3>
+      ${desdeHistorial ? `<p>Ampliación de <strong>${esc(informe.amplia.de)}</strong>${informe.amplia.fecha ? ' (del ' + esc(fmtFecha(informe.amplia.fecha)) + ' ' + esc(informe.amplia.hora || '') + ')' : ''}. El número base es el del informe que amplías; elige la letra.</p>` : ''}
+      <div class="fila-numero">
+        <span class="prefijo">${esc(PREFIJO())}-</span>
+        <input type="number" min="1" step="1" inputmode="numeric" data-ruta="numeroManual.n" ${desdeHistorial ? 'disabled' : ''} aria-label="Número del informe">
+        ${esAmpliacion ? `<span class="prefijo">-</span><select data-ruta="numeroManual.letra" aria-label="Letra de la ampliación">${letras}</select>` : ''}
+      </div>
+      <p class="ayuda">Propuesto por este teléfono: <strong>${esc(numeroPropuestoTexto(p))}</strong>. Cámbialo solo si ese número ya se usó en un Alfa emitido desde la planilla o desde otro teléfono. Al firmar, la app comprueba que no exista en este teléfono y ajusta su contador.</p>
+      ${desdeHistorial ? '' : `<label class="conmutador"><input type="checkbox" id="in-amplia-externa" ${esAmpliacion ? 'checked' : ''}><span>Es ampliación de un informe anterior que no está en este teléfono (por ejemplo, hecho en la planilla)</span></label>
+      ${esAmpliacion ? '<p class="ayuda">Escribe arriba el número del informe que amplías y elige la letra que corresponde. El PDF dirá que es una ampliación de ese informe.</p>' : ''}`}
+      <p class="ayuda">Al firmar, la app vuelve a comprobar todas las reglas y genera el PDF en este dispositivo. Si hay mucho texto, la hoja se alarga hacia abajo.</p></section>`;
+  }
+
   function renderRevision() {
     actualizarProvincia(informe); actualizarResponsable(informe);
     const t = Reglas.totales(informe);
@@ -733,11 +794,12 @@
     const lista = items => items.length ? items.map(x => `<p>${esc(x)}</p>`).join('') : '<p class="vacio">sin indicar</p>';
     const elab = elaboradorDe(informe);
     const conCred = !!(informe.responsable && informe.responsable.credencial && Almacen.leerCredencial());
-    const avisoNumero = informe.amplia
-      ? `<p class="aviso"><strong>Ampliación de ${esc(informe.amplia.de)}</strong> (del ${esc(fmtFecha(informe.amplia.fecha))} ${esc(informe.amplia.hora || '')}). Número previsto: <strong>${esc(numeroPrevisto())}</strong>. El PDF contiene el estado completo y actualizado del evento: revisa y corrige lo que cambió.</p>`
-      : `<p class="aviso">Número previsto: <strong>${esc(numeroPrevisto())}</strong>. Revisa cada sección. Al firmar, la app vuelve a comprobar todas las reglas, asigna el número y genera el PDF en este dispositivo. Si hay mucho texto, la hoja se alarga hacia abajo.</p>`;
+    const avisoNumero = informe.amplia && !informe.amplia.externa
+      ? `<p class="aviso"><strong>Ampliación de ${esc(informe.amplia.de)}</strong>. El PDF contiene el estado completo y actualizado del evento: revisa y corrige lo que cambió.</p>`
+      : '<p class="aviso">Revisa cada sección y el número del informe. Al firmar se asigna el número y se genera el PDF.</p>';
     $('#revision-contenido').innerHTML = `
       ${avisoNumero}
+      ${seccionNumero()}
       ${seccionCambios()}
       ${hallazgos.length ? `<p class="etiqueta roja">Hay ${hallazgos.length} punto(s) por resolver antes de firmar</p>` : '<p class="etiqueta verde">Todas las reglas cuadran</p>'}
       <section class="rev-seccion"><h3>Quién elabora ${editar('elaborador')}</h3>
@@ -804,6 +866,8 @@
     actualizarProvincia(informe); actualizarResponsable(informe);
     const hallazgos = Reglas.evaluar(informe, { todas: true });
     if (hallazgos.length) { mostrarBloqueo(hallazgos[0]); return; }
+    const numeroDefinitivo = validarNumero();
+    if (!numeroDefinitivo) return;
     let cred = null;
     if (Almacen.leerCredencial()) {
       const r = await abrirCredencial();
@@ -817,9 +881,13 @@
     }
     const btn = $('#btn-siguiente');
     btn.disabled = true; btn.textContent = 'Generando el PDF…';
+    const manual = informe.numeroManual;
     try {
       informe.elaboracion = { fecha: hoyISO(), hora: ahoraHHMM(), iso: new Date().toISOString() };
-      if (!informe.numero) informe.numero = asignarNumero();
+      informe.numero = numeroDefinitivo;
+      if (informe.amplia && informe.amplia.externa) { informe.amplia.base = `${PREFIJO()}-${numeroElegido().n}`; informe.amplia.de = informe.amplia.base; }
+      Almacen.ajustarCorrelativo(numeroElegido().n);
+      delete informe.numeroManual;   // es un dato de la pantalla, no del informe
       await sellarInforme(informe, cred);
       ultimoDatos = DatosAlfa.construir(informe, Reglas.totales(informe), CONFIG);
       ultimoPdf = await generarPdf(informe, cred, ultimoDatos);
@@ -828,7 +896,7 @@
       mostrar('listo');
     } catch (e) {
       console.error(e);
-      informe.elaboracion = null; informe.sello = null;
+      informe.elaboracion = null; informe.sello = null; informe.numero = null; informe.numeroManual = manual;
       toast('No se pudo generar el PDF: ' + e.message, 7000);
       btn.disabled = false; btn.textContent = 'Firmar y generar el PDF';
     }
@@ -984,6 +1052,7 @@
     copia.firmante = null;
     copia.sello = null;
     delete copia.importado;
+    delete copia.numeroManual;
     copia.creado = new Date().toISOString();
     informe = copia;
     guardar();
