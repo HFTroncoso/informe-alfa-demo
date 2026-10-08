@@ -16,6 +16,25 @@
   <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
+  <!-- Portada al abrir la app, con la línea estética del Geoportal del Riesgo del Depto. de Reducción del Riesgo de Desastres -->
+  <div id="portada" class="portada" role="dialog" aria-label="Portada de la App Informe Alfa">
+    <img class="portada-logo" src="img/logo_senapred.png" alt="SENAPRED, Ministerio del Interior, Gobierno de Chile">
+    <div class="portada-texto">
+      <p class="portada-titulo">App Informe Alfa</p>
+      <div class="portada-barra"></div>
+      <p class="portada-sub">Región de Magallanes<br>y de la Antártica Chilena</p>
+      <p class="portada-dep"><b>Dirección Regional de Magallanes</b><br>Depto. de Reducción del Riesgo de Desastres · 2026</p>
+      <div class="portada-chips"><span>SIN SEÑAL</span><span>FORMATO OFICIAL</span><span>VERIFICABLE</span></div>
+      <button type="button" id="portada-entrar" class="portada-boton">Entrar a la app →</button>
+      <p class="portada-pie"><span class="insignia">EJERCICIO</span><span>Versión <span id="portada-version"></span></span></p>
+    </div>
+    <div class="portada-derecha" aria-hidden="true">
+      <img class="portada-mapa" src="img/portada_mapa.svg" alt="">
+      <p class="portada-mapa-pie">Territorio Chileno Antártico (90°O–53°O) · Polo Sur</p>
+    </div>
+    <div class="portada-progreso" aria-hidden="true"></div>
+  </div>
+
   <header class="cabecera">
     <div class="cabecera-fila">
       <span class="insignia" title="Modo ejercicio: nada de lo que generes tiene valor oficial">EJERCICIO</span>

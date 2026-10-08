@@ -1,6 +1,6 @@
 /* Service worker de la demo: precarga todos los archivos para que la app abra sin señal.
    Para publicar una versión nueva, cambiar VERSION. */
-const VERSION = 'alfa-demo-v0.5.2';
+const VERSION = 'alfa-demo-v0.5.3';
 const ARCHIVOS = [
   './',
   './index.html',
@@ -20,6 +20,7 @@ const ARCHIVOS = [
   './lib/Carlito-Regular.ttf',
   './lib/Carlito-Bold.ttf',
   './img/logo_senapred.png',
+  './img/portada_mapa.svg',
   './datos/config.json',
   './datos/reglas.json',
   './datos/plantilla_alfa.json',

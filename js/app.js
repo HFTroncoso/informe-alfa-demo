@@ -196,6 +196,29 @@
     estadoConexion();
     if (!Almacen.disponible()) toast('Este navegador no permite guardar borradores en el teléfono.', 6000);
     mostrar('inicio');
+    iniciarPortada();
+  }
+
+  // Portada al abrir la app: se cierra con el botón, tocando la pantalla o sola a los 5 segundos.
+  // No vuelve a aparecer mientras la app siga abierta (una vez por apertura).
+  function iniciarPortada() {
+    const portada = $('#portada');
+    if (!portada) return;
+    let vista = false;
+    try { vista = sessionStorage.getItem('alfaDemo.portadaVista') === '1'; } catch (e) { /* sin almacenamiento de sesión */ }
+    if (vista) { portada.remove(); return; }
+    $('#portada-version').textContent = CONFIG.version_app;
+    let cerrada = false;
+    const cerrar = () => {
+      if (cerrada) return;
+      cerrada = true;
+      try { sessionStorage.setItem('alfaDemo.portadaVista', '1'); } catch (e) { /* sin efecto */ }
+      portada.classList.add('oculta');
+      setTimeout(() => portada.remove(), 400);
+    };
+    portada.addEventListener('click', cerrar);
+    $('#portada-entrar').addEventListener('click', e => { e.stopPropagation(); cerrar(); });
+    setTimeout(cerrar, 5000);
   }
 
   function construirListas() {

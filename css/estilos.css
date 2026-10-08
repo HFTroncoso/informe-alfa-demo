@@ -275,3 +275,39 @@ button { font: inherit; cursor: pointer; }
 .lista-cambios .ahora { color: var(--verde); font-weight: 700; }
 .rev-seccion.cambios { border-left: 4px solid var(--amarillo); }
 .etiqueta-importado { background: #eef2ff; color: var(--azul-oscuro); border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 700; margin-left: 6px; }
+
+/* ---- Versión 0.5.3: portada al abrir la app (línea estética del Geoportal del Riesgo) ---- */
+.portada {
+  position: fixed; inset: 0; z-index: 100; overflow: hidden; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 24px 22px 30px; padding-top: calc(24px + env(safe-area-inset-top)); padding-bottom: calc(30px + env(safe-area-inset-bottom));
+  color: #fff; background: linear-gradient(160deg, #0A2E6B 0%, #0F3D8C 60%, #081F45 100%);
+  transition: opacity 0.35s ease;
+}
+.portada.oculta { opacity: 0; pointer-events: none; }
+.portada-logo { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: 20px; height: 46px; width: auto; border-radius: 6px; }
+.portada-derecha { position: absolute; right: -14%; top: 3%; height: 57%; opacity: 0.5; pointer-events: none; }
+.portada-mapa { height: 100%; width: auto; }
+.portada-mapa-pie { display: none; }
+.portada-texto { position: relative; z-index: 1; max-width: 440px; }
+.portada-titulo { font-size: clamp(2rem, 9vw, 2.9rem); font-weight: 800; line-height: 1.08; margin: 0; color: #fff; }
+.portada-barra { width: 64px; height: 5px; background: #F2B705; border-radius: 3px; margin: 12px 0 14px; }
+.portada-sub { font-size: 1.15rem; color: #D9E4F2; line-height: 1.35; margin: 0 0 10px; }
+.portada-dep { font-size: 0.85rem; color: #AFC2DB; line-height: 1.45; margin: 0 0 14px; }
+.portada-dep b { color: #fff; }
+.portada-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.portada-chips span { background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.2); color: #CCE4FF; border-radius: 6px; padding: 5px 12px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.4px; }
+.portada-boton { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 13px 34px; border: none; border-radius: 9px; background: #F2B705; color: #20304A; font-weight: 700; font-size: 1.05rem; box-shadow: 0 3px 14px rgba(242,183,5,0.27); }
+.portada-pie { display: flex; align-items: center; gap: 10px; margin: 18px 0 0; font-size: 0.8rem; color: #AFC2DB; }
+.portada-progreso { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: #F2B705; transform-origin: left; animation: portada-cuenta 5s linear forwards; }
+@keyframes portada-cuenta { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (min-width: 760px) {
+  .portada { flex-direction: row; align-items: center; justify-content: space-between; padding: 40px 6%; }
+  .portada-logo { top: 28px; left: 6%; height: 56px; }
+  .portada-derecha { position: static; height: auto; opacity: 1; display: flex; flex-direction: column; align-items: center; }
+  .portada-mapa { height: 80vh; max-width: 42vw; }
+  .portada-mapa-pie { display: block; margin: 6px 0 0; font-size: 0.72rem; color: #AFC2DB; }
+  .portada-texto { max-width: 520px; }
+  .portada-titulo { font-size: 3.1rem; }
+}
+@media (prefers-reduced-motion: reduce) { .portada { transition: none; } .portada-progreso { animation: none; } }
