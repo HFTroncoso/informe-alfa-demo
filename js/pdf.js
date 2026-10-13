@@ -252,43 +252,87 @@
       await imagenDesdeArriba(rec.timbrePng, { x: 808, w: 58, h: 58, top: t10 - 17.1 }, 0.85);
     }
 
-    // ---- 6. Marca de agua, aviso superior y pie ----
-    const M = P.campos.marca_agua;
-    const marca = limpiar(C.marca_agua);
-    const wM = fB.widthOfTextAtSize(marca, M.size);
-    const rad = M.angulo * Math.PI / 180;
-    const cy = ALTO / 2;
-    pagina.drawText(marca, {
-      x: M.cx - (wM / 2) * Math.cos(rad) + (M.size / 2) * Math.sin(rad),
-      y: cy - (wM / 2) * Math.sin(rad) - (M.size / 2) * Math.cos(rad),
-      size: M.size, font: fB, color: rgb(0.85, 0.1, 0.1), opacity: 0.16, rotate: degrees(M.angulo)
-    });
-    const A = P.campos.aviso_superior;
-    texto(`INFORME DE EJERCICIO – SIN VALOR OFICIAL – N° ${informe.numero || ''}`, A.cx, A.cy + extra, A.size, null, { centro: true, font: fB, color: rojo });
+    // ---- 6 y 7. Marca de agua, aviso superior, pie y código QR: iguales en la hoja del Alfa y en cada hoja del anexo (D-56) ----
     const conFirmaDigital = !!(informe.sello && informe.sello.firma);
     const firmante = informe.firmante
       ? ` ${conFirmaDigital ? 'Firmado digitalmente' : 'Firmado'} con la credencial de ${informe.firmante.nombre} (${informe.firmante.id ? informe.firmante.id.slice(0, 8) : ''}).`
       : ' Firma y timbre ficticios.';
     const huellaCorta = huella ? ` Huella del contenido: ${huella.slice(0, 16)}…` : '';
     const textoPie = `Documento de ejercicio generado en el teléfono con la app Informe Alfa (demo, versión ${C.version_app}) el ${fmtFecha(E.fecha)} a las ${E.hora || ''}.${firmante} No respalda solicitudes de recursos.${huellaCorta}`;
-    partirLineas(textoPie, fO, 6, 640, limpiar).slice(0, 3).forEach((l, i) => pagina.drawText(l, { x: 52, y: Y(bordeInfTop + 12 + i * 7.2), size: 6, font: fO, color: gris }));
-
-    // ---- 7. Código QR de verificación: margen inferior derecho, fuera del formato oficial ----
-    if (rec.qrcode && rec.qrTexto) {
+    const M = P.campos.marca_agua, A = P.campos.aviso_superior;
+    function marcaYAviso(pg, altoPg, extraPg) {
+      const marca = limpiar(C.marca_agua);
+      const wM = fB.widthOfTextAtSize(marca, M.size);
+      const rad = M.angulo * Math.PI / 180;
+      const cy = altoPg / 2;
+      pg.drawText(marca, {
+        x: M.cx - (wM / 2) * Math.cos(rad) + (M.size / 2) * Math.sin(rad),
+        y: cy - (wM / 2) * Math.sin(rad) - (M.size / 2) * Math.cos(rad),
+        size: M.size, font: fB, color: rgb(0.85, 0.1, 0.1), opacity: 0.16, rotate: degrees(M.angulo)
+      });
+      const s = limpiar(`INFORME DE EJERCICIO – SIN VALOR OFICIAL – N° ${informe.numero || ''}`);
+      pg.drawText(s, { x: A.cx - fB.widthOfTextAtSize(s, A.size) / 2, y: A.cy + extraPg, size: A.size, font: fB, color: rojo });
+    }
+    // bordeTop: distancia desde arriba a la que empieza el margen inferior de esa hoja
+    function pieYQR(pg, altoPg, bordeTop) {
+      const Yp = d => altoPg - d;
+      partirLineas(textoPie, fO, 6, 640, limpiar).slice(0, 3).forEach((l, i) => pg.drawText(l, { x: 52, y: Yp(bordeTop + 12 + i * 7.2), size: 6, font: fO, color: gris }));
+      if (!(rec.qrcode && rec.qrTexto)) return;
       const TAM_QR = 54;
       const qr = rec.qrcode(0, 'L');
       qr.addData(rec.qrTexto);
       qr.make();
       const nMod = qr.getModuleCount();
       const celda = TAM_QR / nMod;
-      const x0 = 872.6 - TAM_QR, topQR = bordeInfTop + GROSOR + 3.5;
+      const x0 = 872.6 - TAM_QR, topQR = bordeTop + GROSOR + 3.5;
       for (let r = 0; r < nMod; r++) for (let c = 0; c < nMod; c++) {
-        if (qr.isDark(r, c)) pagina.drawRectangle({ x: x0 + c * celda, y: Y(topQR + (r + 1) * celda), width: celda + 0.05, height: celda + 0.05, color: negro });
+        if (qr.isDark(r, c)) pg.drawRectangle({ x: x0 + c * celda, y: Yp(topQR + (r + 1) * celda), width: celda + 0.05, height: celda + 0.05, color: negro });
       }
       ['Verificación del informe:', 'escanea el código o abre el verificador', 'de la app y carga este mismo PDF.'].forEach((l, i) => {
         const w = fR.widthOfTextAtSize(l, 5);
-        pagina.drawText(l, { x: x0 - 6 - w, y: Y(topQR + 9 + i * 6.5), size: 5, font: fR, color: gris });
+        pg.drawText(l, { x: x0 - 6 - w, y: Yp(topQR + 9 + i * 6.5), size: 5, font: fR, color: gris });
       });
+    }
+    marcaYAviso(pagina, ALTO, extra);
+    pieYQR(pagina, ALTO, bordeInfTop);
+
+    // ---- 9. Anexo fotográfico: hojas adicionales de tamaño fijo, 4 fotos por hoja, con el mismo pie de verificación (D-56).
+    //         La hoja del Alfa no se parte: solo el anexo agrega hojas. ----
+    const fotos = (rec.fotos || []).filter(f => f && f.bytes && f.bytes.length);
+    if (fotos.length) {
+      const POR_HOJA = 4, COLS = 2;
+      const hojas = Math.ceil(fotos.length / POR_HOJA);
+      const bordeTopAnexo = ALTO_BASE - MARGEN_INF - GROSOR;
+      const tipoTxt = ev.tipo === 'OTRO' ? (ev.otro || 'Otro') : (ev.tipo || '');
+      for (let h = 0; h < hojas; h++) {
+        const pg = doc.addPage([ANCHO, ALTO_BASE]);
+        const Yp = d => ALTO_BASE - d;
+        pg.drawText(limpiar(`ANEXO FOTOGRÁFICO – INFORME ALFA N° ${informe.numero || ''}`), { x: 52, y: Yp(72), size: 13, font: fB, color: negro });
+        pg.drawText(limpiar(`${comunas.join(', ')} · ${tipoTxt} · inicio ${fmtFecha(oc.fecha)} ${oc.hora || ''} · ${fotos.length} foto(s) · hoja ${h + 1} de ${hojas} del anexo`), { x: 52, y: Yp(86), size: 8, font: fR, color: gris });
+        pg.drawRectangle({ x: 52, y: Yp(92), width: 832, height: 0.8, color: negro });
+        const mx = 52, top0 = 102, sep = 18;
+        const gw = (ANCHO - 2 * mx - sep) / COLS;
+        const gh = (bordeTopAnexo - top0 - 8 - sep) / 2;
+        const cajaH = gh - 24;
+        for (let k = 0; k < POR_HOJA; k++) {
+          const f = fotos[h * POR_HOJA + k];
+          if (!f) break;
+          const col = k % COLS, fila = Math.floor(k / COLS);
+          const bx = mx + col * (gw + sep), by = top0 + fila * (gh + sep);
+          let img;
+          try { img = await incrustar(f.bytes); }
+          catch (e) { pg.drawText(limpiar(`Foto ${h * POR_HOJA + k + 1}: imagen no legible`), { x: bx + 4, y: Yp(by + 14), size: 8, font: fR, color: rojo }); continue; }
+          const esc = Math.min(gw / img.width, cajaH / img.height);
+          const w = img.width * esc, hh = img.height * esc;
+          pg.drawImage(img, { x: bx + (gw - w) / 2, y: Yp(by + cajaH) + (cajaH - hh) / 2, width: w, height: hh });
+          pg.drawRectangle({ x: bx, y: Yp(by + cajaH), width: gw, height: cajaH, borderColor: gris, borderWidth: 0.5 });
+          const leyenda = `Foto ${h * POR_HOJA + k + 1}${f.leyenda ? ': ' + f.leyenda : ''}${f.tomada ? ` (${f.tomada})` : ''}`;
+          partirLineas(leyenda, fR, 7.5, gw, limpiar).slice(0, 2).forEach((l, i) => pg.drawText(l, { x: bx, y: Yp(by + cajaH + 10 + i * 9), size: 7.5, font: fR, color: negro }));
+        }
+        pg.drawRectangle({ x: 51.8, y: Yp(bordeTopAnexo + GROSOR), width: 822.8, height: 0.8, color: gris });
+        marcaYAviso(pg, ALTO_BASE, 0);
+        pieYQR(pg, ALTO_BASE, bordeTopAnexo);
+      }
     }
 
     // ---- 8. Archivo de datos incorporado al PDF (adjunto estándar): el verificador y la importación lo leen desde aquí ----

@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const ORDEN = ['inicio', 'elaborador', 'donde', 'evento', 'viviendas', 'personas', 'decisiones', 'recursos', 'necesidad', 'revision', 'listo'];
+  const ORDEN = ['inicio', 'elaborador', 'donde', 'evento', 'viviendas', 'personas', 'decisiones', 'recursos', 'necesidad', 'fotos', 'revision', 'listo'];
   const TITULOS = {
     inicio: 'Modo ejercicio',
     elaborador: '¿Quién elabora el informe?',
@@ -16,10 +16,11 @@
     decisiones: 'Decisiones y acciones',
     recursos: 'Recursos involucrados',
     necesidad: 'Necesidades',
+    fotos: 'Fotos del evento (opcional)',
     revision: 'Revisa y firma',
     listo: 'Informe generado'
   };
-  const PASOS_TOTAL = 9;
+  const PASOS_TOTAL = 10;
   const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   let CONFIG = null, DATOS = null, PLANTILLA = null;
@@ -94,6 +95,7 @@
       hayNecesidad: null,
       necesidades: [necesidadVacia()],
       justificaciones: {},
+      fotos: [],
       responsable: cr ? { nombre: cr.nombre, cargo: cr.cargo, institucion: cr.institucion, credencial: cr.id } : { nombre: CONFIG.responsable_ejercicio.nombre, cargo: '', institucion: '' },
       firmante: null,
       sello: null,
@@ -135,6 +137,7 @@
     if (!Array.isArray(inf.necesidades) || !inf.necesidades.length) inf.necesidades = [necesidadVacia()];
     if (inf.hayNecesidad === undefined) inf.hayNecesidad = null;
     inf.justificaciones = inf.justificaciones || {};
+    if (!Array.isArray(inf.fotos)) inf.fotos = [];
     if (inf.amplia === undefined) inf.amplia = null;
     if (inf.firmante === undefined) inf.firmante = null;
     if (inf.sello === undefined) inf.sello = null;
@@ -388,13 +391,15 @@
       mostrar('elaborador');
     });
     $('#btn-descartar').addEventListener('click', () => {
-      if (confirm('¿Descartar el borrador guardado?')) { Almacen.borrarBorrador(); informe = null; mostrar('inicio'); }
+      if (confirm('¿Descartar el borrador guardado?')) { Almacen.borrarBorrador(); informe = null; Almacen.limpiarFotos(idsFotosEnUso()); mostrar('inicio'); }
     });
     $('#dlg-cerrar').addEventListener('click', () => $('#dlg-bloqueo').close());
     $('#btn-instalar').addEventListener('click', instalar);
     $('#btn-gps').addEventListener('click', usarGPS);
     $('#in-credencial').addEventListener('change', e => { const f = e.target.files[0]; if (f) cargarCredencialArchivo(f); e.target.value = ''; });
     $('#in-importar').addEventListener('change', e => { const f = e.target.files[0]; if (f) importarArchivo(f); e.target.value = ''; });
+    $('#in-foto-camara').addEventListener('change', e => { const fs = e.target.files; if (fs && fs.length) agregarFotos(fs); e.target.value = ''; });
+    $('#in-foto-galeria').addEventListener('change', e => { const fs = e.target.files; if (fs && fs.length) agregarFotos(fs); e.target.value = ''; });
     window.addEventListener('online', estadoConexion);
     window.addEventListener('offline', estadoConexion);
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); eventoInstalacion = e; if (pantalla === 'inicio') renderInicio(); });
@@ -615,6 +620,90 @@
     } else sug.hidden = true;
   }
 
+  // ---------- fotos del anexo fotográfico (D-56) ----------
+  // Las imágenes (JPEG reducido, como dataURL) viven en memoria y en el almacén de fotos del teléfono; en el informe
+  // solo van sus datos y su huella SHA-256, que entran en la firma digital. El PDF las lleva en hojas de anexo.
+  const fotosDatos = new Map();
+  const MAX_FOTOS = 8, LADO_MAX_FOTO = 1280, PESO_MAX_FOTO = 300 * 1024;
+  function fechaHoraCorta(d) { return `${dos(d.getDate())}-${dos(d.getMonth() + 1)}-${d.getFullYear()} ${dos(d.getHours())}:${dos(d.getMinutes())}`; }
+  function bytesADataUrl(bytes, mime) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return `data:${mime};base64,` + btoa(s);
+  }
+  async function procesarImagen(archivo) {
+    const url = URL.createObjectURL(archivo);
+    try {
+      const img = new Image();
+      await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('no se pudo leer la imagen')); img.src = url; });
+      const esc = Math.min(1, LADO_MAX_FOTO / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * esc)); cv.height = Math.max(1, Math.round(img.height * esc));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      let calidad = 0.72, dataUrl = cv.toDataURL('image/jpeg', calidad);
+      while (dataUrl.length * 0.75 > PESO_MAX_FOTO && calidad > 0.4) { calidad -= 0.1; dataUrl = cv.toDataURL('image/jpeg', calidad); }
+      return { dataUrl, ancho: cv.width, alto: cv.height };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function agregarFotos(archivos) {
+    const lista = Array.from(archivos || []);
+    for (const archivo of lista) {
+      if (informe.fotos.length >= MAX_FOTOS) { toast(`Máximo ${MAX_FOTOS} fotos por informe.`, 5000); break; }
+      try {
+        const r = await procesarImagen(archivo);
+        const bytes = Credencial.dataUrlABytes(r.dataUrl);
+        const foto = { id: Credencial.uuid(), nombre: archivo.name || 'foto.jpg', leyenda: '', tomada: archivo.lastModified ? fechaHoraCorta(new Date(archivo.lastModified)) : '', ancho: r.ancho, alto: r.alto, bytes: bytes.length, sha256: Credencial.aB64u(await Credencial.sha256(bytes)) };
+        fotosDatos.set(foto.id, r.dataUrl);
+        if (!(await Almacen.guardarFoto(foto.id, r.dataUrl))) toast('Este navegador no guarda las fotos entre sesiones: no cierres la app antes de firmar.', 6000);
+        informe.fotos.push(foto);
+      } catch (e) { toast('No se pudo agregar una foto: ' + e.message, 6000); }
+    }
+    guardar(); renderFotos(); cargarValores();
+  }
+  function idsFotosEnUso() {
+    const ids = new Set();
+    const b = Almacen.leerBorrador();
+    [...(b ? [b] : []), ...Almacen.leerHistorial(), ...(informe ? [informe] : [])].forEach(inf => (inf.fotos || []).forEach(f => ids.add(f.id)));
+    return ids;
+  }
+  async function quitarFoto(i) {
+    const f = informe.fotos[i]; if (!f) return;
+    informe.fotos.splice(i, 1);
+    guardar(); renderFotos(); cargarValores();
+    if (!idsFotosEnUso().has(f.id)) { fotosDatos.delete(f.id); await Almacen.borrarFotos([f.id]); }
+  }
+  function renderFotos() {
+    const cont = $('#lista-fotos'); if (!cont || !informe) return;
+    cont.innerHTML = informe.fotos.map((f, i) => `
+      <section class="tarjeta foto">
+        <div class="foto-fila"><img class="foto-miniatura" alt="Foto ${i + 1}" src="${fotosDatos.get(f.id) || ''}">
+          <div class="foto-datos"><strong>Foto ${i + 1}</strong><small>${esc(f.tomada || '')} · ${Math.round((f.bytes | 0) / 1024)} KB</small><button type="button" class="enlace" data-accion="quitar-foto" data-i="${i}">Quitar</button></div></div>
+        <label class="campo">Leyenda: qué muestra<input type="text" data-ruta="fotos.${i}.leyenda" placeholder="Por ejemplo: vivienda con daño mayor en calle Colón 105" maxlength="120"></label>
+      </section>`).join('');
+    const total = informe.fotos.reduce((s, f) => s + (f.bytes | 0), 0);
+    $('#fotos-resumen').textContent = informe.fotos.length ? `${informe.fotos.length} foto(s) en ${Math.ceil(informe.fotos.length / 4)} hoja(s) de anexo, unos ${Math.round(total / 1024)} KB.` : 'Sin fotos. Puedes seguir sin agregar ninguna.';
+    const faltan = informe.fotos.filter(f => !fotosDatos.has(f.id)).map(f => f.id);
+    if (faltan.length) Almacen.leerFotos(faltan).then(m => {
+      const ids = Object.keys(m); if (!ids.length) return;
+      ids.forEach(id => fotosDatos.set(id, m[id]));
+      if (pantalla === 'fotos') { renderFotos(); cargarValores(); }
+    });
+  }
+  // Imágenes para el PDF: de la memoria o del almacén; si alguna falta (informe importado sin sus fotos), se avisa
+  async function fotosParaPdf(inf) {
+    const lista = inf.fotos || [];
+    if (!lista.length) return [];
+    const faltan = lista.filter(f => !fotosDatos.has(f.id)).map(f => f.id);
+    if (faltan.length) { const m = await Almacen.leerFotos(faltan); Object.keys(m).forEach(id => fotosDatos.set(id, m[id])); }
+    const salida = []; let perdidas = 0;
+    for (const f of lista) {
+      const d = fotosDatos.get(f.id);
+      if (d) salida.push({ bytes: Credencial.dataUrlABytes(d), leyenda: f.leyenda, tomada: f.tomada }); else perdidas++;
+    }
+    if (perdidas) toast(`${perdidas} foto(s) del informe no están en este teléfono: el anexo sale sin ellas.`, 7000);
+    return salida;
+  }
+
   // ---------- navegación ----------
   function mostrar(id) {
     pantalla = id;
@@ -634,6 +723,7 @@
     btn.disabled = false;
     if (id === 'inicio') renderInicio();
     if (id === 'necesidad') renderNecesidades();
+    if (id === 'fotos') renderFotos();
     if (id === 'revision') renderRevision();
     if (id === 'listo') renderListo();
     if (enFlujo) cargarValores();
@@ -853,6 +943,10 @@
       <section class="rev-seccion"><h3>6. Decisiones ${editar('decisiones')}</h3>${lista(S.decisiones)}</section>
       <section class="rev-seccion"><h3>7. Recursos involucrados ${editar('recursos')}</h3>${lista(S.recursos)}</section>
       <section class="rev-seccion"><h3>8. Evaluación de necesidades ${editar('necesidad')}</h3>${lista(S.necesidades)}</section>
+      <section class="rev-seccion"><h3>Anexo fotográfico ${editar('fotos')}</h3>
+        ${informe.fotos.length
+          ? `<p>${informe.fotos.length} foto(s) en ${Math.ceil(informe.fotos.length / 4)} hoja(s) adicional(es) del PDF, con el mismo pie de verificación.</p><div class="rev-fotos">${informe.fotos.map((f, i) => `<img alt="Foto ${i + 1}" src="${fotosDatos.get(f.id) || ''}">`).join('')}</div>`
+          : '<p class="vacio">sin fotos</p>'}</section>
       <section class="rev-seccion"><h3>9. Observaciones</h3>${lista(S.observaciones)}</section>
       <section class="rev-seccion"><h3>10. Responsable del informe</h3>
         <p>${esc(informe.responsable.nombre)}${informe.responsable.cargo ? ' · ' + esc(informe.responsable.cargo) : ''}${informe.responsable.institucion ? ' · ' + esc(informe.responsable.institucion) : ''}</p>
@@ -884,13 +978,15 @@
       combinada = !!d.combinada;
     }
     const cambios = inf.amplia && inf.amplia.anterior ? Reglas.diferencias(inf.amplia.anterior, inf).rutas : null;
+    const fotosPdf = await fotosParaPdf(inf);
     return AlfaPDF.generar(inf, {
       PDFLib: window.PDFLib, fontkit: window.fontkit || null, fuentes: rec.fuentes, logoPng: rec.logoPng,
       config: CONFIG, datos: DATOS, plantilla: PLANTILLA,
       totales: Reglas.totales(inf), secciones: Reglas.textosSecciones(inf, CONFIG),
       firmaPng: firmaBytes, timbrePng: timbreBytes, firmaCombinada: combinada,
       qrcode: window.qrcode || null, qrTexto: DatosAlfa.textoQR(CONFIG, inf), cambios,
-      datosAdjunto: datos ? { bytes: new TextEncoder().encode(DatosAlfa.serializar(datos)), nombre: DatosAlfa.nombreArchivoDatos(inf) } : null
+      datosAdjunto: datos ? { bytes: new TextEncoder().encode(DatosAlfa.serializar(datos)), nombre: DatosAlfa.nombreArchivoDatos(inf) } : null,
+      fotos: fotosPdf
     });
   }
 
@@ -926,6 +1022,7 @@
       ultimoPdf = await generarPdf(informe, cred, ultimoDatos);
       Almacen.guardarHistorial(informe);
       Almacen.borrarBorrador();
+      Almacen.limpiarFotos(idsFotosEnUso());
       mostrar('listo');
     } catch (e) {
       console.error(e);
@@ -970,7 +1067,7 @@
     const d = CONFIG.destinatario;
     const puedeCompartir = !!(navigator.share && navigator.canShare);
     $('#listo-contenido').innerHTML = `
-      <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> · <strong>${esc(tipoTexto(informe))}</strong>${Reglas.comunasTexto(informe) ? ' · ' + esc(Reglas.comunasTexto(informe)) : ''}, generado en este dispositivo.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}</p>
+      <p class="exito">Informe de ejercicio <strong>${esc(informe.numero)}</strong> · <strong>${esc(tipoTexto(informe))}</strong>${Reglas.comunasTexto(informe) ? ' · ' + esc(Reglas.comunasTexto(informe)) : ''}, generado en este dispositivo.${informe.amplia ? ' Es una ampliación de ' + esc(informe.amplia.de) + '.' : ''}${informe.fotos && informe.fotos.length ? ' Incluye un anexo fotográfico de ' + Math.ceil(informe.fotos.length / 4) + ' hoja(s) con ' + informe.fotos.length + ' foto(s).' : ''}</p>
       <p class="cred-firmante">${informe.firmante ? 'Firmado con la credencial de ' + esc(informe.firmante.nombre) + ' (' + esc(informe.firmante.institucion || '') + ')' + (informe.sello && informe.sello.firma ? ', con firma digital.' : ', sin firma digital (credencial antigua).') : 'Firmado con la identidad ficticia de ejercicio, sin firma digital.'}</p>
       <div class="qr-caja">${qrSvg()}<div><strong>Código de verificación</strong><p class="ayuda">El mismo código va impreso en el PDF, que lleva incorporados los datos del informe. La URAT escanea el código o abre el verificador, carga el PDF y comprueba que el informe es auténtico y no fue alterado.</p></div></div>
       <div class="acciones-fila">
@@ -1098,7 +1195,7 @@
   async function reabrir(i) {
     const h = Almacen.leerHistorial()[i];
     if (!h) return;
-    informe = normalizar(h);
+    informe = h;   // tal como se guardó: completar campos cambiaría la huella firmada de un informe importado
     let cred = null;
     if (informe.firmante) {
       const reg = Almacen.leerCredencial();
@@ -1127,12 +1224,12 @@
   // Importa un informe generado en otro teléfono: desde su PDF (lleva los datos incorporados) o desde su archivo .alfa.json
   async function importarArchivo(archivo) {
     try {
-      let obj;
+      let obj, imagenes = [];
       if (/\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf') {
         if (!window.PDFLib) throw new Error('la biblioteca de PDF no está cargada');
         const ex = await DatosAlfa.extraerDePdf(window.PDFLib, new Uint8Array(await archivo.arrayBuffer()));
         if (!ex.archivo) { toast('Este PDF no trae los datos del informe incorporados (puede ser de una versión anterior a la 0.5.2). Importa el archivo .alfa.json.', 8000); return; }
-        obj = ex.archivo;
+        obj = ex.archivo; imagenes = ex.imagenes || [];
       } else {
         obj = JSON.parse(await archivo.text());
       }
@@ -1140,20 +1237,29 @@
       if (!v.ok) { toast('No se pudo importar: ' + v.motivo, 7000); return; }
       const h = await DatosAlfa.huella(obj.informe);
       if (h !== obj.huella) { toast('No se pudo importar: el archivo fue modificado después de generarse (la huella no coincide).', 8000); return; }
-      const inf = normalizar(obj.informe);
+      // Se guarda tal como viene, sin completar campos: así la huella firmada sigue coincidiendo al volver a compartirlo
+      const inf = obj.informe;
       if (!inf.elaboracion || !inf.numero) { toast('El archivo no corresponde a un informe firmado.', 6000); return; }
-      if (!inf.anio) inf.anio = anioDe(inf);   // informes de versiones anteriores a la 0.5.5
-      inf.importado = { fecha: new Date().toISOString(), app: obj.app || '' };
+      inf.importado = { fecha: new Date().toISOString(), app: obj.app || '' };   // marca de pantalla, fuera de la huella
       const hist = Almacen.leerHistorial();
-      const idx = hist.findIndex(x => x.numero === inf.numero);
+      const idx = hist.findIndex(x => x.numero === inf.numero && anioDe(x) === anioDe(inf));
       if (idx >= 0) {
         if (!confirm(`Ya existe el informe ${inf.numero} en este teléfono. ¿Reemplazarlo por el importado?`)) return;
         hist.splice(idx, 1);
       }
       hist.unshift(inf);
       Almacen.escribirHistorial(hist);
+      // Fotos del anexo: se recuperan del PDF por su huella, para poder volver a compartir el informe con ellas
+      let recuperadas = 0;
+      for (const f of (inf.fotos || [])) {
+        const im = imagenes.find(x => x.sha256 === f.sha256);
+        if (!im) continue;
+        const d = bytesADataUrl(im.bytes, 'image/jpeg');
+        fotosDatos.set(f.id, d); await Almacen.guardarFoto(f.id, d); recuperadas++;
+      }
       renderInicio();
-      toast(`Informe ${inf.numero} importado. Puedes ampliarlo o compartirlo desde la lista.`, 6000);
+      const nFotos = (inf.fotos || []).length;
+      toast(`Informe ${inf.numero} importado${nFotos ? ` con ${recuperadas} de ${nFotos} foto(s)` : ''}. Puedes ampliarlo o compartirlo desde la lista.`, 6000);
     } catch (e) {
       toast('No se pudo leer el archivo: ' + e.message, 7000);
     }
@@ -1173,6 +1279,9 @@
       case 'reabrir': await reabrir(+ds.i); break;
       case 'descargar-datos': descargarDatos(); break;
       case 'importar': $('#in-importar').click(); break;
+      case 'foto-camara': $('#in-foto-camara').click(); break;
+      case 'foto-galeria': $('#in-foto-galeria').click(); break;
+      case 'quitar-foto': await quitarFoto(+ds.i); break;
       case 'cargar-credencial': $('#in-credencial').click(); break;
       case 'quitar-credencial':
         if (confirm('¿Quitar la credencial de este teléfono? Los informes nuevos volverán a firmarse con la identidad ficticia de ejercicio.')) {

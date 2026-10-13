@@ -239,7 +239,21 @@
       </div>
     </section>
 
-    <!-- 9. REVISIÓN Y FIRMA -->
+    <!-- 9. FOTOS (ANEXO FOTOGRÁFICO, OPCIONAL) -->
+    <section class="pantalla" data-pantalla="fotos" hidden>
+      <p class="pregunta">¿Quieres adjuntar fotos de lo que informas? (opcional)</p>
+      <p class="ayuda">Van en hojas aparte, a continuación del Alfa, como anexo fotográfico con el mismo pie de verificación. Fotografía la situación y los inmuebles dañados. <strong>Protege los datos de las personas:</strong> sin rostros reconocibles, nombres, RUT ni documentos. Cada foto se reduce a menos de 300 KB; máximo 8.</p>
+      <div class="acciones-fila">
+        <button type="button" class="primario" data-accion="foto-camara">Tomar una foto</button>
+        <button type="button" class="secundario" data-accion="foto-galeria">Elegir de la galería</button>
+      </div>
+      <input type="file" id="in-foto-camara" accept="image/*" capture="environment" hidden>
+      <input type="file" id="in-foto-galeria" accept="image/*" multiple hidden>
+      <div id="lista-fotos" class="lista-fotos"></div>
+      <p id="fotos-resumen" class="ayuda"></p>
+    </section>
+
+    <!-- 10. REVISIÓN Y FIRMA -->
     <section class="pantalla" data-pantalla="revision" hidden>
       <div id="revision-contenido"></div>
     </section>

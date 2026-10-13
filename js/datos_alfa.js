@@ -10,7 +10,8 @@
 
   function n(v) { const x = parseInt(v, 10); return isNaN(x) || x < 0 ? 0 : x; }
   function texto(v) { return String(v == null ? '' : v).trim(); }
-  function sinSello(informe) { const c = Object.assign({}, informe); delete c.sello; return c; }
+  // La huella cubre el informe sin su sello ni las marcas que la app agrega después de firmar (importado, dato de pantalla)
+  function sinSello(informe) { const c = Object.assign({}, informe); delete c.sello; delete c.importado; delete c.numeroManual; return c; }
   function comunasDe(informe) {
     const id = (informe && informe.identificacion) || {};
     return Array.isArray(id.comunas) && id.comunas.length ? id.comunas : (id.comuna ? [id.comuna] : []);
@@ -128,6 +129,19 @@
         if (obj && obj.tipo === TIPO) { res.archivo = obj; res.nombre = a.nombre; break; }
       } catch (e) { /* no es el archivo de datos; se sigue con el siguiente */ }
     }
+    // Fotos del anexo: imágenes JPEG del PDF con su huella, para comprobarlas contra lo firmado o recuperarlas al importar
+    res.imagenes = [];
+    try {
+      for (const [, obj] of doc.context.enumerateIndirectObjects()) {
+        if (!(obj instanceof PDFRawStream)) continue;
+        if (obj.dict.get(PDFName.of('Subtype')) !== PDFName.of('Image')) continue;
+        const filtro = obj.dict.get(PDFName.of('Filter'));
+        const esJpeg = filtro === PDFName.of('DCTDecode') || (filtro instanceof PDFArray && filtro.asArray().some(f => f === PDFName.of('DCTDecode')));
+        if (!esJpeg) continue;
+        const bytes = obj.contents;
+        res.imagenes.push({ sha256: Cred.aB64u(await Cred.sha256(bytes)), bytes });
+      }
+    } catch (e) { /* sin imágenes legibles */ }
     return res;
   }
 
@@ -170,6 +184,7 @@
       afectadas: total('afectadas'), damnificadas: total('damnificadas'), albergadas: total('albergadas'),
       viviendas_danadas: t.viviendas_danadas != null ? t.viviendas_danadas : null,
       necesidades: inf.hayNecesidad === true ? (inf.necesidades || []).filter(x => x.elemento).length : 0,
+      fotos: Array.isArray(inf.fotos) ? inf.fotos.length : 0,
       app: archivo.app || '', generado: archivo.generado || '',
       firmante: archivo.firma && archivo.firma.firmante ? archivo.firma.firmante.nombre : null
     };
@@ -222,6 +237,22 @@
       agregar('qr', coincide, 'Código QR del PDF',
         coincide ? 'El código QR corresponde a este archivo de datos: el PDF que lo lleva es el de estos datos.'
           : 'El código QR NO corresponde a este archivo: el PDF y los datos son de informes distintos, o alguno fue alterado.');
+    }
+    // Fotos del anexo: lo firmado declara cada foto con su huella; si se cargó el PDF, se comprueba que sus imágenes coincidan
+    const fotos = Array.isArray(inf.fotos) ? inf.fotos : [];
+    if (fotos.length) {
+      if (Array.isArray(opciones.imagenes)) {
+        // Se cuentan las imágenes: dos fotos iguales declaradas exigen dos imágenes en el PDF
+        const disponibles = new Map();
+        opciones.imagenes.forEach(h => disponibles.set(h, (disponibles.get(h) || 0) + 1));
+        let faltan = 0;
+        fotos.forEach(f => { const c = disponibles.get(f.sha256) || 0; if (c > 0) disponibles.set(f.sha256, c - 1); else faltan++; });
+        agregar('fotos', faltan === 0, 'Fotos del anexo',
+          faltan === 0 ? `Las ${fotos.length} foto(s) del PDF coinciden con las declaradas en el informe firmado.`
+            : `${faltan} de ${fotos.length} foto(s) declaradas no están en el PDF o fueron cambiadas.`);
+      } else {
+        agregar('fotos', null, 'Fotos del anexo', `El informe declara ${fotos.length} foto(s) con su huella. Carga el PDF para comprobar que sus imágenes coinciden.`);
+      }
     }
     const modo = inf.modo || archivo.modo || '';
     agregar('modo', null, 'Modo', modo === 'ejercicio' ? 'Informe de EJERCICIO, sin valor oficial.' : `Informe en modo "${modo}".`);

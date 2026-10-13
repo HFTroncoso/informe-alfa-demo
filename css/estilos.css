@@ -276,6 +276,17 @@ button { font: inherit; cursor: pointer; }
 .rev-seccion.cambios { border-left: 4px solid var(--amarillo); }
 .etiqueta-importado { background: #eef2ff; color: var(--azul-oscuro); border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 700; margin-left: 6px; }
 
+/* ---- Versión 0.6.0: anexo fotográfico ---- */
+.tarjeta.foto { padding: 10px 14px; }
+.foto-fila { display: flex; gap: 12px; align-items: center; }
+.foto-miniatura { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; background: #e5e7eb; flex: none; }
+.foto-datos { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.foto-datos small { color: var(--texto-suave); }
+.foto-datos .enlace { align-self: flex-start; padding-left: 0; }
+.tarjeta.foto .campo { margin: 8px 0 0; }
+.rev-fotos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.rev-fotos img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; }
+
 /* ---- Versión 0.5.4: número del informe editable en la revisión ---- */
 .rev-seccion.numero { border-left: 4px solid var(--azul); }
 .fila-numero { display: flex; align-items: center; gap: 6px; margin: 6px 0 8px; }

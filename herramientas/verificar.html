@@ -79,7 +79,7 @@
     (function () {
       'use strict';
       const $ = s => document.querySelector(s);
-      let CONFIG = null, archivoDatos = null, origenDatos = '', qr = null, huellaPdf = null, numeroPdf = null, datosDesdePdf = false;
+      let CONFIG = null, archivoDatos = null, origenDatos = '', qr = null, huellaPdf = null, numeroPdf = null, datosDesdePdf = false, imagenesPdf = null;
 
       function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
       function estado(sel, texto, clase) { const el = $(sel); el.hidden = false; el.textContent = texto; el.className = 'estado' + (clase ? ' ' + clase : ''); }
@@ -115,6 +115,7 @@
         try {
           const ex = await DatosAlfa.extraerDePdf(PDFLib, new Uint8Array(await f.arrayBuffer()));
           huellaPdf = ex.huella; numeroPdf = ex.numero;
+          imagenesPdf = (ex.imagenes || []).map(i => i.sha256);   // fotos del anexo, para compararlas con las declaradas
           if (!huellaPdf) { estado('#estado-pdf', `El PDF ${f.name} no trae la huella de la App Informe Alfa: puede ser de una versión anterior a la 0.5 o no haber sido generado por la app.`, 'mal'); return; }
           if (ex.archivo) {
             archivoDatos = ex.archivo; datosDesdePdf = true; origenDatos = `${f.name} (datos incorporados en el PDF)`;
@@ -140,7 +141,7 @@
 
       async function comprobar() {
         const clave = CONFIG.credenciales && CONFIG.credenciales.clave_publica;
-        const r = await DatosAlfa.comprobar(archivoDatos, clave, { qr });
+        const r = await DatosAlfa.comprobar(archivoDatos, clave, { qr, imagenes: imagenesPdf });
         if (huellaPdf && r.resumen) {
           const ok = huellaPdf === archivoDatos.huella;
           r.resultados.push({ clave: 'pdf', ok, titulo: 'PDF recibido', detalle: ok
@@ -183,6 +184,7 @@
             ${fila('Afectadas / damnificadas / albergadas', [s.afectadas, s.damnificadas, s.albergadas].map(x => x == null ? '–' : x).join(' / '))}
             ${fila('Viviendas dañadas', s.viviendas_danadas)}
             ${fila('Necesidades registradas', s.necesidades)}
+            ${fila('Fotos del anexo', s.fotos)}
             ${fila('Generado con', s.app ? `App Informe Alfa ${s.app}` : '')}
             ${fila('Origen de los datos', origenDatos)}
           </dl>`;

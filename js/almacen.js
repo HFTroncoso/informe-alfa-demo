@@ -29,6 +29,28 @@ const Almacen = (() => {
     }
   }
 
+  // ---------- fotos del anexo: IndexedDB, porque pesan más de lo que admite localStorage (D-56) ----------
+  // Cada foto se guarda por su id como dataURL JPEG; si el navegador no ofrece IndexedDB, las fotos viven solo en memoria.
+  const NOMBRE_DB = 'alfaDemo', ALMACEN_FOTOS = 'fotos';
+  function abrirDb() {
+    return new Promise((res, rej) => {
+      if (!('indexedDB' in globalThis)) { rej(new Error('sin IndexedDB')); return; }
+      const pet = indexedDB.open(NOMBRE_DB, 1);
+      pet.onupgradeneeded = () => { const db = pet.result; if (!db.objectStoreNames.contains(ALMACEN_FOTOS)) db.createObjectStore(ALMACEN_FOTOS, { keyPath: 'id' }); };
+      pet.onsuccess = () => res(pet.result);
+      pet.onerror = () => rej(pet.error || new Error('no se pudo abrir el almacén de fotos'));
+    });
+  }
+  function conFotos(modo, fn) {
+    return abrirDb().then(db => new Promise((res, rej) => {
+      const t = db.transaction(ALMACEN_FOTOS, modo);
+      let salida;
+      try { salida = fn(t.objectStore(ALMACEN_FOTOS)); } catch (e) { db.close(); rej(e); return; }
+      t.oncomplete = () => { db.close(); res(salida && typeof salida === 'object' && 'result' in salida ? salida.result : salida); };
+      t.onerror = () => { db.close(); rej(t.error); };
+      t.onabort = () => { db.close(); rej(t.error || new Error('transacción cancelada')); };
+    }));
+  }
   const anioHoy = () => new Date().getFullYear();
   function contadores() {
     const mapa = leer(K.correlativos, null);
@@ -78,8 +100,24 @@ const Almacen = (() => {
     guardarCredencial(registro) { return escribir(K.credencial, registro); },
     leerCredencial() { return leer(K.credencial, null); },
     borrarCredencial() { try { localStorage.removeItem(K.credencial); } catch (e) { /* sin efecto */ } },
+    // Fotos: devuelven promesas; ante un fallo del almacén resuelven sin romper el flujo
+    guardarFoto(id, dataUrl) { return conFotos('readwrite', st => st.put({ id, dataUrl, guardada: new Date().toISOString() })).then(() => true).catch(() => false); },
+    leerFotos(ids) {
+      return conFotos('readonly', st => st.getAll()).then(lista => {
+        const m = {}; (lista || []).forEach(f => { if (ids.includes(f.id)) m[f.id] = f.dataUrl; }); return m;
+      }).catch(() => ({}));
+    },
+    borrarFotos(ids) { return conFotos('readwrite', st => { ids.forEach(id => st.delete(id)); return true; }).catch(() => false); },
+    // Borra las fotos que ningún informe (borrador, historial o el informe en curso) referencia
+    limpiarFotos(idsEnUso) {
+      return conFotos('readonly', st => st.getAllKeys()).then(claves => {
+        const sobran = (claves || []).filter(k => !idsEnUso.has(k));
+        return sobran.length ? conFotos('readwrite', st => { sobran.forEach(k => st.delete(k)); return sobran.length; }) : 0;
+      }).catch(() => 0);
+    },
     borrarTodo() {
       Object.values(K).forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* sin efecto */ } });
+      conFotos('readwrite', st => st.clear()).catch(() => false);
     }
   };
 })();

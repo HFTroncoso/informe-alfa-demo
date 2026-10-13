@@ -225,6 +225,8 @@ const Reglas = (() => {
     if (anioCorr && anioFecha && anioCorr !== anioFecha) observaciones.push(`Correlativo del año ${anioCorr}: el evento comenzó ese año y este informe lo continúa.`);
     const lugar = lugarTexto(informe);
     if (lugar) observaciones.push(lugar);
+    const nFotos = Array.isArray(informe.fotos) ? informe.fotos.length : 0;
+    if (nFotos) observaciones.push(`Anexo fotográfico: ${nFotos} foto(s) en ${Math.ceil(nFotos / 4)} hoja(s) adicional(es) de este PDF, con el mismo pie de verificación.`);
     const J = informe.justificaciones || {};
     for (const clave of Object.keys(J)) {
       if (!texto(J[clave])) continue;
