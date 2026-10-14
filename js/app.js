@@ -599,7 +599,7 @@
     $('#resumen-personas').innerHTML = `
       <table>${filas || '<tr><td>Sin personas registradas todavía</td><td></td></tr>'}</table>
       <div class="fila"><span>Personas únicas (aprox.)</span><strong>${t.personas}</strong></div>
-      <p class="nota">Incluye a las personas de las viviendas dañadas. Las albergadas no se suman porque ya están contadas como damnificadas, evacuadas o aisladas.</p>`;
+      <p class="nota">Dato informativo, no se imprime. Incluye a las personas de las viviendas dañadas; las albergadas no se suman porque ya están contadas como damnificadas, evacuadas o aisladas. Las cantidades de recursos se calculan por la categoría que atiende cada elemento.</p>`;
     DATOS.categorias_personas.forEach(c => { const el = $(`[data-total-cat="${c.id}"]`); if (el) el.textContent = `${ocupantesOtras(c.id)} persona(s) en esta categoría`; });
   }
 
@@ -615,7 +615,7 @@
     const s = Reglas.sugerencia(n.elemento, informe);
     if (s) {
       sug.hidden = false;
-      $('span', sug).textContent = `En el informe hay ${s.baseValor} ${s.baseNombre}: cuadran hasta ${s.tope} ${el.unidad}.`;
+      $('span', sug).textContent = `En el informe hay ${s.baseValor} ${s.baseNombre}${s.detalle ? ` (${s.detalle})` : ''}: cuadran hasta ${s.tope} ${el.unidad}.`;
       $('button', sug).hidden = (n.cantidad | 0) === s.tope;
     } else sug.hidden = true;
   }
@@ -748,7 +748,7 @@
     const dlg = $('#dlg-bloqueo');
     const esJust = h.nivel === 'justificacion';
     $('#dlg-contenido').innerHTML = `
-      <p class="etiqueta ${esJust ? 'amarilla' : 'roja'}">${esJust ? 'Bloqueo con justificación' : 'Bloqueo'}</p>
+      <p class="etiqueta ${esJust ? 'amarilla' : 'roja'}">${esJust ? 'Requiere justificación' : 'Bloqueo'}</p>
       <h2 id="dlg-titulo">${esc(h.titulo)}</h2>
       <h3>Qué no cuadra</h3>
       <p>${esc(h.que_no_cuadra)}</p>
@@ -785,7 +785,8 @@
     }));
     $('#dlg-guardar-motivo').addEventListener('click', () => {
       const m = $('#dlg-motivo').value.trim();
-      if (m.length < 8) { toast('Escribe un motivo un poco más completo.'); return; }
+      const minimo = (DATOS.parametros && DATOS.parametros.largo_minimo_justificacion) || 12;
+      if (m.length < minimo) { toast(`Escribe un motivo un poco más completo (al menos ${minimo} letras).`); return; }
       informe.justificaciones[h.clave] = m;
       guardar(); dlg.close();
       toast('Motivo guardado. Se imprimirá en Observaciones.');
@@ -936,7 +937,7 @@
       <section class="rev-seccion"><h3>4. Afectación a personas ${editar('personas')}</h3>
         <table class="tabla"><thead><tr><th></th><th>Adultos H</th><th>Adultas M</th><th>NNA H</th><th>NNA M</th><th>Total</th></tr></thead>
         <tbody>${filasPersonas}</tbody></table>
-        <p class="ayuda">Personas únicas (aprox.): <strong>${t.personas}</strong>. Las albergadas no se suman porque ya están contadas como damnificadas, evacuadas o aisladas.</p></section>
+        <p class="ayuda">Personas únicas (aprox.): <strong>${t.personas}</strong>, dato informativo que no se imprime. Las albergadas no se suman porque ya están contadas como damnificadas, evacuadas o aisladas.</p></section>
       <section class="rev-seccion"><h3>5. Daño a viviendas ${editar('viviendas')}</h3>
         ${DATOS.condiciones_vivienda.map(c => `<p>${esc(c.nivel_largo)}: <strong>${t.viviendas[c.id]}</strong></p>`).join('')}
         <p>Total de viviendas dañadas: <strong>${t.viviendas_danadas}</strong></p></section>

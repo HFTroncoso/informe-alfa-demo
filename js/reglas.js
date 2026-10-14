@@ -94,13 +94,20 @@ const Reglas = (() => {
       if (c.ocupantes_cuentan_como === 'damnificadas') t.viviendas_no_habitables += viv;
       if (c.pregunta_albergue && v.hayAlbergue) { sumar(t.albergadas, v.albergue); t.albergadas_viviendas += ocupantes(v.albergue); }
     }
+    const albOtras = fila();   // albergadas que no vienen de las viviendas dañadas
     for (const c of (D.categorias_personas || [])) {
       const o = (informe.otras || {})[c.id];
       if (o && o.hay) {
         sumar(t[c.id], o);
-        if (c.id === 'albergadas') t.albergadas_otras += ocupantes(o);
+        if (c.id === 'albergadas') { t.albergadas_otras += ocupantes(o); sumar(albOtras, o); }
       }
     }
+    // Bases por categoría para sugerir y contrastar cantidades (D-57). Las albergadas que salieron de las viviendas
+    // dañadas ya están contadas como damnificadas; las de otras procedencias se suman aparte.
+    const alojar = fila(); sumar(alojar, t.damnificadas); sumar(alojar, albOtras);
+    t.alojar = alojar.total; t.alojar_hombres = alojar.adH + alojar.nnaH; t.alojar_mujeres = alojar.adM + alojar.nnaM; t.alojar_nna = alojar.nnaH + alojar.nnaM;
+    t.alimentar = alojar.total + t.aisladas.total;
+    // "Personas únicas": aproximación solo informativa para la pantalla; no se usa para cantidades (D-57)
     for (const k of CATEGORIAS) {
       if (NO_SUMAN_A_UNICAS.includes(k)) continue;
       t.personas += t[k].total;
@@ -227,27 +234,52 @@ const Reglas = (() => {
     if (lugar) observaciones.push(lugar);
     const nFotos = Array.isArray(informe.fotos) ? informe.fotos.length : 0;
     if (nFotos) observaciones.push(`Anexo fotográfico: ${nFotos} foto(s) en ${Math.ceil(nFotos / 4)} hoja(s) adicional(es) de este PDF, con el mismo pie de verificación.`);
+    // Motivos escritos por el funcionario. Los de cantidades se imprimen junto a la referencia del IT-LOG-01 (D-58),
+    // y solo si la necesidad sigue existiendo con ese elemento y sigue sobre la referencia.
     const J = informe.justificaciones || {};
     for (const clave of Object.keys(J)) {
       if (!texto(J[clave])) continue;
-      const r = regla(clave.split(':')[0]);
+      const partes = clave.split(':');
+      const r = regla(partes[0]);
+      const el = partes[1] ? elemento(partes[1]) : null;
+      const nec = partes.length > 2 ? (informe.necesidades || [])[parseInt(partes[2], 10)] : null;
+      if (partes[0] === 'TOPE_ELEMENTO') {
+        if (!el || !nec || nec.elemento !== el.id) continue;
+        const s = sugerencia(el.id, informe);
+        if (!s || n(nec.cantidad) <= s.tope) continue;
+        observaciones.push(`${el.nombre}: se piden ${n(nec.cantidad)} ${el.unidad} y cuadran ${s.tope} (${s.baseValor} ${s.baseNombre}${s.detalle ? ': ' + s.detalle : ''}). Motivo: ${texto(J[clave])}`);
+        continue;
+      }
+      if (partes[0] === 'ALIMENTACION_72H') {
+        if (!el || !nec || nec.elemento !== el.id) continue;
+        observaciones.push(`${el.nombre} antes de las 72 horas: ${texto(J[clave])}`);
+        continue;
+      }
       const titulo = r ? plantilla(r.titulo, { numero: '' }).replace(/\s+/g, ' ').trim() : clave;
       observaciones.push(`${titulo}: ${texto(J[clave])}`);
     }
     const version = config && config.version_app ? config.version_app : '';
-    observaciones.push(`Informe de EJERCICIO generado con la app Informe Alfa (versión ${version}). Personas únicas registradas (aprox.): ${t.personas}; viviendas dañadas: ${t.viviendas_danadas}.`);
+    observaciones.push(`Informe de EJERCICIO generado con la app Informe Alfa (versión ${version}).`);
 
     return { decisiones, recursos, necesidades, observaciones };
   }
 
   // ---------- sugerencia de cantidad ----------
+  // Valor de una base en los totales (admite claves con punto, como "damnificadas.total")
+  function valorBase(t, clave) { return n(String(clave).split('.').reduce((o, k) => (o != null && o[k] != null ? o[k] : 0), t)); }
+  // Desglose de una base compuesta, por ejemplo "14 damnificadas y 5 albergadas de otras procedencias"
+  function detalleBase(t, baseId) {
+    const b = D.bases[baseId];
+    if (!b || !Array.isArray(b.componentes)) return '';
+    return lista(b.componentes.map(c => ({ v: valorBase(t, c.clave), nombre: c.nombre })).filter(c => c.v > 0).map(c => `${c.v} ${c.nombre}`));
+  }
   function sugerencia(elementoId, informe) {
     const el = elemento(elementoId);
     if (!el || !el.base || !el.factor) return null;
     const t = totales(informe);
-    const baseValor = t[el.base] || 0;
+    const baseValor = valorBase(t, el.base);
     const tope = Math.ceil(baseValor * el.factor);
-    return { tope, baseValor, baseNombre: D.bases[el.base].nombre, criterio: el.criterio, nivel: el.nivel_tope };
+    return { tope, baseValor, baseNombre: D.bases[el.base].nombre, detalle: detalleBase(t, el.base), criterio: el.criterio, nivel: el.nivel_tope || 'justificacion' };
   }
 
   // ---------- evaluación ----------
@@ -389,10 +421,12 @@ const Reglas = (() => {
         if (faltan.length) { hallazgo(regla('NECESIDAD_INCOMPLETA'), { faltantes: lista(faltan), indice: i, numero }, { sufijo: String(i) }); return; }
         const el = elemento(nec.elemento);
         if (el && el.base && el.factor) {
-          const baseValor = t[el.base] || 0;
+          const baseValor = valorBase(t, el.base);
           const tope = Math.ceil(baseValor * el.factor);
           if (n(nec.cantidad) > tope) {
-            hallazgo(regla('TOPE_ELEMENTO'), { cantidad: n(nec.cantidad), unidad: el.unidad, elemento: el.nombre, criterio: el.criterio.toLowerCase(), base_valor: baseValor, base_nombre: D.bases[el.base].nombre, tope, indice: i, numero }, { nivel: el.nivel_tope, sufijo: el.id + ':' + i, caso: el.caso_parecido });
+            // Nunca bloquea: la cantidad mayor se admite con motivo escrito, que se imprime en Observaciones (D-58)
+            const det = detalleBase(t, el.base);
+            hallazgo(regla('TOPE_ELEMENTO'), { cantidad: n(nec.cantidad), unidad: el.unidad, elemento: el.nombre, criterio: el.criterio.toLowerCase(), base_valor: baseValor, base_nombre: D.bases[el.base].nombre, base_detalle: det ? ` (${det})` : '', tope, indice: i, numero }, { nivel: el.nivel_tope || 'justificacion', sufijo: el.id + ':' + i, caso: el.caso_parecido });
           }
         }
         if (el && el.regla_72h) {

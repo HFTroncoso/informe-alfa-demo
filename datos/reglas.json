@@ -1,6 +1,6 @@
 {
   "_comentario": "Catálogo de elementos, condiciones de vivienda, categorías de personas, tipos de evento y reglas de validación de la demo. VERSIÓN PROVISORIA redactada en el Sprint 1 a partir de ARQUITECTURA.md, la Guía de Aplicación 2026 y el IT-LOG-01 v4. Debe ser revisada en Cowork y validada con la URAT (riesgo R-12) antes del piloto. Si cambia el instructivo, se edita este archivo, no el código.",
-  "version": "demo-0.5.5: criterios revisados por la Dirección Regional el 2026-10-08 (D-54); validación con la URAT pendiente (R-12)",
+  "version": "demo-0.6.1: bases por categoría para sugerir y contrastar cantidades (D-57) y topes con justificación en vez de bloqueo (D-58), criterios de la Dirección Regional del 2026-10-13; validación con la URAT pendiente (R-12)",
   "condiciones_vivienda": [
     {
       "id": "menor",
@@ -124,7 +124,7 @@
     "afectadas": "Personas que ven alterado directamente su modo de vida; por ejemplo, por cortes de luz, agua o teléfono, o por aislamiento (Guía 2026, sección 4).",
     "damnificadas": "Personas que, por el daño a su vivienda, perdieron su condición de habitabilidad de forma temporal o permanente (Guía 2026, sección 4). En la app nacen solo de las viviendas con daño mayor o destruidas.",
     "albergadas": "Personas atendidas en un lugar especialmente habilitado para damnificados, aislados o evacuados. Quien se queda con familiares o vecinos no cuenta como albergada (Guía 2026, sección 4; criterio de la Dirección Regional, D-14).",
-    "personas_unicas": "Una misma persona puede estar en más de una categoría. La app no suma a las albergadas, porque ya están contadas como damnificadas, evacuadas o aisladas; las demás categorías se suman como aproximación de personas únicas, que es la base para sugerir cantidades."
+    "personas_unicas": "Una misma persona puede estar en más de una categoría. La app no suma a las albergadas, porque ya están contadas como damnificadas, evacuadas o aisladas; las demás categorías se suman como aproximación de personas únicas, solo como dato informativo de la pantalla. Las cantidades de recursos se calculan por la categoría que atiende cada elemento (D-57)."
   },
   "tipos_evento": [
     {
@@ -209,22 +209,6 @@
     }
   ],
   "bases": {
-    "personas": {
-      "nombre": "personas registradas",
-      "descripcion": "Aproximación de personas únicas: todas las categorías salvo las albergadas, que ya están contadas en otra."
-    },
-    "personas_hombres": {
-      "nombre": "hombres registrados (adultos y NNA)",
-      "descripcion": "Suma de hombres adultos y NNA hombres registrados."
-    },
-    "personas_mujeres": {
-      "nombre": "mujeres registradas (adultas y NNA)",
-      "descripcion": "Suma de mujeres adultas y NNA mujeres registradas."
-    },
-    "personas_nna": {
-      "nombre": "niños, niñas y adolescentes registrados",
-      "descripcion": "Suma de NNA hombres y mujeres registrados."
-    },
     "viviendas_no_habitables": {
       "nombre": "viviendas con daño mayor o destruidas",
       "descripcion": "Viviendas que perdieron la habitabilidad."
@@ -232,6 +216,50 @@
     "viviendas_danadas": {
       "nombre": "viviendas dañadas",
       "descripcion": "Todas las viviendas registradas con daño menor, mayor o destruidas."
+    },
+    "alojar": {
+      "nombre": "personas por alojar",
+      "descripcion": "Personas damnificadas (ocupantes de viviendas con daño mayor o destruidas) más las albergadas que no vienen de viviendas dañadas. Las albergadas que salieron de las viviendas dañadas ya están contadas como damnificadas (D-57).",
+      "componentes": [
+        {
+          "clave": "damnificadas.total",
+          "nombre": "damnificadas"
+        },
+        {
+          "clave": "albergadas_otras",
+          "nombre": "albergadas de otras procedencias"
+        }
+      ]
+    },
+    "alojar_hombres": {
+      "nombre": "hombres por alojar (adultos y NNA)",
+      "descripcion": "Hombres adultos y NNA hombres entre las personas por alojar (D-57)."
+    },
+    "alojar_mujeres": {
+      "nombre": "mujeres por alojar (adultas y NNA)",
+      "descripcion": "Mujeres adultas y NNA mujeres entre las personas por alojar (D-57)."
+    },
+    "alojar_nna": {
+      "nombre": "niños, niñas y adolescentes por alojar",
+      "descripcion": "NNA entre las personas por alojar (D-57)."
+    },
+    "alimentar": {
+      "nombre": "personas por alimentar",
+      "descripcion": "Personas por alojar más las aisladas (D-57).",
+      "componentes": [
+        {
+          "clave": "damnificadas.total",
+          "nombre": "damnificadas"
+        },
+        {
+          "clave": "albergadas_otras",
+          "nombre": "albergadas de otras procedencias"
+        },
+        {
+          "clave": "aisladas.total",
+          "nombre": "aisladas"
+        }
+      ]
     }
   },
   "catalogo_elementos": [
@@ -242,7 +270,7 @@
       "criterio": "1 por vivienda destruida o con daño mayor",
       "base": "viviendas_no_habitables",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)",
       "caso_parecido": "Temporal con 4 viviendas anegadas que no pueden volver a ocuparse y 2 con daño menor. Se registran 4 viviendas con daño mayor y 2 con daño menor, y se piden 4 viviendas de emergencia, no 6: las de daño menor se reparan."
     },
@@ -251,9 +279,9 @@
       "nombre": "Cama 1 plaza con kit de alojamiento",
       "unidad": "unidades",
       "criterio": "1 por persona",
-      "base": "personas",
+      "base": "alojar",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -261,9 +289,9 @@
       "nombre": "Colchón forrado en tela D-21",
       "unidad": "unidades",
       "criterio": "1 por persona",
-      "base": "personas",
+      "base": "alojar",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -271,9 +299,9 @@
       "nombre": "Juego de sábanas 1 plaza",
       "unidad": "juegos",
       "criterio": "1 por persona",
-      "base": "personas",
+      "base": "alojar",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -281,7 +309,7 @@
       "nombre": "Frazada",
       "unidad": "unidades",
       "criterio": "Hasta 2 por persona; puede variar según la zona y la estación del año",
-      "base": "personas",
+      "base": "alojar",
       "factor": 2,
       "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
@@ -291,9 +319,9 @@
       "nombre": "Kit de higiene personal hombre",
       "unidad": "kits",
       "criterio": "1 por persona por 30 días",
-      "base": "personas_hombres",
+      "base": "alojar_hombres",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -301,9 +329,9 @@
       "nombre": "Kit de higiene personal mujer",
       "unidad": "kits",
       "criterio": "1 por persona por 30 días",
-      "base": "personas_mujeres",
+      "base": "alojar_mujeres",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -311,9 +339,9 @@
       "nombre": "Kit de higiene infantil",
       "unidad": "kits",
       "criterio": "1 por persona por 30 días",
-      "base": "personas_nna",
+      "base": "alojar_nna",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -323,17 +351,17 @@
       "criterio": "1 por vivienda",
       "base": "viviendas_danadas",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
       "id": "kit_cocina",
       "nombre": "Kit de cocina familiar con habitabilidad",
       "unidad": "kits",
-      "criterio": "1 por vivienda",
-      "base": "viviendas_danadas",
+      "criterio": "1 por vivienda que perdió la habitabilidad",
+      "base": "viviendas_no_habitables",
       "factor": 1,
-      "nivel_tope": "bloqueo",
+      "nivel_tope": "justificacion",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)"
     },
     {
@@ -341,7 +369,7 @@
       "nombre": "Kit de alimentación 4.4 (4 personas, 4 días)",
       "unidad": "kits",
       "criterio": "1 para 4 personas por 4 días",
-      "base": "personas",
+      "base": "alimentar",
       "factor": 0.25,
       "nivel_tope": "justificacion",
       "regla_72h": true,
@@ -352,7 +380,7 @@
       "nombre": "Kit de alimentación 4.7 (4 personas, 7 días)",
       "unidad": "kits",
       "criterio": "1 para 4 personas por 7 días",
-      "base": "personas",
+      "base": "alimentar",
       "factor": 0.25,
       "nivel_tope": "justificacion",
       "regla_72h": true,
@@ -434,7 +462,8 @@
   "parametros": {
     "horas_minimas_kit_alimentacion": 72,
     "largo_minimo_para_que": 12,
-    "largo_minimo_decision": 10
+    "largo_minimo_decision": 10,
+    "largo_minimo_justificacion": 12
   },
   "reglas": [
     {
@@ -602,26 +631,30 @@
     },
     {
       "id": "TOPE_ELEMENTO",
-      "nombre": "Cantidad pedida mayor que el criterio del IT-LOG-01",
+      "nombre": "Cantidad pedida mayor que la referencia del IT-LOG-01",
       "nivel": "segun_elemento",
       "fuente": "IT-LOG-01 v4, Anexo N° 8 (cantidad de elementos a solicitar por folio FIBE)",
       "pantalla": "necesidad",
-      "titulo": "La cantidad no cuadra con la afectación",
-      "que_no_cuadra": "Pediste {cantidad} {unidad} de \"{elemento}\". El criterio es {criterio} y en el informe hay {base_valor} {base_nombre}: el máximo que cuadra es {tope}.",
-      "por_que": "El IT-LOG-01 fija criterios de cantidad por elemento para que lo solicitado se corresponda con la afectación registrada. Una cantidad mayor sin explicación es observada por la Unidad de Recursos de Emergencia.",
+      "titulo": "La cantidad supera la referencia del IT-LOG-01",
+      "que_no_cuadra": "Pediste {cantidad} {unidad} de \"{elemento}\". El criterio es {criterio} y en el informe hay {base_valor} {base_nombre}{base_detalle}: cuadran hasta {tope}.",
+      "por_que": "El Anexo N° 8 del IT-LOG-01 fija cantidades de referencia por elemento para que lo solicitado se corresponda con la afectación registrada. Una cantidad mayor sin explicación es observada por la Unidad de Recursos de Emergencia; con el motivo escrito, la Unidad puede evaluarla (D-58).",
       "como_resolver": [
         {
-          "texto": "Ajustar la cantidad al máximo que cuadra",
+          "texto": "Ajustar la cantidad a la que cuadra",
           "accion": "ajustar_cantidad"
         },
         {
           "texto": "Revisar las viviendas y personas registradas, si faltó alguna",
           "pantalla": "viviendas"
+        },
+        {
+          "texto": "Si la cantidad es necesaria (por ejemplo, dos familias en una vivienda, el frío de la zona o un albergue recién habilitado), escribir el motivo; quedará impreso en Observaciones junto a la cantidad de referencia",
+          "accion": "justificar"
         }
       ],
       "como_resolver_justificacion": [
         {
-          "texto": "Ajustar la cantidad al máximo que cuadra",
+          "texto": "Ajustar la cantidad a la que cuadra",
           "accion": "ajustar_cantidad"
         },
         {
@@ -629,11 +662,11 @@
           "pantalla": "viviendas"
         },
         {
-          "texto": "Si la cantidad es necesaria (por ejemplo, por el frío de la zona), escribir el motivo; quedará impreso en Observaciones",
+          "texto": "Si la cantidad es necesaria (por ejemplo, dos familias en una vivienda, el frío de la zona o un albergue recién habilitado), escribir el motivo; quedará impreso en Observaciones junto a la cantidad de referencia",
           "accion": "justificar"
         }
       ],
-      "caso_parecido": "Incendio con 3 viviendas destruidas y 11 personas damnificadas. Se pidieron 20 camas \"por si acaso\". El criterio es 1 por persona: se corrigió a 11 camas y la solicitud se aprobó sin observaciones."
+      "caso_parecido": "Incendio con 3 viviendas destruidas y 11 personas damnificadas. Se pidieron 20 camas \"por si acaso\": el criterio es 1 por persona, se corrigió a 11 y la solicitud se aprobó sin observaciones. En otro caso vivían dos familias en una misma vivienda destruida: se pidieron 2 viviendas de emergencia con el motivo escrito y la Unidad de Recursos lo evaluó con esa explicación."
     },
     {
       "id": "ALIMENTACION_72H",
